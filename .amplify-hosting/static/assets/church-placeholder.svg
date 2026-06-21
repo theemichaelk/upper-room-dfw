@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#1e3a8a"/>
+  <rect x="80" y="80" width="240" height="180" rx="8" fill="#ffffff" opacity="0.15"/>
+  <!-- Simple church silhouette -->
+  <polygon points="200,40 100,120 300,120" fill="#f1e7c7"/>
+  <rect x="140" y="120" width="120" height="140" fill="#f1e7c7"/>
+  <rect x="175" y="160" width="50" height="100" fill="#1e3a8a"/>
+  <!-- Cross -->
+  <line x1="200" y1="60" x2="200" y2="95" stroke="#1e3a8a" stroke-width="12"/>
+  <line x1="185" y1="72" x2="215" y2="72" stroke="#1e3a8a" stroke-width="8"/>
+  <text x="200" y="270" font-family="sans-serif" font-size="18" fill="#ffffff" text-anchor="middle" font-weight="600">Local Church</text>
+</svg>

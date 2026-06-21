@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Directory | Upper Room DFW</title>
+  <meta name="description" content="Browse registered church members and partners in the Upper Room DFW platform directory.">
+  <link rel="canonical" href="https://upperroomdfw.com/user-directory.html">
+  <meta property="og:url" content="https://upperroomdfw.com/user-directory.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">User Directory</h1>
+  <p class="text-sm text-slate-600">Roles assigned by membership package.</p>
+  <div id="users" class="mt-4 space-y-2"></div>
+  <script src="js/platform/loader.js"></script>
+  <script>
+    setTimeout(() => {
+      const P = window.URDFWPlatform;
+      const users = P.getUserDirectory();
+      const clients = P.get('clients', []);
+      const all = [...users, ...clients.map(c => ({ id: c.id, name: c.name, email: c.email, role: P.getUserRole(c), area: c.area }))];
+      document.getElementById('users').innerHTML = all.length ? all.map(u =>
+        `<div class="border rounded p-3 flex justify-between text-sm"><div><strong>${u.name}</strong> <span class="text-slate-400">${u.email}</span></div><span class="px-2 py-0.5 bg-sky-100 rounded text-xs">${u.role}</span></div>`).join('') : '<p class="text-sm text-slate-500">No users yet. <a href="signup.html">Sign up</a></p>';
+    }, 800);
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

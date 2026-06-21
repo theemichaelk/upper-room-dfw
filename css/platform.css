@@ -1,0 +1,101 @@
+/* Upper Room DFW Platform — Bootstrap-inspired responsive + display modes + RTL */
+
+/* Bootstrap-compatible breakpoints */
+:root {
+  --bs-breakpoint-sm: 576px;
+  --bs-breakpoint-md: 768px;
+  --bs-breakpoint-lg: 992px;
+  --bs-breakpoint-xl: 1200px;
+  --urdfw-primary: var(--primary, #0369a1);
+  --urdfw-font: var(--urdfw-custom-font, 'Inter', system-ui, sans-serif);
+  --urdfw-radius: var(--urdfw-custom-radius, 1rem);
+}
+
+html[dir="rtl"] body { direction: rtl; text-align: right; }
+html[dir="rtl"] .nav-link, html[dir="rtl"] .church-card { text-align: right; }
+
+body.urdfw-platform { font-family: var(--urdfw-font); }
+
+/* 4 display modes */
+.urdfw-mode-grid .directory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.urdfw-mode-list .directory-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+.urdfw-mode-list .church-card { display: flex; flex-direction: row; max-height: 140px; }
+.urdfw-mode-list .church-card .relative { width: 180px; min-height: 140px; flex-shrink: 0; }
+.urdfw-mode-compact .directory-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+.urdfw-mode-compact .church-card { padding: 0.5rem; border-radius: var(--urdfw-radius); }
+.urdfw-mode-compact .church-card .relative { height: 80px; }
+.urdfw-mode-map .directory-grid { display: none; }
+.urdfw-mode-map .urdfw-map-column { grid-column: 1 / -1; }
+
+/* Map — fixed aspect, never stretch with listing column */
+#directory-map {
+  height: 340px !important;
+  max-height: 42vh;
+  width: 100%;
+}
+.leaflet-container {
+  height: 100% !important;
+  width: 100%;
+  z-index: 1;
+  border-radius: 0 0 1rem 1rem;
+}
+.urdfw-mode-map #directory-map {
+  height: min(460px, 50vh) !important;
+  max-height: 50vh;
+}
+
+/* Listing level badges */
+.badge-featured { background: #f59e0b; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.badge-sticky { background: #7c3aed; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.badge-vip { background: #dc2626; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+.badge-raised { background: #059669; color: #fff; font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+
+.church-card.sticky-listing { order: -2; border-color: #7c3aed; }
+.church-card.featured-listing { order: -1; border-color: #f59e0b; }
+
+/* Facet filters */
+.urdfw-facets { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+.urdfw-facet { padding: 0.35rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 999px; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.urdfw-facet.active { background: var(--urdfw-primary); color: #fff; border-color: var(--urdfw-primary); }
+
+/* Map draw toolbar */
+.urdfw-map-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; }
+.urdfw-map-toolbar button { font-size: 12px; padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; background: #fff; }
+.urdfw-map-toolbar button.active { background: var(--urdfw-primary); color: #fff; }
+
+/* Reviews */
+.urdfw-stars { color: #fbbf24; letter-spacing: 1px; }
+.urdfw-review-criteria { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.5rem; font-size: 12px; }
+.urdfw-upvote { cursor: pointer; opacity: 0.6; transition: opacity 0.15s; }
+.urdfw-upvote.active { opacity: 1; color: var(--urdfw-primary); }
+
+/* Widgets */
+.urdfw-widget { border: 1px solid #e2e8f0; border-radius: var(--urdfw-radius); padding: 1rem; background: #fff; margin-bottom: 1rem; }
+.urdfw-widget-title { font-weight: 600; font-size: 14px; margin-bottom: 0.5rem; }
+
+/* Customization panel */
+#urdfw-customize-panel { position: fixed; bottom: 1rem; right: 1rem; z-index: 9999; }
+#urdfw-customize-panel.rtl-panel { right: auto; left: 1rem; }
+#urdfw-customize-toggle { width: 48px; height: 48px; border-radius: 50%; background: var(--urdfw-primary); color: #fff; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; }
+#urdfw-customize-drawer { display: none; position: absolute; bottom: 56px; right: 0; width: 280px; background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+#urdfw-customize-drawer.open { display: block; }
+
+/* Performance: content-visibility for long lists */
+.urdfw-mode-list .church-card, .urdfw-mode-grid .church-card { content-visibility: auto; contain-intrinsic-size: 320px; }
+
+/* Template previews */
+.tpl-preview { border: 2px solid transparent; border-radius: 0.75rem; cursor: pointer; padding: 0.5rem; text-align: center; font-size: 11px; }
+.tpl-preview.active { border-color: var(--urdfw-primary); background: #f0f9ff; }
+
+/* Drag-drop builders */
+.dd-item { padding: 0.5rem; border: 1px dashed #94a3b8; border-radius: 0.5rem; margin: 0.25rem 0; cursor: grab; background: #f8fafc; font-size: 13px; }
+.dd-item.dragging { opacity: 0.5; }
+.dd-dropzone { min-height: 120px; border: 2px dashed #cbd5e1; border-radius: 0.75rem; padding: 0.75rem; }
+
+/* Shortcode output */
+.shortcode-output { font-family: ui-monospace, monospace; font-size: 12px; background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; word-break: break-all; }
+
+@media (max-width: 768px) {
+  .urdfw-mode-list .church-card { flex-direction: column; max-height: none; }
+  .urdfw-mode-list .church-card .relative { width: 100%; }
+}

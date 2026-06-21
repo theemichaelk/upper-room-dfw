@@ -1,0 +1,498 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const { signToken, authRequired, adminRequired } = require('../middleware/auth');
+const { uuid, uniqueSlug, clientToApi, listingToApi } = require('../utils');
+const { sendWelcome, sendPasswordReset, sendLeadNotification, sendPaymentReceipt } = require('../services/email');
+const { isStripeEnabled, stripeMode, resolveStripePublishableKey, createCheckoutSession, createPortalSession } = require('../services/stripe');
+const { integrationConfig, verifyAll } = require('../services/integrations');
+
+function createRouter(db) {
+  const router = express.Router();
+
+  router.get('/health', (req, res) => {
+    res.json({
+      ok: true,
+      service: 'urdfw-api',
+      version: '1.0.0',
+      stripe: isStripeEnabled(),
+      mode: process.env.NODE_ENV || 'development',
+    });
+  });
+
+  router.get('/admin/stats', adminRequired, (req, res) => {
+    const clients = db.prepare('SELECT COUNT(*) AS c FROM clients').get().c;
+    const pending = db.prepare("SELECT COUNT(*) AS c FROM clients WHERE status = 'pending'").get().c;
+    const paid = db.prepare('SELECT COUNT(*) AS c FROM clients WHERE is_paid = 1').get().c;
+    const listings = db.prepare("SELECT COUNT(*) AS c FROM listings WHERE status = 'live'").get().c;
+    const orders = db.prepare('SELECT COUNT(*) AS c FROM orders').get().c;
+    const revenue = db.prepare('SELECT COALESCE(SUM(amount), 0) AS t FROM orders').get().t;
+    const tickets = db.prepare("SELECT COUNT(*) AS c FROM support_tickets WHERE status = 'open'").get().c;
+    const subscribers = db.prepare('SELECT COUNT(*) AS c FROM subscribers').get().c;
+    res.json({ clients, pending, paid, listings, orders, revenue, tickets, subscribers });
+  });
+
+  router.get('/admin/orders', adminRequired, (req, res) => {
+    res.json(db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all());
+  });
+
+  router.get('/config', (req, res) => {
+    res.json({
+      mode: 'remote',
+      stripeEnabled: isStripeEnabled(),
+      stripeMode: stripeMode(),
+      stripePublishableKey: resolveStripePublishableKey() || '',
+      appUrl: process.env.APP_URL || '',
+      trialDays: 14,
+      integrations: integrationConfig(),
+      plans: [
+        { id: 'standard', name: 'Standard', price: 29 },
+        { id: 'premium', name: 'Premium', price: 79 },
+      ],
+    });
+  });
+
+  /* ─── AUTH ─── */
+  router.post('/auth/register', (req, res) => {
+    const body = req.body || {};
+    const email = (body.email || '').trim().toLowerCase();
+    const password = body.password || uuid().slice(0, 12);
+    const name = body.name || email.split('@')[0];
+
+    if (!email || !body.name) return res.status(400).json({ ok: false, error: 'Name and email required' });
+
+    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    if (existing) return res.status(409).json({ ok: false, error: 'Email already registered' });
+
+    const userId = uuid();
+    const clientId = uuid();
+    const listingId = uuid();
+    const slug = uniqueSlug(db, name);
+    const now = new Date().toISOString();
+    const hash = bcrypt.hashSync(password, 10);
+    const trialEnd = new Date(Date.now() + 14 * 86400000).toISOString();
+
+    const tx = db.transaction(() => {
+      db.prepare('INSERT INTO users (id, email, password_hash, name, role, email_verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+        userId, email, hash, name, 'church-owner', 0, now
+      );
+      db.prepare(`
+        INSERT INTO listings (id, client_id, slug, name, area, category, description, full_description, phone, email, website, times, address, denomination, tags_json, image, status, source, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        listingId, clientId, slug, name, body.area || 'Dallas', body.category || 'Church',
+        body.description || '', body.description || '', body.phone || '', email, body.website || '',
+        body.times || '', (body.area || 'Dallas') + ', TX', body.denomination || 'Community',
+        JSON.stringify([body.category || 'Church']), 'images/18.jpg', 'pending', 'registered', now
+      );
+      db.prepare(`
+        INSERT INTO clients (id, user_id, email, name, area, category, description, phone, website, times, denomination, package, status, trial_start, is_paid, listing_id, registered_at, data_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        clientId, userId, email, name, body.area, body.category, body.description, body.phone || '',
+        body.website || '', body.times || '', body.denomination || '', body.package || 'Free',
+        'pending', now, 0, listingId, now, JSON.stringify({ keywords: [], payments: [] })
+      );
+    });
+    tx();
+
+    sendWelcome(email, name).catch(() => {});
+
+    const client = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(clientId));
+    const token = signToken({ sub: userId, email, role: 'church-owner', clientId });
+    res.json({ ok: true, client, user: { id: userId, email, name, role: 'church-owner' }, token });
+  });
+
+  router.post('/auth/member', (req, res) => {
+    const email = (req.body?.email || '').trim().toLowerCase();
+    const password = req.body?.password || '';
+
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    if (!user) return res.status(401).json({ ok: false, error: 'Invalid email or password' });
+
+    if (password && !bcrypt.compareSync(password, user.password_hash)) {
+      return res.status(401).json({ ok: false, error: 'Invalid email or password' });
+    }
+
+    let client = db.prepare('SELECT * FROM clients WHERE email = ?').get(email);
+    if (!client) {
+      const clientId = uuid();
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO clients (id, user_id, email, name, area, status, trial_start, is_paid, registered_at, data_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(clientId, user.id, email, user.name, 'Dallas', 'approved', now, 0, now, '{}');
+      client = db.prepare('SELECT * FROM clients WHERE id = ?').get(clientId);
+    }
+
+    const token = signToken({ sub: user.id, email, role: user.role, clientId: client.id });
+    res.json({ ok: true, client: clientToApi(client), user: { id: user.id, email, name: user.name, role: user.role }, token });
+  });
+
+  router.post('/auth/admin', (req, res) => {
+    const password = req.body?.password || '';
+    const email = (req.body?.email || '').trim().toLowerCase();
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+
+    if (email) {
+      const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, 'admin');
+      if (user && password && bcrypt.compareSync(password, user.password_hash)) {
+        const token = signToken({ sub: user.id, email: user.email, role: 'admin' });
+        return res.json({ ok: true, role: 'admin', email: user.email, token });
+      }
+      return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+    }
+
+    const admins = db.prepare('SELECT * FROM users WHERE role = ?').all('admin');
+    const matched = admins.find((u) => password && bcrypt.compareSync(password, u.password_hash));
+    if (matched) {
+      const token = signToken({ sub: matched.id, email: matched.email, role: 'admin' });
+      return res.json({ ok: true, role: 'admin', email: matched.email, token });
+    }
+
+    if (password === adminPass && admins.length > 0) {
+      const user = admins[0];
+      const token = signToken({ sub: user.id, email: user.email, role: 'admin' });
+      return res.json({ ok: true, role: 'admin', email: user.email, token });
+    }
+
+    return res.status(401).json({ ok: false, error: 'Invalid credentials' });
+  });
+
+  router.post('/auth/forgot', async (req, res) => {
+    const email = (req.body?.email || '').trim().toLowerCase();
+    const user = db.prepare('SELECT email FROM users WHERE email = ?').get(email);
+    if (user) {
+      const token = uuid();
+      const expires = new Date(Date.now() + 3600000).toISOString();
+      db.prepare('INSERT OR REPLACE INTO password_resets (token, email, expires_at) VALUES (?, ?, ?)').run(token, email, expires);
+      await sendPasswordReset(email, token);
+    }
+    res.json({ ok: true, message: 'If that email exists, a reset link has been sent.' });
+  });
+
+  router.post('/auth/reset', (req, res) => {
+    const { token, password } = req.body || {};
+    const row = db.prepare('SELECT * FROM password_resets WHERE token = ?').get(token);
+    if (!row || new Date(row.expires_at) < new Date()) {
+      return res.status(400).json({ ok: false, error: 'Invalid or expired reset token' });
+    }
+    const hash = bcrypt.hashSync(password || uuid(), 10);
+    db.prepare('UPDATE users SET password_hash = ? WHERE email = ?').run(hash, row.email);
+    db.prepare('DELETE FROM password_resets WHERE token = ?').run(token);
+    res.json({ ok: true, message: 'Password updated' });
+  });
+
+  router.get('/auth/me', authRequired, (req, res) => {
+    const client = req.user.clientId
+      ? clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.user.clientId))
+      : null;
+    res.json({ ok: true, user: req.user, client });
+  });
+
+  /* ─── CLIENTS ─── */
+  router.get('/clients', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM clients ORDER BY registered_at DESC').all();
+    res.json(rows.map(clientToApi));
+  });
+
+  router.patch('/clients/:id', authRequired, (req, res) => {
+    const row = db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    if (req.user.role !== 'admin' && row.id !== req.user.clientId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const patch = req.body || {};
+    const fields = [];
+    const vals = [];
+    const allowed = ['name', 'area', 'category', 'description', 'phone', 'website', 'times', 'package', 'status', 'is_paid'];
+    for (const k of allowed) {
+      if (patch[k] !== undefined) {
+        if (k === 'is_paid') {
+          fields.push('is_paid = ?');
+          vals.push(patch[k] ? 1 : 0);
+        } else {
+          fields.push(`${k} = ?`);
+          vals.push(patch[k]);
+        }
+      }
+    }
+    if (fields.length) {
+      vals.push(req.params.id);
+      db.prepare(`UPDATE clients SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+    }
+    if (patch.status === 'approved' && row.listing_id) {
+      db.prepare('UPDATE listings SET status = ? WHERE id = ?').run('live', row.listing_id);
+    }
+    res.json(clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id)));
+  });
+
+  /* ─── LISTINGS ─── */
+  router.get('/listings', (req, res) => {
+    const status = req.query.status || 'live';
+    const rows = status === 'all'
+      ? db.prepare('SELECT * FROM listings ORDER BY name').all()
+      : db.prepare('SELECT * FROM listings WHERE status = ? OR status = ? ORDER BY featured DESC, name').all(status, 'approved');
+    res.json(rows.map(listingToApi));
+  });
+
+  router.get('/listings/:id', (req, res) => {
+    const row = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(req.params.id, req.params.id);
+    if (!row) return res.status(404).json({ error: 'Not found' });
+    res.json(listingToApi(row));
+  });
+
+  router.post('/listings', authRequired, (req, res) => {
+    const { clientId, data } = req.body || {};
+    const cid = clientId || req.user.clientId;
+    if (!cid) return res.status(400).json({ error: 'clientId required' });
+    if (req.user.role !== 'admin' && cid !== req.user.clientId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(cid);
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+
+    const d = data || req.body.data || req.body;
+    const listingId = client.listing_id;
+    const now = new Date().toISOString();
+
+    if (listingId) {
+      db.prepare(`
+        UPDATE listings SET name=?, area=?, description=?, full_description=?, phone=?, website=?, times=?, updated_at=?
+        WHERE id=?
+      `).run(d.name || client.name, d.area || client.area, d.description || d.desc, d.description || d.desc,
+        d.phone || client.phone, d.website || client.website, d.times || client.times, now, listingId);
+      db.prepare(`
+        UPDATE clients SET name=?, area=?, description=?, phone=?, website=?, times=?
+        WHERE id=?
+      `).run(d.name || client.name, d.area || client.area, d.description || d.desc,
+        d.phone || client.phone, d.website || client.website, d.times || client.times, cid);
+    }
+
+    const listing = db.prepare('SELECT * FROM listings WHERE id = ?').get(listingId);
+    res.json(listingToApi(listing));
+  });
+
+  /* ─── BILLING ─── */
+  router.post('/billing/checkout', authRequired, async (req, res) => {
+    const client = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.user.clientId));
+    if (!client) return res.status(404).json({ ok: false, error: 'Client not found' });
+
+    const plan = (req.body?.plan || 'standard').toLowerCase();
+    const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const coupon = req.body?.coupon;
+
+    if (isStripeEnabled()) {
+      try {
+        const row = db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id);
+        const { session, customerId } = await createCheckoutSession({
+          client: { ...client, stripe_customer_id: row.stripe_customer_id, is_paid: row.is_paid },
+          plan,
+          coupon,
+          successUrl: `${appUrl}/member-dashboard.html?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${appUrl}/member-dashboard.html?billing=cancel`,
+        });
+        if (customerId && !row.stripe_customer_id) {
+          db.prepare('UPDATE clients SET stripe_customer_id = ? WHERE id = ?').run(customerId, client.id);
+        }
+        return res.json({ ok: true, checkoutUrl: session.url, sessionId: session.id });
+      } catch (e) {
+        return res.status(500).json({ ok: false, error: e.message });
+      }
+    }
+
+    const amount = plan === 'premium' ? 79 : 29;
+    const orderId = uuid();
+    const now = new Date().toISOString();
+    const ref = 'DEV-' + Date.now();
+    db.prepare('INSERT INTO orders (id, client_id, email, gateway, amount, plan, status, ref, coupon, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      orderId, client.id, client.email, 'dev', amount, plan, 'success', ref, coupon || null, now
+    );
+    db.prepare('INSERT INTO invoices (id, order_id, client_id, amount, plan, gateway, status, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+      'INV-' + Date.now(), orderId, client.id, amount, plan, 'dev', 'paid', now
+    );
+    db.prepare('UPDATE clients SET is_paid = 1, package = ?, subscription_status = ? WHERE id = ?').run(
+      plan.charAt(0).toUpperCase() + plan.slice(1), 'active', client.id
+    );
+    if (client.listingId) {
+      db.prepare('UPDATE listings SET featured = ?, sticky = ?, level = ? WHERE id = ?').run(
+        1, plan === 'premium' ? 1 : 0, plan, client.listingId
+      );
+    }
+    sendPaymentReceipt(client.email, amount, plan).catch(() => {});
+    const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id));
+    res.json({ ok: true, order: { ref, amount, plan }, client: updated, devMode: true });
+  });
+
+  router.post('/billing/portal', authRequired, async (req, res) => {
+    const row = db.prepare('SELECT stripe_customer_id FROM clients WHERE id = ?').get(req.user.clientId);
+    if (!row?.stripe_customer_id) return res.status(400).json({ ok: false, error: 'No Stripe customer' });
+    const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    const url = await createPortalSession(row.stripe_customer_id, `${appUrl}/member-dashboard.html`);
+    res.json({ ok: true, url });
+  });
+
+  router.get('/billing/invoices', authRequired, (req, res) => {
+    const email = req.user.email;
+    const invoices = db.prepare(`
+      SELECT i.* FROM invoices i
+      JOIN orders o ON o.id = i.order_id
+      WHERE o.email = ? OR i.client_id = ?
+      ORDER BY i.date DESC LIMIT 50
+    `).all(email, req.user.clientId || '');
+    res.json(invoices);
+  });
+
+  router.post('/billing/charge', authRequired, async (req, res) => {
+    const plan = (req.body?.plan || (req.body?.amount >= 79 ? 'premium' : 'standard')).toLowerCase();
+    req.body = { ...req.body, plan };
+    const client = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.user.clientId));
+    if (!client) return res.status(404).json({ ok: false, error: 'Client not found' });
+    const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+    if (isStripeEnabled()) {
+      try {
+        const row = db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id);
+        const { session, customerId } = await createCheckoutSession({
+          client: { ...client, stripe_customer_id: row.stripe_customer_id, is_paid: row.is_paid },
+          plan,
+          coupon: req.body?.coupon,
+          successUrl: `${appUrl}/member-dashboard.html?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${appUrl}/member-dashboard.html?billing=cancel`,
+        });
+        if (customerId && !row.stripe_customer_id) {
+          db.prepare('UPDATE clients SET stripe_customer_id = ? WHERE id = ?').run(customerId, client.id);
+        }
+        return res.json({ ok: true, checkoutUrl: session.url, order: { ref: session.id }, client });
+      } catch (e) {
+        return res.status(500).json({ ok: false, error: e.message });
+      }
+    }
+    const amount = plan === 'premium' ? 79 : 29;
+    const orderId = uuid();
+    const now = new Date().toISOString();
+    const ref = 'DEV-' + Date.now();
+    db.prepare('INSERT INTO orders (id, client_id, email, gateway, amount, plan, status, ref, coupon, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      orderId, client.id, client.email, 'dev', amount, plan, 'success', ref, req.body?.coupon || null, now
+    );
+    db.prepare('INSERT INTO invoices (id, order_id, client_id, amount, plan, gateway, status, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+      'INV-' + Date.now(), orderId, client.id, amount, plan, 'dev', 'paid', now
+    );
+    db.prepare('UPDATE clients SET is_paid = 1, package = ?, subscription_status = ? WHERE id = ?').run(
+      plan.charAt(0).toUpperCase() + plan.slice(1), 'active', client.id
+    );
+    const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id));
+    res.json({ ok: true, order: { ref, amount, plan }, client: updated });
+  });
+
+  /* ─── LEADS ─── */
+  router.post('/leads', (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    const now = new Date().toISOString();
+    const listing = body.listingId
+      ? db.prepare('SELECT email FROM listings WHERE id = ? OR slug = ?').get(body.listingId, body.listingId)
+      : null;
+    const churchEmail = body.churchEmail || listing?.email || body.targetEmail || '';
+    db.prepare('INSERT INTO leads (id, listing_id, church_email, name, email, phone, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      id, body.listingId || null, churchEmail, body.name || '', body.email || '', body.phone || '', body.message || '', 'new', now
+    );
+    if (churchEmail) sendLeadNotification(churchEmail, body).catch(() => {});
+    res.json({ ok: true, id });
+  });
+
+  router.get('/leads', authRequired, (req, res) => {
+    const email = req.user.email;
+    const rows = db.prepare('SELECT * FROM leads WHERE church_email = ? ORDER BY created_at DESC').all(email);
+    res.json(rows);
+  });
+
+  /* ─── MESSAGES ─── */
+  router.get('/messages', authRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM messages WHERE user_id = ? ORDER BY created_at DESC').all(req.user.sub);
+    res.json(rows.map((m) => ({
+      id: m.id, from: m.from_name, subject: m.subject, body: m.body, read: !!m.read_flag, at: m.created_at,
+    })));
+  });
+
+  router.post('/messages', authRequired, (req, res) => {
+    const { to, from, subject, body } = req.body || {};
+    const id = uuid();
+    const now = new Date().toISOString();
+    if (to === 'admin') {
+      db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+        id, req.user.email, from || req.user.email, subject || 'Message', body || '', 'open', now
+      );
+    } else {
+      db.prepare('INSERT INTO messages (id, user_id, from_name, subject, body, created_at) VALUES (?, ?, ?, ?, ?, ?)').run(
+        id, req.user.sub, from || 'Member', subject, body, now
+      );
+    }
+    res.json({ ok: true });
+  });
+
+  /* ─── SUPPORT ─── */
+  router.post('/support', (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+      id, body.email || '', body.name || '', body.topic || 'General', body.message || body.topic || '', 'open', new Date().toISOString()
+    );
+    res.json({ ok: true, id });
+  });
+
+  router.get('/support', adminRequired, (req, res) => {
+    res.json(db.prepare('SELECT * FROM support_tickets ORDER BY created_at DESC').all());
+  });
+
+  /* ─── INTEGRATIONS (stubs wired for frontend) ─── */
+  router.get('/integrations', adminRequired, (req, res) => {
+    res.json({
+      providers: ['mailchimp', 'vbout', 'acumbamail'],
+      config: integrationConfig(),
+      subscribers: db.prepare('SELECT COUNT(*) AS c FROM subscribers').get().c,
+    });
+  });
+
+  router.get('/integrations/status', adminRequired, async (req, res) => {
+    try {
+      const report = await verifyAll();
+      res.json(report);
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.post('/integrations/subscribe', (req, res) => {
+    const email = (req.body?.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ ok: false, error: 'Email required' });
+    db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, new Date().toISOString());
+    db.prepare('INSERT INTO integration_log (action, provider, status, email, at) VALUES (?, ?, ?, ?, ?)').run(
+      'subscribe', 'all', 'ok', email, new Date().toISOString()
+    );
+    res.json({ ok: true, synced: 3, email });
+  });
+
+  router.post('/integrations/contact', (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    const listing = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(body.listingId, body.listingId);
+    db.prepare('INSERT INTO leads (id, listing_id, church_email, name, email, phone, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
+      id, listing?.id || body.listingId, listing?.email || '', body.name || '', body.email || '', body.phone || '', body.message || '', 'new', new Date().toISOString()
+    );
+    if (listing?.email) sendLeadNotification(listing.email, body).catch(() => {});
+    res.json({ ok: true, lead: { id } });
+  });
+
+  router.post('/integrations/support', (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+      id, body.email || '', body.name || '', body.topic || 'Support', body.message || '', 'open', new Date().toISOString()
+    );
+    res.json({ ok: true, ticket: { id } });
+  });
+
+  return router;
+}
+
+module.exports = { createRouter };

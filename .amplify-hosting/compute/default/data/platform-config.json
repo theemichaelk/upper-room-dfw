@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "displayModes": ["grid", "list", "map", "compact"],
+  "singlePageTemplates": [
+    "classic", "modern", "minimal", "magazine", "card", "hero",
+    "sidebar", "fullwidth", "dark", "light", "event", "ministry",
+    "youth", "outreach", "catholic", "network"
+  ],
+  "multiPageTemplates": ["standard-multipage", "premium-multipage"],
+  "mapProviders": ["openstreetmap", "google", "mapbox"],
+  "listingLevels": ["free", "standard", "premium", "vip", "featured", "sticky"],
+  "paymentGateways": ["paypal", "stripe", "2checkout", "woocommerce"],
+  "membershipTypes": ["free", "one-time", "recurring", "free-trial", "paid-trial", "variable"],
+  "userRoles": ["visitor", "member", "church-owner", "premium-church", "admin"],
+  "upvoteIcons": ["thumbs-up", "heart", "star", "check", "fire"],
+  "customFieldTypes": ["text", "textarea", "number", "select", "checkbox", "radio", "date", "url", "email", "phone", "icon", "image", "youtube", "vimeo"],
+  "widgets": ["search", "categories", "locations", "listings", "button", "map", "slider", "sidebar-search", "sidebar-categories", "sidebar-locations", "onpage-listings", "onpage-map", "onpage-slider", "onpage-categories"],
+  "shortcodes": ["listings", "map", "categories", "locations", "search", "slider", "button", "featured"],
+  "integrations": ["mailchimp", "vbout", "acumbamail", "contact-form", "support-form"],
+  "api": {
+    "mode": "remote",
+    "endpoints": {
+      "base": "",
+      "auth": "/api/auth",
+      "clients": "/api/clients",
+      "billing": "/api/billing",
+      "listings": "/api/listings",
+      "integrations": "/api/integrations"
+    }
+  },
+  "languages": ["en", "es", "ar"],
+  "packages": [
+    { "id": "free", "name": "Free", "price": 0, "durationDays": 365, "maxLinks": 1, "featured": false, "sticky": false },
+    { "id": "standard", "name": "Standard", "price": 29, "durationDays": 30, "maxLinks": 3, "featured": true, "sticky": false },
+    { "id": "premium", "name": "Premium", "price": 79, "durationDays": 30, "maxLinks": 10, "featured": true, "sticky": true },
+    { "id": "vip", "name": "VIP", "price": 149, "durationDays": 30, "maxLinks": 25, "featured": true, "sticky": true }
+  ],
+  "directories": [
+    { "id": "dfw-churches", "name": "DFW Churches", "slug": "churches" },
+    { "id": "dfw-ministries", "name": "DFW Ministries", "slug": "ministries" },
+    { "id": "dfw-events", "name": "DFW Faith Events", "slug": "events" }
+  ]
+}

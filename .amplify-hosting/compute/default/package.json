@@ -1,0 +1,16 @@
+{
+  "name": "upper-room-dfw-compute",
+  "version": "2.0.0",
+  "private": true,
+  "main": "server.js",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.16",
+    "stripe": "^17.5.0"
+  }
+}

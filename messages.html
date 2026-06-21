@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Messages & Notifications | Upper Room DFW</title>
+  <meta name="description" content="Member messages and notifications for church partners on Upper Room DFW.">
+  <link rel="canonical" href="https://upperroomdfw.com/messages.html">
+  <meta property="og:url" content="https://upperroomdfw.com/messages.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="max-w-2xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">Messages & Notifications</h1>
+  <div id="msgs" class="mt-4 space-y-2 text-sm"></div>
+  <form id="send-msg" class="mt-6 border rounded-xl p-4 space-y-2">
+    <input name="subject" placeholder="Subject" class="w-full border rounded px-3 py-2">
+    <textarea name="body" rows="3" placeholder="Message" class="w-full border rounded px-3 py-2"></textarea>
+    <button class="px-4 py-2 bg-[#0369a1] text-white rounded text-sm">Send Test Notification</button>
+  </form>
+  <script src="js/platform/loader.js"></script>
+  <script>
+    const uid = 'demo-user';
+    function render() {
+      const P = window.URDFWPlatform;
+      const msgs = P.getMessages(uid);
+      const notifs = P.getNotifications(uid);
+      document.getElementById('msgs').innerHTML = [
+        ...msgs.map(m => `<div class="border rounded p-3 ${m.read ? '' : 'bg-sky-50'}"><strong>${m.subject}</strong><p>${m.body}</p></div>`),
+        ...notifs.map(n => `<div class="border rounded p-3 bg-amber-50">🔔 ${n.subject || JSON.stringify(n)}</div>`),
+      ].join('') || '<p class="text-slate-500">No messages yet.</p>';
+    }
+    setTimeout(render, 800);
+    document.getElementById('send-msg').onsubmit = (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      URDFWPlatform.sendMessage(uid, 'System', fd.get('subject'), fd.get('body'));
+      const notifs = URDFWPlatform.get('notifications', {});
+      notifs[uid] = notifs[uid] || [];
+      notifs[uid].push({ subject: fd.get('subject'), at: Date.now() });
+      URDFWPlatform.set('notifications', notifs);
+      render();
+    };
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

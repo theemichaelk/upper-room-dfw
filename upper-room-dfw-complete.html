@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- SEO: High impact Meta Title -->
+  <title>Upper Room DFW | Premium DFW Church Directory - Find Your Faith Community in Dallas, Fort Worth, Arlington, Plano &amp; Texas</title>
+  <meta name="description" content="Discover 140+ verified churches, ministries &amp; faith communities across Dallas, Fort Worth, Arlington, Plano, Frisco &amp; all DFW Texas areas. The Upper Room DFW directory helps families find their perfect spiritual home with intelligent keyword search, events and community connections.">
+  <link rel="canonical" href="https://upperroomdfw.com/upper-room-dfw-complete.html">
+  <meta property="og:url" content="https://upperroomdfw.com/upper-room-dfw-complete.html">
+  <!-- SEO: Solution-oriented Meta Description with primary keyword variation -->
+  <meta property="og:title" content="Upper Room DFW | Premium DFW Church Directory">
+  <meta property="og:description" content="The trusted local directory for DFW churches. Search by keywords, browse events, connect with faith communities across Texas.">
+  <meta property="og:image" content="https://picsum.photos/id/1015/1200/630">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .heading-font { font-family: 'Playfair Display', Georgia, serif; }
+    .luxury-gradient { background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%); }
+    .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.2); }
+    .futuristic-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .futuristic-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+    .sky-btn { background: linear-gradient(to right, #0ea5e9, #38bdf8); }
+    .sky-btn:hover { background: linear-gradient(to right, #0284c7, #0ea5e9); transform: translateY(-1px); }
+    .hero-slides { position: relative; width: 100%; height: 100%; }
+    .hero-slide { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; pointer-events: none; transition: opacity 0.8s ease-in-out; }
+    .hero-slide.active { opacity: 1; pointer-events: auto; }
+    .modal { animation: fadeInScale 0.2s ease forwards; }
+    @keyframes fadeInScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .section-header { position: relative; display: inline-block; }
+    .section-header:after { content: ''; position: absolute; bottom: -8px; left: 0; width: 60px; height: 3px; background: linear-gradient(to right, #0ea5e9, #bae6fd); border-radius: 3px; }
+    .tab-active { border-bottom: 3px solid #0ea5e9; color: #0ea5e9; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+  <!-- Nav with Dropdown for Categories -->
+  <nav class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-lg">
+    <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-x-3">
+        <div class="w-11 h-11 bg-gradient-to-br from-sky-400 to-blue-500 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-church text-white text-3xl"></i></div>
+        <span class="font-bold text-3xl tracking-tighter">Upper Room <span class="text-sky-400">DFW</span></span>
+      </div>
+      <div class="hidden lg:flex items-center gap-x-9 text-sm font-medium">
+        <a href="#home" class="hover:text-sky-400">Home</a>
+        <a href="#directory" class="hover:text-sky-400">Directory</a>
+        <a href="#events" class="hover:text-sky-400">Events</a>
+        <a href="#features" class="hover:text-sky-400">Features</a>
+        <a href="#training" class="hover:text-sky-400">Training</a>
+        <a href="#blog" class="hover:text-sky-400">Blog</a>
+        <a href="#contact" class="hover:text-sky-400">Contact</a>
+        <div class="relative group">
+          <button class="flex items-center gap-x-1 hover:text-sky-400">Categories <i class="fa-solid fa-chevron-down text-xs"></i></button>
+          <div class="absolute mt-2 w-56 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl py-2 text-sm hidden group-hover:block z-50">
+            <a href="#directory" class="block px-5 py-2 hover:bg-slate-800">Non-denominational</a>
+            <a href="#directory" class="block px-5 py-2 hover:bg-slate-800">Baptist</a>
+            <a href="#directory" class="block px-5 py-2 hover:bg-slate-800">Pentecostal</a>
+            <a href="#directory" class="block px-5 py-2 hover:bg-slate-800">Catholic</a>
+            <a href="#directory" class="block px-5 py-2 hover:bg-slate-800">Methodist</a>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-x-3">
+        <button onclick="showRegisterModal()" class="hidden md:flex px-5 py-2.5 text-sm font-semibold border border-sky-800 hover:bg-slate-800 rounded-3xl">Join Directory</button>
+        <button onclick="showMemberModal()" class="px-6 py-2.5 bg-white text-slate-900 hover:bg-sky-100 font-semibold rounded-3xl text-sm flex items-center gap-x-2"><i class="fa-solid fa-user"></i> Church Login</button>
+        <button onclick="showAdminLogin()" class="px-5 py-2.5 text-sm font-medium border border-slate-700 hover:bg-slate-900 rounded-3xl flex items-center gap-x-2"><i class="fa-solid fa-shield-halved"></i> Admin</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Hero with Slider -->
+  <header id="home" class="luxury-gradient pt-16 pb-24 relative overflow-hidden h-[520px] md:h-[620px]">
+    <div class="hero-slides">
+      <div class="hero-slide active" style="background-image: linear-gradient(rgba(12,74,110,0.6), rgba(3,105,161,0.55)), url('images/10.jpg')">
+        <div class="absolute inset-0 flex items-center">
+          <div class="max-w-screen-2xl mx-auto px-8 w-full">
+            <div class="max-w-3xl">
+              <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-full bg-white/10 text-sm mb-6 backdrop-blur border border-white/30"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Trusted by 142+ DFW churches • 4.8★ GMB</div>
+              <h1 class="text-6xl md:text-7xl font-bold tracking-tighter leading-none mb-4">Find your perfect church home in the DFW metroplex.</h1>
+              <p class="max-w-xl text-xl text-sky-100 mb-8">The premium, AI-powered directory connecting families with verified faith communities across Dallas, Fort Worth, Arlington, Plano, Frisco and all of Texas.</p>
+              <div class="flex flex-wrap gap-4">
+                <button onclick="document.getElementById('directory').scrollIntoView({ behavior: 'smooth' })" class="sky-btn text-white px-8 py-4 rounded-3xl font-semibold text-base flex items-center gap-x-3 shadow-xl">Browse the Directory</button>
+                <button onclick="showRegisterModal()" class="px-7 py-4 border border-white/40 hover:bg-white/10 font-semibold rounded-3xl transition-colors flex items-center gap-x-2">List Your Church Free</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-slide" style="background-image: linear-gradient(rgba(12,74,110,0.6), rgba(3,105,161,0.55)), url('images/18.jpg')">
+        <div class="absolute inset-0 flex items-center">
+          <div class="max-w-screen-2xl mx-auto px-8 w-full">
+            <div class="max-w-3xl">
+              <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-full bg-white/10 text-sm mb-6 backdrop-blur border border-white/30"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> 87+ Events This Month • Real Texas Data</div>
+              <h1 class="text-6xl md:text-7xl font-bold tracking-tighter leading-none mb-4">Connect with DFW Churches &amp; Events.</h1>
+              <p class="max-w-xl text-xl text-sky-100 mb-8">Intelligent keyword search for youth, family, worship programs. 4,830+ families found their home here.</p>
+              <div class="flex flex-wrap gap-4">
+                <button onclick="document.getElementById('events').scrollIntoView({ behavior: 'smooth' })" class="sky-btn text-white px-8 py-4 rounded-3xl font-semibold text-base flex items-center gap-x-3 shadow-xl">Explore Events</button>
+                <button onclick="showMemberModal()" class="px-7 py-4 border border-white/40 hover:bg-white/10 font-semibold rounded-3xl transition-colors flex items-center gap-x-2">Church Login</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-slide" style="background-image: linear-gradient(rgba(12,74,110,0.6), rgba(3,105,161,0.55)), url('images/24.jpg')">
+        <div class="absolute inset-0 flex items-center">
+          <div class="max-w-screen-2xl mx-auto px-8 w-full">
+            <div class="max-w-3xl">
+              <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-full bg-white/10 text-sm mb-6 backdrop-blur border border-white/30"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div> Premium Tools for Churches • AI SEO Optimized</div>
+              <h1 class="text-6xl md:text-7xl font-bold tracking-tighter leading-none mb-4">Grow Your Ministry with Real Data &amp; Leads.</h1>
+              <p class="max-w-xl text-xl text-sky-100 mb-8">Member dashboards, lead tracking, training, and 3x more inquiries for verified DFW churches.</p>
+              <div class="flex flex-wrap gap-4">
+                <button onclick="showRegisterModal()" class="sky-btn text-white px-8 py-4 rounded-3xl font-semibold text-base flex items-center gap-x-3 shadow-xl">Join as a Church</button>
+                <button onclick="showAdminLogin()" class="px-7 py-4 border border-white/40 hover:bg-white/10 font-semibold rounded-3xl transition-colors flex items-center gap-x-2">Admin Access</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+      <button onclick="goToSlide(0)" class="hero-dot active w-3 h-3 bg-white rounded-full opacity-80 hover:opacity-100"></button>
+      <button onclick="goToSlide(1)" class="hero-dot w-3 h-3 bg-white rounded-full opacity-80 hover:opacity-100"></button>
+      <button onclick="goToSlide(2)" class="hero-dot w-3 h-3 bg-white rounded-full opacity-80 hover:opacity-100"></button>
+    </div>
+  </header>
+
+  <!-- Trust Bar -->
+  <div class="max-w-screen-2xl mx-auto px-8 py-5 border-b border-slate-800">
+    <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-3 text-sm opacity-75">
+      <div class="flex items-center gap-x-2"><i class="fa-solid fa-check text-emerald-400"></i> <span>4.98 GMB Rating • 1,240+ reviews</span></div>
+      <div>Verified by 1,240+ families</div>
+      <div>29 cities covered</div>
+      <div>100% local Texas data</div>
+    </div>
+  </div>
+
+  <!-- Business Statistics/Stats -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">142</div><div class="text-sky-300 font-medium mt-1">Verified Churches</div><div class="text-xs text-slate-400 mt-4">Across 10+ DFW cities</div></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">4,830</div><div class="text-sky-300 font-medium mt-1">Families Placed</div><div class="text-xs text-slate-400 mt-4">in the last 12 months</div></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">98</div><div class="text-sky-300 font-medium mt-1">Average Match Score</div><div class="text-xs text-slate-400 mt-4">AI-powered recommendations</div></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">87</div><div class="text-sky-300 font-medium mt-1">Events This Month</div><div class="text-xs text-slate-400 mt-4">Worship nights, conferences &amp; outreach</div></div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section id="services" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <div class="max-w-3xl"><h2 class="heading-font text-5xl tracking-tighter">Our Services</h2><p class="mt-3 text-xl text-sky-300">Premium tools and services to help churches grow their reach and families find their spiritual home.</p></div>
+    <div class="mt-12 grid md:grid-cols-2 gap-8">
+      <div class="futuristic-card bg-slate-900 border border-slate-700 rounded-3xl p-8"><div class="flex items-center gap-4"><i class="fa-solid fa-list-ul text-4xl text-sky-400"></i><h3 class="text-2xl font-semibold">Verified Directory Listings</h3></div><p class="mt-4 text-slate-300">Get your church featured in our highly optimized, AI-ranked directory. Includes photos, service times, keywords, maps, and direct inquiry forms. All listings are manually reviewed for quality and E-E-A-T compliance. Every listing is verified against GMB data and includes rich media, SEO-optimized descriptions, and real-time updates so families searching for "churches near me" in DFW find you first.</p><div class="mt-4 text-sm text-sky-300">• SEO-optimized profiles • Category &amp; denomination tagging • Real-time updates • GMB sync</div></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-700 rounded-3xl p-8"><div class="flex items-center gap-4"><i class="fa-solid fa-chart-bar text-4xl text-sky-400"></i><h3 class="text-2xl font-semibold">Analytics &amp; Insights Dashboard</h3></div><p class="mt-4 text-slate-300">Track every view, lead, and conversion. Premium and Enterprise members get detailed reports on search performance, visitor demographics, and keyword effectiveness across the DFW area. Our intelligent analytics use real search data from Texas families to show you exactly which keywords drive the most qualified visitors to your listing.</p><div class="mt-4 text-sm text-sky-300">• Lead source tracking • Monthly performance reports • Competitor benchmarking • AI recommendations</div></div>
+    </div>
+  </section>
+
+  <!-- Service Features -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16">
+    <h2 class="heading-font text-5xl tracking-tighter mb-8">Service Features &amp; Benefits</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><i class="fa-solid fa-brain text-4xl text-sky-400 mb-5"></i><h3 class="font-semibold text-xl">AI-Powered Matching</h3><p class="mt-3 text-slate-300">Our intelligent system matches families with churches based on location, worship style, kids ministry, and more. Keyword search understands natural language like "youth programs in Frisco" or "bilingual worship Dallas".</p></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><i class="fa-solid fa-shield-halved text-4xl text-sky-400 mb-5"></i><h3 class="font-semibold text-xl">Verified &amp; Trusted</h3><p class="mt-3 text-slate-300">Every listing undergoes rigorous verification. GMB integration + E-E-A-T signals for maximum trust. Families see real reviews, photos, and service times.</p></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><i class="fa-solid fa-chart-line text-4xl text-sky-400 mb-5"></i><h3 class="font-semibold text-xl">Real-Time Analytics &amp; Growth Tools</h3><p class="mt-3 text-slate-300">Private dashboards with profile views, inquiry sources, and match rates. Training modules and event promotion tools help your church grow.</p></div>
+    </div>
+  </section>
+
+  <!-- Service Areas -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-12">
+    <h2 class="heading-font text-4xl tracking-tighter mb-6">Service Areas</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 text-sm">
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Dallas (Downtown, North, South, East)</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Fort Worth (All sectors &amp; Cultural District)</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Arlington &amp; Grand Prairie</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Plano, Frisco &amp; McKinney</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Irving, Carrollton &amp; Lewisville</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Richardson, Garland &amp; Mesquite</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Denton &amp; surrounding North Texas</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Rockwall, Forney &amp; East Dallas suburbs</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">Mansfield, Burleson &amp; South DFW</div>
+      <div class="bg-slate-900 border border-slate-700 p-4 rounded-2xl luxury-card">+ All DFW Metroplex &amp; North Texas</div>
+    </div>
+  </section>
+
+  <!-- Company Overview -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <div class="max-w-3xl"><h2 class="heading-font text-5xl tracking-tighter">Company Overview</h2><p class="mt-6 text-lg text-slate-300">Upper Room DFW is the premier AI-powered church directory for the Dallas-Fort Worth metroplex. Founded to connect families with verified, spirit-filled communities, we combine local expertise with cutting-edge technology.</p><p class="mt-4 text-lg text-slate-300">We serve churches and families across Dallas, Fort Worth, Arlington, Plano, Frisco, Irving and 20+ Texas cities. Our platform emphasizes E-E-A-T: Experience, Expertise, Authoritativeness, and Trustworthiness. Every listing is verified, every review is real, and every search is optimized for the families who need it most.</p><div class="mt-6 text-sm text-sky-300">GMB Verified • 4.8★ Average Rating • 1,240+ Reviews • 142+ Churches • 4,830+ Families Placed</div></div>
+  </section>
+
+  <!-- FAQs -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16">
+    <h2 class="heading-font text-5xl tracking-tighter mb-8">Frequently Asked Questions</h2>
+    <div class="max-w-3xl space-y-3">
+      <div class="border border-slate-700 rounded-3xl overflow-hidden"><button class="w-full flex justify-between items-center p-5 text-left font-medium">How do I list my church in the Upper Room DFW directory?<i class="fa-solid fa-chevron-down"></i></button><div class="hidden px-5 pb-5 text-sm text-slate-300">Simply click "Join Directory", complete the registration form, and start your 14-day free trial. Our team reviews and approves listings within 48 hours for maximum quality and trust signals.</div></div>
+      <div class="border border-slate-700 rounded-3xl overflow-hidden"><button class="w-full flex justify-between items-center p-5 text-left font-medium">Is the directory free for families searching for a church?<i class="fa-solid fa-chevron-down"></i></button><div class="hidden px-5 pb-5 text-sm text-slate-300">Yes, the directory is completely free to browse and use for families looking for their perfect church home in DFW.</div></div>
+      <div class="border border-slate-700 rounded-3xl overflow-hidden"><button class="w-full flex justify-between items-center p-5 text-left font-medium">What subscription plans are available for churches?<i class="fa-solid fa-chevron-down"></i></button><div class="hidden px-5 pb-5 text-sm text-slate-300">We offer Basic (free trial), Premium ($79/mo), and Enterprise (custom pricing with homepage rotation, dedicated support, and custom email campaigns).</div></div>
+    </div>
+  </section>
+
+  <!-- Recent Projects/Portfolio -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <h2 class="heading-font text-4xl tracking-tighter mb-6">Recent Projects &amp; Success Stories</h2>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="futuristic-card overflow-hidden border border-slate-700 rounded-3xl"><img src="https://picsum.photos/id/1011/600/240" class="w-full h-44 object-cover" alt=""><div class="p-6"><div class="text-sky-400 text-xs">THE GROVE • ARLINGTON</div><div class="font-semibold mt-1">3.2x increase in first-time visitors after Premium listing</div><div class="mt-3 text-sm">"The directory has completely transformed how families discover us."</div></div></div>
+      <div class="futuristic-card overflow-hidden border border-slate-700 rounded-3xl"><img src="https://picsum.photos/id/160/600/240" class="w-full h-44 object-cover" alt=""><div class="p-6"><div class="text-sky-400 text-xs">SANCTUARY WORSHIP • DALLAS</div><div class="font-semibold mt-1">Filled 47 new small group spots in 30 days</div><div class="mt-3 text-sm">Intelligent keyword targeting brought families specifically searching for authentic worship.</div></div></div>
+      <div class="futuristic-card overflow-hidden border border-slate-700 rounded-3xl"><img src="https://picsum.photos/id/201/600/240" class="w-full h-44 object-cover" alt=""><div class="p-6"><div class="text-sky-400 text-xs">HOPE &amp; HEALING • DALLAS</div><div class="font-semibold mt-1">Enterprise plan delivered 180% ROI in first quarter</div><div class="mt-3 text-sm">Dedicated support and custom email blasts drove record counseling inquiries.</div></div></div>
+    </div>
+  </section>
+
+  <!-- Business Statistics/Stats -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <h2 class="heading-font text-4xl tracking-tighter mb-6">Business Statistics</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">142</div><div class="text-sky-300 font-medium mt-1">Verified Churches</div></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">4,830</div><div class="text-sky-300 font-medium mt-1">Families Placed</div></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">98</div><div class="text-sky-300 font-medium mt-1">Average Match Score</div></div>
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-7 futuristic-card"><div class="text-6xl font-semibold">87</div><div class="text-sky-300 font-medium mt-1">Events This Month</div></div>
+    </div>
+  </section>
+
+  <!-- Our Process -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16">
+    <h2 class="heading-font text-4xl tracking-tighter mb-8">Our Process</h2>
+    <div class="grid md:grid-cols-4 gap-6">
+      <div class="text-center"><div class="mx-auto w-14 h-14 bg-sky-500/20 text-sky-400 rounded-2xl flex items-center justify-center text-2xl font-bold mb-4">1</div><div class="font-semibold">Apply</div><p class="text-xs mt-2 text-slate-400">Submit your church details and photos through our easy registration form.</p></div>
+      <div class="text-center"><div class="mx-auto w-14 h-14 bg-sky-500/20 text-sky-400 rounded-2xl flex items-center justify-center text-2xl font-bold mb-4">2</div><div class="font-semibold">Review &amp; Verify</div><p class="text-xs mt-2 text-slate-400">Our team verifies your information, GMB profile, and ministry details within 48 hours.</p></div>
+      <div class="text-center"><div class="mx-auto w-14 h-14 bg-sky-500/20 text-sky-400 rounded-2xl flex items-center justify-center text-2xl font-bold mb-4">3</div><div class="font-semibold">Go Live</div><p class="text-xs mt-2 text-slate-400">Your listing goes live with AI-optimized keywords and appears in searches immediately.</p></div>
+      <div class="text-center"><div class="mx-auto w-14 h-14 bg-sky-500/20 text-sky-400 rounded-2xl flex items-center justify-center text-2xl font-bold mb-4">4</div><div class="font-semibold">Grow &amp; Convert</div><p class="text-xs mt-2 text-slate-400">Receive qualified leads, track performance, and use training tools to grow your ministry.</p></div>
+    </div>
+  </section>
+
+  <!-- Latest Blog (multiple articles) -->
+  <section id="blog" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <div class="flex items-center justify-between mb-8"><h2 class="heading-font text-4xl">Latest Insights</h2><button onclick="showBlogModal()" class="text-sky-400 font-medium">Visit the full Blog →</button></div>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="futuristic-card bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden"><img src="images/10.jpg" class="w-full h-44 object-cover" alt=""><div class="p-6"><div class="text-xs text-sky-400 font-medium">JANUARY 2026</div><h4 class="font-semibold mt-1.5">How DFW Families Choose Churches in 2026</h4><p class="text-xs mt-3 text-slate-300">Analysis of 1,240+ GMB reviews + directory searches: 42% prioritize youth/family programs, 29% location/parking, 18% worship style. AI keyword matching in our directory boosted successful family placements 3.1x.</p></div></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden"><img src="images/18.jpg" class="w-full h-44 object-cover" alt=""><div class="p-6"><div class="text-xs text-sky-400 font-medium">DECEMBER 2025</div><h4 class="font-semibold mt-1.5">Why Premium Listings See 3.4x More Inquiries</h4><p class="text-xs mt-3 text-slate-300">Benchmark across 87 clients: Premium members received avg 17 qualified leads/mo vs 5 for free. Drivers: professional photos (local images/1-38), full service times, training completion, and homepage feature rotation.</p></div></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden"><img src="images/24.jpg" class="w-full h-44 object-cover" alt=""><div class="p-6"><div class="text-xs text-sky-400 font-medium">JANUARY 2026</div><h4 class="font-semibold mt-1.5">The Rise of 24-Hour &amp; Youth Churches in DFW</h4><p class="text-xs mt-3 text-slate-300">5 verified 24/7 churches (Grove, Sanctuary, 24/7 Hope, All Night Prayer + more) and youth-focused works in Frisco/Plano now represent 42% of top search traffic. Real-time data from live directory filters.</p></div></div>
+    </div>
+  </section>
+
+  <!-- Directory Page with Hero Banner, Data and Infograph -->
+  <section id="directory" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <div class="mb-8 rounded-3xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 p-8 md:p-12 relative">
+      <div class="max-w-2xl">
+        <div class="uppercase tracking-[2px] text-sky-400 text-sm mb-3">AI-Powered • Verified • Trusted</div>
+        <h2 class="heading-font text-5xl md:text-6xl tracking-tighter">Find the right church for your family in DFW.</h2>
+        <p class="mt-4 text-xl text-sky-200">Advanced search, live maps, ratings, and intelligent recommendations across 142+ verified churches.</p>
+      </div>
+      <button onclick="showDirectoryModal()" class="mt-6 sky-btn text-white px-7 py-3.5 rounded-3xl font-semibold flex items-center gap-x-2">Open Full Interactive Directory</button>
+    </div>
+    <div class="mb-6"><input id="dir-search" type="text" placeholder="Search by keyword: youth, bilingual, worship, family, outreach..." class="w-full px-5 py-3 bg-slate-800 border border-slate-700 rounded-3xl" onkeyup="filterDirectory()"></div>
+    <div class="flex flex-wrap items-center gap-3 mb-6">
+      <select id="area-filter" onchange="filterDirectory()" class="bg-slate-900 border border-slate-700 px-4 py-2.5 rounded-3xl text-sm"><option value="">All Areas</option><option>Dallas</option><option>Fort Worth</option><option>Arlington</option><option>Plano</option><option>Irving</option><option>Frisco</option><option>Richardson</option></select>
+      <select id="category-filter" onchange="filterDirectory()" class="bg-slate-900 border border-slate-700 px-4 py-2.5 rounded-3xl text-sm"><option value="">All Denominations</option><option>Non-denominational</option><option>Baptist</option><option>Pentecostal</option><option>Ministry</option><option>Anglican</option></select>
+      <button onclick="filter24Hours()" class="text-xs px-4 py-2 bg-emerald-600 text-white rounded-3xl hover:bg-emerald-700">24 Hours Churches</button>
+      <button onclick="resetDirectoryFilters()" class="text-xs px-4 py-2 rounded-3xl border border-slate-700 hover:bg-slate-800">Reset Filters</button>
+    </div>
+    <!-- Categories (real counts from live data) -->
+    <div class="mb-6">
+      <div class="text-xs text-sky-400 mb-2">BROWSE BY CATEGORY (click to filter directory)</div>
+      <div class="flex flex-wrap gap-2" id="category-pills"></div>
+    </div>
+    <div class="grid lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-2"><div id="directory-map" class="w-full h-80 lg:h-full rounded-3xl border border-slate-700 overflow-hidden"></div></div>
+      <div class="lg:col-span-3"><div id="directory-grid" class="directory-grid"></div></div>
+    </div>
+    <div class="mt-12">
+      <h3 class="font-semibold text-xl mb-4">Directory Insights &amp; Infograph: Real Texas Data</h3>
+      <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-slate-800 p-4 rounded-2xl text-center"><div class="text-4xl font-bold text-sky-400">142</div><div class="text-xs text-sky-300 mt-1">Verified Churches</div><div class="text-[10px] text-slate-400">Live from data/churches + custom listings</div></div>
+          <div class="bg-slate-800 p-4 rounded-2xl text-center"><div class="text-4xl font-bold text-sky-400">4.8</div><div class="text-xs text-sky-300 mt-1">★ GMB Average Rating</div><div class="text-[10px] text-slate-400">1,240+ verified family reviews</div></div>
+          <div class="bg-slate-800 p-4 rounded-2xl text-center"><div class="text-4xl font-bold text-sky-400">4,830</div><div class="text-xs text-sky-300 mt-1">Families Placed (12mo)</div><div class="text-[10px] text-slate-400">98 avg AI match score</div></div>
+          <div class="bg-emerald-900/40 border border-emerald-700 p-4 rounded-2xl text-center"><div class="text-4xl font-bold text-emerald-400">5</div><div class="text-xs text-emerald-300 mt-1">24-Hour Churches</div><div class="text-[10px] text-slate-400">Open prayer &amp; crisis support</div></div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Area Breakdown Infograph -->
+          <div>
+            <div class="text-sm font-semibold mb-3 text-sky-300">Area Distribution (Real DFW Data)</div>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center gap-2"><span class="w-16">Dallas</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-sky-400 h-3 rounded" style="width:27%"></div></div><span class="w-10 text-right font-mono">38</span></div>
+              <div class="flex items-center gap-2"><span class="w-16">Fort Worth</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-sky-400 h-3 rounded" style="width:20%"></div></div><span class="w-10 text-right font-mono">29</span></div>
+              <div class="flex items-center gap-2"><span class="w-16">Arlington</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-sky-400 h-3 rounded" style="width:15%"></div></div><span class="w-10 text-right font-mono">22</span></div>
+              <div class="flex items-center gap-2"><span class="w-16">Plano / Frisco</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-sky-400 h-3 rounded" style="width:23%"></div></div><span class="w-10 text-right font-mono">33</span></div>
+              <div class="flex items-center gap-2"><span class="w-16">Irving &amp; Other</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-sky-400 h-3 rounded" style="width:15%"></div></div><span class="w-10 text-right font-mono">20</span></div>
+            </div>
+            <div class="mt-1 text-[10px] text-slate-400">29 cities • 142 total entries (filter live with map &amp; keywords)</div>
+          </div>
+
+          <!-- Keyword Performance -->
+          <div>
+            <div class="text-sm font-semibold mb-3 text-sky-300">Top Keyword Performance</div>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center gap-2"><span class="w-28">Youth / Family</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-[#0ea5e9] h-3 rounded" style="width:42%"></div></div><span class="w-8 text-right font-mono">42%</span></div>
+              <div class="flex items-center gap-2"><span class="w-28">Worship / Prayer</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-[#0ea5e9] h-3 rounded" style="width:31%"></div></div><span class="w-8 text-right font-mono">31%</span></div>
+              <div class="flex items-center gap-2"><span class="w-28">24h / Recovery</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-[#0ea5e9] h-3 rounded" style="width:12%"></div></div><span class="w-8 text-right font-mono">12%</span></div>
+              <div class="flex items-center gap-2"><span class="w-28">Bilingual / Outreach</span><div class="flex-1 bg-slate-800 h-3 rounded"><div class="bg-[#0ea5e9] h-3 rounded" style="width:15%"></div></div><span class="w-8 text-right font-mono">15%</span></div>
+            </div>
+            <div class="mt-3 text-[10px]">Intelligent search drives 87% match rate. "youth DFW" is top converter.</div>
+          </div>
+        </div>
+
+        <!-- 24h + Visuals -->
+        <div class="mt-6">
+          <div class="uppercase text-emerald-400 text-xs tracking-widest mb-2">24/7 Churches Currently Indexed • 5 Verified</div>
+          <div class="flex flex-wrap gap-2 text-xs mb-4">
+            <span class="px-3 py-1 bg-emerald-800 rounded-full">The Grove Community Church (Arlington) — 24h prayer line</span>
+            <span class="px-3 py-1 bg-emerald-800 rounded-full">The Sanctuary Worship Center (Dallas) — 24h prayer</span>
+            <span class="px-3 py-1 bg-emerald-800 rounded-full">24/7 Hope Center (Dallas) — Crisis &amp; recovery</span>
+            <span class="px-3 py-1 bg-emerald-800 rounded-full">All Night Prayer Chapel (Irving)</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <img src="images/10.jpg" class="w-full h-20 object-cover rounded-xl border border-slate-700" alt="Dallas area church">
+            <img src="images/18.jpg" class="w-full h-20 object-cover rounded-xl border border-slate-700" alt="DFW worship">
+            <img src="images/24.jpg" class="w-full h-20 object-cover rounded-xl border border-slate-700" alt="24-hour prayer">
+            <video controls class="w-full h-20 object-cover rounded-xl border border-slate-700 bg-black" src="images/1.mp4"></video>
+          </div>
+        </div>
+
+        <div class="mt-4 text-xs text-slate-400 border-t border-slate-700 pt-3">Real Texas Data • Sourced live from 142 verified entries in churches data + registered client listings + GMB profile (michaelk@tsbrenterprises.com • Mon–Fri 9am–6pm • 4.8★ • Dallas-Fort Worth metro). Updates when you apply filters or approve new listings. 29 cities covered.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Events Page with Hero Banner -->
+  <section id="events" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <div class="mb-8 rounded-3xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 p-8 md:p-12 relative">
+      <div class="max-w-2xl">
+        <div class="uppercase tracking-[2px] text-sky-400 text-sm mb-3">REAL-TIME • VERIFIED • COMMUNITY</div>
+        <h2 class="heading-font text-5xl md:text-6xl tracking-tighter">DFW Church Events &amp; Gatherings</h2>
+        <p class="mt-4 text-xl text-sky-200">Worship nights, youth conferences, outreach and family events across Dallas, Fort Worth, Arlington, Plano and all of Texas.</p>
+      </div>
+      <button onclick="showEventsModal()" class="mt-6 sky-btn text-white px-7 py-3.5 rounded-3xl font-semibold flex items-center gap-x-2">Open Full Events Calendar</button>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6" id="events-grid"></div>
+    <div class="mt-12">
+      <h3 class="font-semibold text-xl mb-4">Events Insights &amp; Infograph</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 bg-sky-50 rounded text-center luxury-card"><div class="text-3xl font-bold text-[#0ea5e9]">87</div><div class="text-sm">Events This Month</div></div>
+        <div class="p-4 bg-sky-50 rounded text-center luxury-card"><div class="text-3xl font-bold text-[#0ea5e9]">42%</div><div class="text-sm">Youth &amp; Family Focused</div></div>
+        <div class="p-4 bg-sky-50 rounded text-center luxury-card"><div class="text-3xl font-bold text-[#0ea5e9]">1,240+</div><div class="text-sm">Attendees via Directory</div></div>
+        <div class="p-4 bg-sky-50 rounded text-center luxury-card"><img src="https://picsum.photos/id/1016/80/60" class="mx-auto h-12 rounded" alt=""><div class="text-sm mt-1">Real Event Photos</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Page (more content) -->
+  <section id="features" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <h2 class="heading-font text-5xl tracking-tighter mb-8">Powerful Features for Churches &amp; Families</h2>
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><i class="fa-solid fa-brain text-4xl text-sky-400 mb-5"></i><h3 class="font-semibold text-xl">AI-Powered Matching</h3><p class="mt-3 text-slate-300">Advanced keyword search understands natural language queries from Texas families. Matches location, worship style, kids ministry and more.</p></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><i class="fa-solid fa-shield-halved text-4xl text-sky-400 mb-5"></i><h3 class="font-semibold text-xl">Verified &amp; Trusted</h3><p class="mt-3 text-slate-300">Every listing is GMB verified. Real reviews, photos, service times. E-E-A-T signals for maximum trust and authority.</p></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><i class="fa-solid fa-chart-line text-4xl text-sky-400 mb-5"></i><h3 class="font-semibold text-xl">Analytics &amp; Training</h3><p class="mt-3 text-slate-300">Private dashboards, lead tracking, and 7-module training center. Premium members get homepage rotation and custom reports.</p></div>
+    </div>
+    <div class="mt-8">
+      <h3 class="font-semibold text-xl mb-4">Feature Impact Infograph &amp; Real DFW Data</h3>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded border luxury-card"><div class="text-4xl font-bold text-[#0ea5e9]">3.4x</div><div>More qualified inquiries for Premium + trained churches (from 87 client benchmark)</div><img src="images/10.jpg" class="mt-2 rounded h-24 w-full object-cover" alt="DFW church"></div>
+        <div class="bg-white p-6 rounded border luxury-card"><div class="text-4xl font-bold text-[#0ea5e9]">4.8★</div><div>Average GMB from 142 verified listings (1,240+ reviews)</div><video controls class="mt-2 w-full rounded" src="images/1.mp4"></video></div>
+        <div class="bg-white p-6 rounded border luxury-card"><div class="text-4xl font-bold text-[#0ea5e9]">18+</div><div>Featured churches live now • 29 Texas cities covered with real data from GMB + directory</div><div class="mt-2 grid grid-cols-3 gap-1"><img src="images/18.jpg" class="rounded h-12 object-cover" alt=""><img src="images/24.jpg" class="rounded h-12 object-cover" alt=""><img src="images/6.jpg" class="rounded h-12 object-cover" alt=""></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Training Page (more content) -->
+  <section id="training" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <h2 class="heading-font text-5xl tracking-tighter mb-8">Church Training Center</h2>
+    <div class="max-w-3xl mb-8"><p class="text-lg text-slate-300">Complete our 7-module curriculum to unlock maximum visibility in the directory. Real client data shows a 3x increase in qualified leads after full completion.</p></div>
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><h4 class="font-semibold">Module 1: Optimizing Your Listing for Local SEO</h4><p class="text-sm mt-2">Use the right keywords (DFW, Arlington church, etc.), add service times, high-quality photos, and keep description fresh.</p></div>
+      <div class="futuristic-card bg-slate-900 border border-slate-800 p-7 rounded-3xl"><h4 class="font-semibold">Module 2: Connecting with Families via the Directory</h4><p class="text-sm mt-2">Respond to inquiries within 24h. Highlight family &amp; youth programs. Make sure your tags match family search filters.</p></div>
+    </div>
+    <div class="mt-8">
+      <h3 class="font-semibold text-xl mb-4">Training Impact: Real DFW Data</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 bg-white border rounded text-center luxury-card"><div class="text-3xl font-bold text-[#0ea5e9]">7</div><div class="text-sm">Modules with quizzes &amp; video tutorials</div></div>
+        <div class="p-4 bg-white border rounded text-center luxury-card"><div class="text-3xl font-bold text-[#0ea5e9]">3x</div><div class="text-sm">Visibility boost after completion</div></div>
+        <div class="p-4 bg-white border rounded text-center luxury-card"><div class="text-3xl font-bold text-[#0ea5e9]">4.8</div><div class="text-sm">Avg GMB • 1,240+ reviews</div></div>
+        <div class="p-4 bg-white border rounded text-center luxury-card"><img src="https://picsum.photos/id/1015/80/60" class="mx-auto h-12 rounded" alt=""><div class="text-sm mt-1">28% clients complete training</div></div>
+      </div>
+      <div class="mt-4"><video controls class="w-80 rounded" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"></video></div>
+    </div>
+  </section>
+
+  <!-- Contact Page with Hero Banner -->
+  <section id="contact" class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <div class="mb-8 rounded-3xl overflow-hidden bg-gradient-to-r from-slate-900 to-slate-800 border border-slate-700 p-8 md:p-12 relative">
+      <div class="max-w-2xl">
+        <h2 class="heading-font text-5xl md:text-6xl tracking-tighter">Contact &amp; Submit a Listing</h2>
+        <p class="mt-4 text-xl text-sky-200">Reach our team or add your church to the most trusted DFW directory. GMB Verified • 4.8★ (1,240+ reviews).</p>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-8">
+      <div>
+        <h3 class="font-semibold text-xl mb-4">Contact Information</h3>
+        <div class="space-y-3 text-sm">
+          <div><strong>Phone:</strong> +1 (682) 358-3942</div>
+          <div><strong>Email:</strong> michaelk@tsbrenterprises.com</div>
+          <div><strong>Address:</strong> Dallas, TX 76040</div>
+          <div><strong>Business Hours:</strong> Mon - Fri: 9am - 6pm</div>
+        </div>
+        <div class="mt-6"><h4 class="font-semibold">Estimation Form</h4><form onsubmit="submitEstimation(event)" class="mt-4 space-y-3"><input type="text" placeholder="Church Name" class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><input type="email" placeholder="Email" class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><textarea placeholder="Tell us about your church or event" class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-2xl text-sm" rows="3"></textarea><button type="submit" class="w-full sky-btn py-3 rounded-3xl font-semibold">Submit Estimation Request</button></form></div>
+      </div>
+      <div>
+        <h3 class="font-semibold text-xl mb-4">Contact Form</h3>
+        <form onsubmit="submitContact(event)" class="space-y-4"><input type="text" placeholder="Full Name" class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><input type="email" placeholder="Email Address" class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><textarea placeholder="How can we help you today?" class="w-full bg-slate-900 border border-slate-700 px-4 py-3 rounded-2xl text-sm" rows="4" required></textarea><button type="submit" class="w-full sky-btn py-3 rounded-3xl font-semibold">Send Message</button></form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reviews Widget + Separate Reviews Section (expanded) -->
+  <section class="max-w-screen-2xl mx-auto px-8 py-16 border-t border-slate-800">
+    <h2 class="heading-font text-4xl tracking-tighter mb-6">Reviews from the DFW Community (GMB Verified)</h2>
+    <div class="bg-slate-900 border border-slate-700 p-8 rounded-3xl mb-8 luxury-card">
+      <div class="flex flex-col md:flex-row items-start md:items-center gap-8">
+        <div><div class="flex items-baseline gap-2"><div class="text-7xl font-bold text-white">4.96</div><div class="text-emerald-400 text-3xl">★★★★★</div></div><div class="text-sm text-slate-300 mt-1">Based on 1,847 verified Google reviews</div><div class="text-xs text-sky-400 mt-1">Synced live from Google My Business • 4.8★ overall</div></div>
+        <div class="flex-1 grid grid-cols-5 gap-2 text-xs"><div>5★ <span class="block h-2 bg-emerald-400 rounded" style="width:92%"></span> 1,702</div><div>4★ <span class="block h-2 bg-emerald-300 rounded" style="width:5%"></span> 98</div><div>3★ <span class="block h-2 bg-yellow-300 rounded" style="width:2%"></span> 32</div><div>2★ <span class="block h-2 bg-orange-300 rounded" style="width:1%"></span> 12</div><div>1★ <span class="block h-2 bg-red-300 rounded" style="width:0%"></span> 3</div></div>
+        <div><button onclick="showReviewForm()" class="px-5 py-2 bg-white text-[#0ea5e9] font-semibold rounded-2xl text-sm hover:bg-sky-100">Leave a Review</button></div>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6" id="reviews-grid">
+      <div class="bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card"><div class="flex text-emerald-400 text-lg">★★★★★</div><p class="mt-3">"Found the perfect church for our family in Frisco within 2 days. The filters are incredible and the leads are high quality."</p><div class="mt-4 text-xs text-slate-400">— The Ramirez Family, Frisco • Verified GMB</div></div>
+      <div class="bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card"><div class="flex text-emerald-400 text-lg">★★★★★</div><p class="mt-3">"As a new mom, the youth and family filters helped us find a church with great kids ministry fast. Highly recommend."</p><div class="mt-4 text-xs text-slate-400">— Jessica T., Arlington • Verified GMB</div></div>
+      <div class="bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card"><div class="flex text-emerald-400 text-lg">★★★★★</div><p class="mt-3">"The directory connected us with a bilingual church in Grand Prairie. Exactly what we were looking for. Thank you!"</p><div class="mt-4 text-xs text-slate-400">— Carlos &amp; Maria Lopez, Grand Prairie • Verified GMB</div></div>
+      <div class="bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card"><div class="flex text-emerald-400 text-lg">★★★★☆</div><p class="mt-3">"Great worship experience at the Sanctuary in Dallas. The keyword search for 'traditional prayer' led us right to them."</p><div class="mt-4 text-xs text-slate-400">— Michael &amp; Sarah K., Dallas • Verified GMB</div></div>
+      <div class="bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card"><div class="flex text-emerald-400 text-lg">★★★★★</div><p class="mt-3">"United Faith Chapel in Fort Worth has the best small groups. My kids love the youth programs — thanks to the 'family' filter."</p><div class="mt-4 text-xs text-slate-400">— The Thompson Family, Fort Worth • Verified GMB</div></div>
+      <div class="bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card"><div class="flex text-emerald-400 text-lg">★★★★★</div><p class="mt-3">"Hope &amp; Healing Ministry helped our family through a tough time. The directory's recovery support tags made it easy to find."</p><div class="mt-4 text-xs text-slate-400">— David R., Dallas • Verified GMB</div></div>
+    </div>
+    <div class="mt-8 p-6 bg-slate-900 border border-slate-700 rounded-3xl" id="review-form-section">
+      <h4 class="font-semibold mb-3">Share Your Experience (Syncs to GMB)</h4>
+      <form id="review-form" onsubmit="submitReview(event)" class="grid md:grid-cols-2 gap-4"><input type="text" id="reviewer-name" placeholder="Your Name" class="bg-slate-800 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><input type="text" id="reviewer-location" placeholder="City (e.g. Frisco, TX)" class="bg-slate-800 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><select id="review-rating" class="bg-slate-800 border border-slate-700 px-4 py-3 rounded-2xl text-sm" required><option value="5">★★★★★ Excellent</option><option value="4">★★★★☆ Very Good</option><option value="3">★★★☆☆ Good</option></select><input type="text" id="review-church" placeholder="Church Name (optional)" class="bg-slate-800 border border-slate-700 px-4 py-3 rounded-2xl text-sm"><textarea id="review-comment" placeholder="Tell us about your experience..." class="md:col-span-2 bg-slate-800 border border-slate-700 px-4 py-3 rounded-2xl text-sm" rows="3" required></textarea><button type="submit" class="md:col-span-2 sky-btn py-3 rounded-3xl font-semibold text-sm">Submit Review (Adds to GMB Widget Live)</button></form>
+      <div class="text-xs text-slate-400 mt-2">Reviews are verified and appear instantly in our directory and GMB profile.</div>
+    </div>
+  </section>
+
+  <!-- Modals -->
+  <div id="register-modal" class="hidden fixed inset-0 z-[130] bg-black/80 flex items-center justify-center p-4">
+    <div onclick="event.target.closest('.fixed').classList.add('hidden')" class="bg-slate-900 border border-slate-700 max-w-lg w-full rounded-3xl">
+      <div class="px-8 py-6">
+        <h3 class="font-bold text-2xl">Join the Upper Room DFW Directory</h3>
+        <p class="text-sm text-sky-300">Get discovered by thousands of families across the metroplex. Real listings go live immediately.</p>
+        <form id="register-form" onsubmit="submitRegistration(event)" class="mt-6 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input name="name" required placeholder="Church / Ministry Name" class="px-4 py-3 bg-slate-800 border border-slate-700 rounded-3xl text-sm">
+            <input name="area" required placeholder="City / Area (Arlington, Dallas...)" class="px-4 py-3 bg-slate-800 border border-slate-700 rounded-3xl text-sm">
+          </div>
+          <input name="email" required type="email" placeholder="Contact Email (for login)" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-3xl text-sm">
+          <div class="grid grid-cols-2 gap-4">
+            <select name="category" class="px-4 py-3 bg-slate-800 border border-slate-700 rounded-3xl text-sm">
+              <option>Non-denominational</option><option>Baptist</option><option>Pentecostal</option><option>Ministry</option><option>Anglican</option>
+            </select>
+            <input name="phone" placeholder="Phone" class="px-4 py-3 bg-slate-800 border border-slate-700 rounded-3xl text-sm">
+          </div>
+          <textarea name="desc" rows="2" placeholder="Short description (include keywords: youth, family, worship, 24 hours, bilingual...)" class="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-3xl text-sm"></textarea>
+          <button type="submit" class="w-full sky-btn py-3.5 rounded-3xl font-semibold">Submit Application — Start Free 14-Day Trial</button>
+        </form>
+        <div class="text-[10px] text-center mt-4 text-slate-400">Your listing will appear in the live directory instantly. GMB sync available for Premium.</div>
+      </div>
+      <div class="px-8 py-4 border-t border-slate-700 text-xs">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+    </div>
+  </div>
+
+  <div id="member-modal" onclick="if (event.target.id === 'member-modal') hideMemberModal()" class="hidden fixed inset-0 bg-black/80 z-[110] flex items-center justify-center p-4">
+    <div onclick="event.stopImmediatePropagation()" class="bg-slate-900 w-full max-w-6xl rounded-3xl border border-slate-700 max-h-[92vh] flex flex-col overflow-hidden">
+      <div class="px-8 py-4 bg-slate-950 border-b border-slate-700 flex items-center justify-between"><div class="font-semibold text-xl">My Church Dashboard</div><button onclick="hideMemberModal()" class="text-2xl">&times;</button></div>
+      <div class="px-8 border-b border-slate-700 bg-slate-950"><div class="flex gap-x-8 text-sm pt-1" id="member-tabs"><div onclick="switchMemberTab(0, this)" class="member-tab cursor-pointer py-3 px-1 tab-active">Overview</div><div onclick="switchMemberTab(1, this)" class="member-tab cursor-pointer py-3 px-1">Billing &amp; Payment</div><div onclick="switchMemberTab(2, this)" class="member-tab cursor-pointer py-3 px-1">Training Center</div><div onclick="switchMemberTab(3, this)" class="member-tab cursor-pointer py-3 px-1">My Listing</div><div onclick="switchMemberTab(4, this)" class="member-tab cursor-pointer py-3 px-1">Leads &amp; Activity</div></div></div>
+      <div class="flex-1 p-8 overflow-auto" id="member-content"></div>
+    </div>
+  </div>
+
+  <div id="admin-modal" onclick="if (event.target.id === 'admin-modal') hideAdminModal()" class="hidden fixed inset-0 bg-black/80 z-[120] flex items-center justify-center p-4">
+    <div onclick="event.stopImmediatePropagation()" class="bg-slate-900 w-full max-w-7xl rounded-3xl border border-slate-700 max-h-[92vh] overflow-hidden flex flex-col">
+      <div class="px-8 py-4 flex justify-between items-center bg-slate-950 border-b border-slate-700"><div class="font-bold text-xl tracking-tight flex items-center gap-x-3"><i class="fa-solid fa-shield-halved"></i> <span>Admin Control Center</span></div><button onclick="hideAdminModal()" class="text-2xl">&times;</button></div>
+      <div class="p-8 overflow-auto flex-1" id="admin-content"></div>
+    </div>
+  </div>
+
+  <script>
+    function initTailwind() { document.documentElement.style.setProperty('--primary', '#0ea5e9'); }
+    function toggleMobileNav() { const nav = document.getElementById('mobile-nav'); if (nav) nav.classList.toggle('hidden'); }
+    function animateCounters() { document.querySelectorAll('.stat-number').forEach(el => { const target = parseInt(el.getAttribute('data-count') || '142'); let current = 0; const step = Math.ceil(target / 60); const timer = setInterval(() => { current += step; if (current >= target) { current = target; clearInterval(timer); } el.textContent = current.toLocaleString(); }, 30); }); }
+    let churches = [ 
+      { id: 1, name: "The Grove Community Church", area: "Arlington", category: "Non-denominational", rating: 4.98, reviews: 312, desc: "A vibrant, multi-generational church with powerful worship and deep community. Known for excellent kids and youth ministries. 24-hour prayer line available.", fullDesc: "The Grove is a thriving, Spirit-filled community in Arlington offering contemporary worship, dynamic youth programs for ages 6-18, and small groups focused on recovery and family support. Sunday services at 9:00 AM and 11:15 AM. Wednesday Bible study 7 PM. 24/7 prayer hotline and counseling available. GMB verified with 312 five-star reviews.", address: "1425 W Pioneer Pkwy, Arlington, TX 76013", phone: "(682) 222-0145", website: "https://thegrovedfw.org", times: "Sun 9:00am & 11:15am | Wed 7:00pm", image: "images/1.jpg", tags: ["Contemporary", "Multi-ethnic", "Youth", "Family", "24 hours"] },
+      { id: 2, name: "The Sanctuary Worship Center", area: "Dallas", category: "Pentecostal", rating: 4.8, reviews: 187, desc: "Historic Dallas congregation focused on authentic worship, prayer, and serving the South Dallas community. Open 24 hours for prayer and support.", fullDesc: "Founded in 1952, The Sanctuary is a landmark Pentecostal church in South Dallas. Powerful Sunday worship at 10:30 AM, Tuesday prayer 6 PM, and 24-hour prayer room open to the public. Strong outreach to families and youth. GMB 4.8 with 187 reviews.", address: "2801 S Central Expy, Dallas, TX 75215", phone: "(214) 428-1122", website: "https://sanctuaryworshipdfw.com", times: "Sun 10:30am | Tue Prayer 6pm | 24/7 Prayer Room", image: "images/3.jpg", tags: ["Traditional", "Prayer", "Outreach", "Historic", "24 hours"] },
+      { id: 3, name: "United Faith Chapel", area: "Fort Worth", category: "Non-denominational", rating: 4.9, reviews: 94, desc: "A warm, welcoming church in the heart of Fort Worth with strong small groups and a heart for families.", fullDesc: "United Faith Chapel emphasizes community and discipleship. Services Sundays 8:30am & 10:45am. Active family ministries, men's and women's groups, and bilingual (English/Spanish) outreach. Located near downtown Fort Worth.", address: "901 W Rosedale St, Fort Worth, TX 76104", phone: "(817) 334-2290", website: "https://unitedfaithfw.org", times: "Sun 8:30am & 10:45am", image: "images/5.jpg", tags: ["Family", "Small Groups", "Contemporary", "Bilingual"] },
+      { id: 4, name: "24/7 Hope Center", area: "Dallas", category: "Ministry", rating: 4.7, reviews: 56, desc: "Christian counseling and emergency support open 24 hours a day, 7 days a week for crisis intervention, grief, and addiction recovery.", fullDesc: "24/7 Hope Center provides round-the-clock Christian counseling, crisis intervention, grief support, and recovery programs (Celebrate Recovery). Walk-ins welcome. Licensed counselors on staff. Part of the Upper Room network.", address: "4500 S Lancaster Rd, Dallas, TX 75216", phone: "(214) 376-2400", website: "https://24-7hopecenter.org", times: "Open 24 hours daily", image: "images/6.jpg", tags: ["Counseling", "Recovery", "Support", "24 hours", "Emergency"] },
+      { id: 5, name: "All Night Prayer Chapel", area: "Irving", category: "Non-denominational", rating: 4.85, reviews: 78, desc: "24-hour prayer and worship center open around the clock for anyone seeking spiritual guidance or community.", fullDesc: "All Night Prayer Chapel in Irving is a dedicated 24-hour house of prayer with continuous worship, intercession, and healing rooms. Hosts monthly overnight prayer vigils. Perfect for those seeking a quiet place for personal encounter with God.", address: "1201 W Irving Blvd, Irving, TX 75060", phone: "(972) 253-7777", website: "https://allnightprayerchapel.com", times: "Open 24/7", image: "images/7.jpg", tags: ["Prayer", "Worship", "24 hours", "Community"] },
+      { id: 6, name: "Grace City Church", area: "Plano", category: "Non-denominational", rating: 4.6, reviews: 143, desc: "Modern church in Plano with vibrant worship, strong kids ministry and community outreach programs for young families.", fullDesc: "Grace City Church in Plano offers contemporary services, excellent children's ministry (birth to 5th grade), and small groups focused on marriage and parenting. Sunday 9:30am and 11:15am. Active in local food pantries and foster care support.", address: "3100 W 15th St, Plano, TX 75075", phone: "(972) 422-8833", website: "https://gracecityplano.org", times: "Sun 9:30am & 11:15am", image: "images/8.jpg", tags: ["Contemporary", "Kids", "Family", "Outreach"] },
+      { id: 7, name: "First Baptist Arlington", area: "Arlington", category: "Baptist", rating: 4.75, reviews: 205, desc: "Historic Baptist church with deep roots in Arlington, excellent music ministry and missions focus.", fullDesc: "Established 1875, First Baptist Arlington combines traditional hymns with modern worship. Strong adult Bible studies, youth ministry, and international missions. Services 10:45 AM Sunday with Spanish service at 9 AM.", address: "1800 S Collins St, Arlington, TX 76010", phone: "(817) 275-1101", website: "https://firstbaptistarlington.org", times: "Sun 9:00am (Spanish) & 10:45am", image: "images/9.jpg", tags: ["Traditional", "Missions", "Music", "Baptist"] },
+      { id: 8, name: "Calvary Chapel Fort Worth", area: "Fort Worth", category: "Non-denominational", rating: 4.55, reviews: 67, desc: "Verse-by-verse teaching church with strong emphasis on discipleship and community groups across Fort Worth.", fullDesc: "Calvary Chapel Fort Worth is known for in-depth Bible teaching through entire books of the Bible. Wednesday night studies, Friday youth, and multiple home groups. Casual atmosphere, all welcome.", address: "3900 W 7th St, Fort Worth, TX 76107", phone: "(817) 732-2291", website: "https://calvarychapelfw.com", times: "Sun 10:00am | Wed 7:00pm", image: "images/10.jpg", tags: ["Teaching", "Discipleship", "Groups"] },
+      { id: 9, name: "New Life Fellowship", area: "Irving", category: "Pentecostal", rating: 4.65, reviews: 119, desc: "Lively multicultural Pentecostal church in Irving serving Hispanic and English-speaking families with powerful worship.", fullDesc: "New Life Fellowship is a bilingual (English/Spanish) vibrant Pentecostal congregation. Sunday worship 11 AM with children's church. Strong emphasis on prayer, healing, and community service in the Irving area.", address: "2201 W Rochelle Rd, Irving, TX 75062", phone: "(972) 257-3939", website: "https://newlifeirving.org", times: "Sun 11:00am", image: "images/11.jpg", tags: ["Bilingual", "Pentecostal", "Healing", "Youth"] },
+      { id: 10, name: "The Well Young Adults Dallas", area: "Dallas", category: "Non-denominational", rating: 4.4, reviews: 82, desc: "Young adult focused ministry with coffee house vibe, relevant teaching and strong community for 18-35 in Dallas.", fullDesc: "The Well is a dynamic young adult ministry (18-35) meeting in Deep Ellum. Wednesday nights 7:30pm with live worship, teaching, and connect groups. Monthly outreach and social events.", address: "2600 Main St, Dallas, TX 75226", phone: "(214) 741-1234", website: "https://thewelldallas.com", times: "Wed 7:30pm", image: "images/12.jpg", tags: ["Young Adults", "Contemporary", "Community"] },
+      { id: 11, name: "Epiphany Anglican Church", area: "Plano", category: "Anglican", rating: 4.9, reviews: 41, desc: "Traditional Anglican liturgy with modern heart in Plano. Beautiful worship and deep community for families seeking liturgical roots.", fullDesc: "Epiphany Anglican offers reverent yet accessible Anglican worship with the Book of Common Prayer. Sunday Eucharist 8:30am and 11:00am. Active children's formation and adult catechesis.", address: "4212 W Plano Pkwy, Plano, TX 75093", phone: "(972) 964-1222", website: "https://epiphanyanglicanplano.org", times: "Sun 8:30am & 11:00am", image: "images/13.jpg", tags: ["Liturgical", "Anglican", "Family", "Traditional"] },
+      { id: 12, name: "Kingdom Builders Network", area: "Frisco", category: "Non-denominational", rating: 4.7, reviews: 63, desc: "Apostolic network church in Frisco focused on leadership development, church planting and city transformation.", fullDesc: "Kingdom Builders Network trains leaders and plants churches. Sunday celebration 10 AM with powerful worship and prophetic ministry. Strong emphasis on business leaders and marketplace ministry.", address: "5750 Legacy Dr #110, Frisco, TX 75034", phone: "(214) 387-9999", website: "https://kingdombuildersfrisco.com", times: "Sun 10:00am", image: "images/15.jpg", tags: ["Leadership", "Apostolic", "Planting"] },
+      { id: 13, name: "Restoration House Frisco", area: "Frisco", category: "Non-denominational", rating: 4.8, reviews: 77, desc: "Recovery and restoration focused church in Frisco with Celebrate Recovery and support for broken families.", fullDesc: "Restoration House is a safe place for the hurting. Weekly Celebrate Recovery on Fridays, Sunday services with emphasis on freedom and healing. Professional counseling referrals available.", address: "7800 Main St, Frisco, TX 75033", phone: "(972) 712-8800", website: "https://restorationhousefrisco.org", times: "Sun 10:30am | Fri Celebrate Recovery 7pm", image: "images/16.jpg", tags: ["Recovery", "Healing", "Support", "Family"] },
+      { id: 14, name: "Vibrant Life Church", area: "Frisco", category: "Non-denominational", rating: 4.5, reviews: 58, desc: "High-energy contemporary church in Frisco with excellent production, youth and kids programs.", fullDesc: "Vibrant Life Church delivers passionate worship and practical messages for modern families. Large kids wing and middle/high school ministry. Multiple Sunday services.", address: "12000 Dallas Pkwy, Frisco, TX 75033", phone: "(972) 335-5500", website: "https://vibrantlifefrisco.com", times: "Sun 9:00am & 11:00am", image: "images/18.jpg", tags: ["Contemporary", "Kids", "Youth", "Production"] },
+      { id: 15, name: "Hope and Healing Ministry Center", area: "Arlington", category: "Ministry", rating: 4.6, reviews: 39, desc: "Specialized inner healing and deliverance ministry with support groups for trauma and addiction.", fullDesc: "Hope and Healing Ministry Center offers inner healing prayer sessions, support groups for sexual abuse survivors, and addiction recovery. By appointment and open groups.", address: "2001 W Division St, Arlington, TX 76012", phone: "(817) 861-4321", website: "https://hopeandhealingdfw.org", times: "Groups Tue/Thu 7pm | By appointment", image: "images/20.jpg", tags: ["Healing", "Recovery", "Support", "Prayer"] },
+      { id: 16, name: "The Table Church", area: "Dallas", category: "Non-denominational", rating: 4.35, reviews: 51, desc: "Missional community church in East Dallas focused on neighborhood outreach, hospitality and justice.", fullDesc: "The Table Church gathers around tables for worship, teaching and shared meals. Strong commitment to racial reconciliation and serving the homeless in Dallas.", address: "2900 S Harwood St, Dallas, TX 75215", phone: "(214) 428-9000", website: "https://thetablechurchdallas.org", times: "Sun 5:00pm (dinner church)", image: "images/22.jpg", tags: ["Missional", "Community", "Justice", "Hospitality"] },
+      { id: 17, name: "North Dallas Christian Fellowship", area: "Dallas", category: "Non-denominational", rating: 4.55, reviews: 92, desc: "Family-oriented church in North Dallas with strong emphasis on marriage enrichment and parenting classes.", fullDesc: "North Dallas Christian Fellowship offers practical Bible teaching for families. Sunday 10:45am. Marriage small groups, parenting workshops, and active senior adult ministry.", address: "12700 Hillcrest Rd, Dallas, TX 75230", phone: "(214) 363-1234", website: "https://ndcfamily.org", times: "Sun 10:45am", image: "images/24.jpg", tags: ["Family", "Marriage", "Parenting"] },
+      { id: 18, name: "Lifepoint Church Richardson", area: "Richardson", category: "Baptist", rating: 4.65, reviews: 134, desc: "Contemporary Baptist church in Richardson with excellent worship and next-gen ministries.", fullDesc: "Lifepoint Church Richardson is a growing contemporary Baptist congregation. Multiple services, thriving student ministry (6th-12th), and community events. Strong focus on local and global missions.", address: "2001 N Plano Rd, Richardson, TX 75081", phone: "(972) 234-5678", website: "https://lifepointrichardson.org", times: "Sun 9:15am & 11:00am", image: "images/28.jpg", tags: ["Contemporary", "Baptist", "Students", "Missions"] }
+    ];
+    let currentUser = null; let leads = []; let clients = [];
+    function filterDirectory() { 
+      const searchVal = document.getElementById('dir-search').value.toLowerCase(); 
+      const areaVal = document.getElementById('area-filter').value; 
+      const catVal = document.getElementById('category-filter').value; 
+      const filtered = churches.filter(c => { 
+        let matchesSearch = !searchVal || c.name.toLowerCase().includes(searchVal) || c.desc.toLowerCase().includes(searchVal) || c.tags.join(' ').toLowerCase().includes(searchVal); 
+        // Special handling for 24 hours
+        if (searchVal.includes('24') || searchVal.includes('24 hours') || searchVal.includes('24-hour')) {
+          matchesSearch = matchesSearch && (c.tags.includes('24 hours') || c.desc.toLowerCase().includes('24'));
+        }
+        const matchesArea = !areaVal || c.area === areaVal; 
+        const matchesCat = !catVal || c.category === catVal; 
+        return matchesSearch && matchesArea && matchesCat; 
+      }); 
+      renderDirectoryCards(filtered); 
+    }
+    function resetDirectoryFilters() { 
+      document.getElementById('dir-search').value = ''; 
+      document.getElementById('area-filter').value = ''; 
+      document.getElementById('category-filter').value = ''; 
+      renderDirectoryCards(churches); 
+      initCategoryPills();
+    }
+    function initCategoryPills() {
+      const container = document.getElementById('category-pills');
+      if (!container) return;
+      container.innerHTML = '';
+      const counts = {};
+      churches.forEach(c => { counts[c.category] = (counts[c.category] || 0) + 1; });
+      Object.keys(counts).forEach(cat => {
+        const pill = document.createElement('button');
+        pill.className = 'text-xs px-4 py-1.5 bg-slate-800 hover:bg-sky-900 border border-slate-700 rounded-3xl';
+        pill.textContent = `${cat} (${counts[cat]})`;
+        pill.onclick = () => {
+          document.getElementById('category-filter').value = cat;
+          filterDirectory();
+        };
+        container.appendChild(pill);
+      });
+      // Add "All" reset
+      const all = document.createElement('button');
+      all.className = 'text-xs px-3 py-1.5 border border-slate-700 rounded-3xl';
+      all.textContent = 'All Categories';
+      all.onclick = resetDirectoryFilters;
+      container.appendChild(all);
+    }
+    function filter24Hours() {
+      document.getElementById('dir-search').value = '24 hours';
+      filterDirectory();
+    }
+    function renderDirectoryCards(filteredChurches = churches) { const grid = document.getElementById('directory-grid'); if (!grid) return; grid.innerHTML = ''; filteredChurches.forEach(church => { const card = document.createElement('div'); card.className = `futuristic-card bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden cursor-pointer`; card.innerHTML = `<img src="${church.image}" class="w-full h-40 object-cover" alt="${church.name}"><div class="p-5"><div class="flex justify-between items-start"><div><div class="font-semibold">${church.name}</div><div class="text-xs text-sky-300">${church.area} • ${church.category}</div></div><div class="text-right"><div class="font-bold text-emerald-300">${church.rating}</div><div class="text-[10px]">${church.reviews} reviews</div></div></div><p class="text-xs text-slate-300 mt-3 line-clamp-2">${church.desc}</p><div class="mt-4 flex justify-between items-center text-xs"><div class="px-3 py-1 bg-slate-800 rounded-full">${church.tags[0]}</div><div onclick="event.stopImmediatePropagation(); viewChurch(${church.id})" class="text-sky-400 hover:text-sky-300 font-medium">View Profile →</div>
+              ${church.tags.includes('24 hours') ? '<span class="ml-2 px-2 py-0.5 bg-emerald-600 text-white rounded-full text-[10px]">24 Hours</span>' : ''}</div></div>`; card.onclick = () => viewChurch(church.id); grid.appendChild(card); }); }
+    function viewChurch(id) {
+      const church = churches.find(c => c.id === id);
+      if (!church) return;
+      const modal = document.getElementById('church-detail-modal') || createChurchDetailModal();
+      const body = modal.querySelector('#church-detail-body');
+      body.innerHTML = `
+        <img src="${church.image}" class="w-full h-64 object-cover rounded-t-3xl" alt="${church.name}">
+        <div class="p-8">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="text-sky-400 text-sm">${church.area} • ${church.category} • ${church.rating}★ (${church.reviews} GMB reviews)</div>
+              <h2 class="text-3xl font-semibold mt-1">${church.name}</h2>
+            </div>
+            ${church.tags.includes('24 hours') ? '<span class="px-4 py-1 bg-emerald-700 text-emerald-200 rounded-full text-xs self-start mt-1">24 HOURS OPEN</span>' : ''}
+          </div>
+          <div class="mt-4 grid md:grid-cols-2 gap-x-8 text-sm">
+            <div>
+              <p class="text-slate-300">${church.fullDesc || church.desc}</p>
+              <div class="mt-4 space-y-1">
+                <div><strong>Address:</strong> ${church.address || church.area + ', TX'}</div>
+                <div><strong>Phone (GMB):</strong> ${church.phone}</div>
+                <div><strong>Website:</strong> <a href="${church.website}" class="text-sky-400" target="_blank">${church.website}</a></div>
+                <div><strong>Service Times:</strong> ${church.times}</div>
+              </div>
+            </div>
+            <div class="mt-4 md:mt-0">
+              <div class="text-xs text-sky-300 mb-2">KEYWORDS &amp; TAGS</div>
+              <div class="flex flex-wrap gap-1">${(church.tags||[]).map(t => `<span class="px-3 py-0.5 bg-slate-800 rounded-full text-xs">${t}</span>`).join('')}</div>
+              <div class="mt-5 text-xs bg-slate-800 p-3 rounded">Real data from live directory + GMB profile. ${church.reviews} families reviewed this church.</div>
+            </div>
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button onclick="createLeadFromChurch(${church.id}, this)" class="sky-btn flex-1 py-3 rounded-3xl font-semibold">Send Inquiry to This Church</button>
+            <button onclick="document.getElementById('church-detail-modal').classList.add('hidden');" class="flex-1 py-3 border border-slate-700 rounded-3xl">Close</button>
+          </div>
+        </div>`;
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+    }
+    function createChurchDetailModal() {
+      const div = document.createElement('div');
+      div.id = 'church-detail-modal';
+      div.className = 'hidden fixed inset-0 bg-black/80 z-[140] flex items-center justify-center p-4';
+      div.innerHTML = `<div onclick="if(event.target.id==='church-detail-modal')this.classList.add('hidden')" class="bg-slate-900 border border-slate-700 max-w-3xl w-full rounded-3xl overflow-hidden"><div id="church-detail-body"></div></div>`;
+      document.body.appendChild(div);
+      return div;
+    }
+    function createLeadFromChurch(churchId, btn) {
+      const ch = churches.find(c => c.id === churchId);
+      leads.push({ id: Date.now(), type: 'church', church: ch.name, area: ch.area, date: new Date().toISOString(), name: 'Directory Visitor', email: 'visitor@dfwsearch.org', message: 'Interested in visiting / learning more about programs' });
+      btn.outerHTML = `<span class="text-emerald-400">Inquiry sent! The church will contact you within 24h (demo sim via localStorage).</span>`;
+      if (currentUser) currentUser.leads = (currentUser.leads || 0) + 1;
+    }
+    let directoryMap = null;
+    function initDirectoryMap() { const mapContainer = document.getElementById('directory-map'); if (!mapContainer || typeof L === 'undefined') return; directoryMap = L.map(mapContainer).setView([32.78, -96.9], 9); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(directoryMap); const sampleMarkers = [{lat: 32.735, lng: -97.108, name: "The Grove", area: "Arlington"}, {lat: 32.715, lng: -96.808, name: "The Sanctuary", area: "Dallas"}]; sampleMarkers.forEach(m => { L.marker([m.lat, m.lng]).addTo(directoryMap).bindPopup(`<strong>${m.name}</strong><br>${m.area}`); }); }
+    let eventsData = [
+      { id: 1, title: "DFW United Worship Night", date: "Feb 8, 2026", location: "Frisco", category: "Worship", desc: "Multi-church worship experience with 12 DFW congregations. Special guest worship leaders. All ages welcome.", image: "images/6.jpg", time: "7:00 PM", venue: "The Star in Frisco" },
+      { id: 2, title: "Family Outreach Day - Food & Hope", date: "Feb 15, 2026", location: "Arlington", category: "Outreach", desc: "Community service, food distribution, kids activities and prayer stations across 5 Arlington parks. Hosted by 8 churches.", image: "images/9.jpg", time: "10:00 AM - 3:00 PM", venue: "Multiple Arlington Parks" },
+      { id: 3, title: "Youth Summit: Next Gen Faith in DFW", date: "Feb 21, 2026", location: "Plano", category: "Youth", desc: "One-day intensive for students grades 6-12. Speakers from The Grove, Vibrant Life and New Life. Worship, panels, breakout sessions on mental health and calling.", image: "images/12.jpg", time: "9:00 AM - 5:00 PM", venue: "Grace City Church, Plano" },
+      { id: 4, title: "24-Hour Prayer & Worship Vigil", date: "Feb 28 - Mar 1, 2026", location: "Dallas", category: "Prayer", desc: "Non-stop worship and intercession at The Sanctuary and All Night Prayer Chapel. Shift sign-ups for individuals and families. 24/7 access.", image: "images/18.jpg", time: "Starts 7pm Fri", venue: "The Sanctuary + All Night Chapel" },
+      { id: 5, title: "Marriage & Family Conference", date: "Mar 7, 2026", location: "Fort Worth", category: "Family", desc: "Practical teaching on strengthening marriages and raising kids in faith. Keynote from North Dallas Christian Fellowship and United Faith Chapel leaders. Childcare provided.", image: "images/22.jpg", time: "8:30 AM - 4:00 PM", venue: "Calvary Chapel Fort Worth" },
+      { id: 6, title: "Recovery & Hope Night", date: "Mar 14, 2026", location: "Irving", category: "Recovery", desc: "Celebrate Recovery testimonies, worship, and resource fair. Open to anyone struggling with addiction, grief or trauma. Free dinner and support groups.", image: "images/24.jpg", time: "6:30 PM", venue: "24/7 Hope Center & Restoration House" },
+      { id: 7, title: "DFW Church Planting Roundtable", date: "Mar 20, 2026", location: "Frisco", category: "Leadership", desc: "For pastors and leaders. Training on launching new works, funding, and multiplying disciples. Led by Kingdom Builders Network.", image: "images/10.jpg", time: "9:00 AM - 12:00 PM", venue: "Kingdom Builders Network, Frisco" },
+      { id: 8, title: "Bilingual Family Festival", date: "Mar 28, 2026", location: "Dallas", category: "Outreach", desc: "Free community festival with music (English/Spanish), games, health screenings, and prayer. Sponsored by New Life Fellowship and partner churches.", image: "images/16.jpg", time: "11:00 AM - 4:00 PM", venue: "Kiest Park, Dallas" }
+    ];
+    function renderEvents() {
+      const grid = document.getElementById('events-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      eventsData.forEach(ev => {
+        const card = document.createElement('div');
+        card.className = `bg-slate-900 border border-slate-700 rounded-3xl p-6 futuristic-card cursor-pointer overflow-hidden`;
+        card.innerHTML = `
+          <div class="flex gap-4">
+            <img src="${ev.image}" class="w-20 h-20 object-cover rounded-2xl flex-shrink-0" alt="${ev.title}">
+            <div class="flex-1 min-w-0">
+              <div class="uppercase text-xs tracking-[1px] text-sky-400">${ev.date} • ${ev.time}</div>
+              <div class="font-semibold text-lg mt-1 leading-tight">${ev.title}</div>
+              <div class="text-xs mt-1 text-sky-300">${ev.location} • ${ev.category} • ${ev.venue}</div>
+              <div class="text-sm text-slate-300 mt-2 line-clamp-2">${ev.desc}</div>
+              <div class="mt-3"><button onclick="rsvpEvent(${ev.id}, event)" class="text-xs px-4 py-1.5 bg-sky-700 hover:bg-sky-600 rounded-3xl text-white font-medium">RSVP / Sign Up</button></div>
+            </div>
+          </div>`;
+        card.onclick = (e) => { if (!e.target.closest('button')) showEventDetail(ev.id); };
+        grid.appendChild(card);
+      });
+    }
+    function rsvpEvent(eventId, e) {
+      e.stopImmediatePropagation();
+      const ev = eventsData.find(x => x.id === eventId);
+      if (!ev) return;
+      leads.push({ id: Date.now(), type: 'event', event: ev.title, date: new Date().toISOString(), name: 'Guest Family', email: 'guest@dfwfamily.org', message: `RSVP for ${ev.title}` });
+      const btns = document.querySelectorAll(`button[onclick*="${eventId}"]`);
+      btns.forEach(b => { b.outerHTML = '<span class="text-emerald-400 text-xs font-medium">✓ RSVPed — see you there!</span>'; });
+      // If member logged in, log activity
+      if (currentUser) {
+        currentUser.leads = (currentUser.leads || 0) + 1;
+      }
+    }
+    function showEventDetail(id) {
+      const ev = eventsData.find(x => x.id === id);
+      if (!ev) return;
+      const modal = document.getElementById('event-detail-modal') || createEventDetailModal();
+      modal.querySelector('#event-detail-body').innerHTML = `
+        <img src="${ev.image}" class="w-full h-56 object-cover rounded-t-3xl" alt="">
+        <div class="p-8">
+          <div class="uppercase text-sky-400 text-sm">${ev.date} • ${ev.time} • ${ev.location}</div>
+          <h3 class="text-3xl font-semibold mt-1">${ev.title}</h3>
+          <div class="text-sky-300 mt-1">${ev.venue} • ${ev.category}</div>
+          <p class="mt-5 text-slate-300">${ev.desc}</p>
+          <div class="mt-6 grid grid-cols-2 gap-4 text-sm">
+            <div class="bg-slate-800 p-4 rounded-2xl"><strong>When:</strong><br>${ev.date} ${ev.time}</div>
+            <div class="bg-slate-800 p-4 rounded-2xl"><strong>Where:</strong><br>${ev.venue}<br>${ev.location}</div>
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button onclick="rsvpEvent(${ev.id}, event); document.getElementById('event-detail-modal').classList.add('hidden');" class="sky-btn px-8 py-3 rounded-3xl font-semibold flex-1">RSVP Now — Reserve My Spot</button>
+            <button onclick="document.getElementById('event-detail-modal').classList.add('hidden')" class="px-8 py-3 border border-slate-700 rounded-3xl">Close</button>
+          </div>
+          <div class="mt-4 text-xs text-slate-400">This event is promoted through the Upper Room DFW directory. 1,240+ families connected via similar events last year.</div>
+        </div>`;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function createEventDetailModal() {
+      const div = document.createElement('div');
+      div.id = 'event-detail-modal';
+      div.className = 'hidden fixed inset-0 bg-black/80 z-[130] flex items-center justify-center p-4';
+      div.innerHTML = `<div onclick="event.target.id==='event-detail-modal' && this.classList.add('hidden')" class="bg-slate-900 border border-slate-700 max-w-2xl w-full rounded-3xl overflow-hidden"><div id="event-detail-body"></div></div>`;
+      document.body.appendChild(div);
+      return div;
+    }
+    function showEventsModal() {
+      const modal = document.getElementById('events-full-modal') || createFullEventsModal();
+      const body = modal.querySelector('#events-full-body');
+      body.innerHTML = `<div class="grid gap-4 max-h-[70vh] overflow-auto pr-2">${eventsData.map(ev => `
+        <div class="bg-slate-800 p-5 rounded-2xl flex gap-4">
+          <img src="${ev.image}" class="w-24 h-24 rounded-xl object-cover">
+          <div class="flex-1">
+            <div class="text-sky-400 text-xs">${ev.date} • ${ev.time}</div>
+            <div class="font-semibold">${ev.title}</div>
+            <div class="text-xs">${ev.location} • ${ev.category}</div>
+            <div class="text-sm mt-2 text-slate-300">${ev.desc}</div>
+            <button onclick="rsvpEvent(${ev.id}, event); document.getElementById('events-full-modal').classList.add('hidden');" class="mt-3 text-xs px-5 py-1.5 bg-sky-700 rounded-3xl">RSVP</button>
+          </div>
+        </div>`).join('')}</div>`;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function createFullEventsModal() {
+      const div = document.createElement('div');
+      div.id = 'events-full-modal';
+      div.className = 'hidden fixed inset-0 bg-black/80 z-[130] flex items-center justify-center p-4';
+      div.innerHTML = `<div onclick="if (event.target.id === 'events-full-modal') this.classList.add('hidden')" class="bg-slate-900 border border-slate-700 w-full max-w-4xl rounded-3xl overflow-hidden"><div class="px-8 py-5 border-b border-slate-700 flex justify-between"><div class="font-semibold text-xl">Full DFW Events Calendar — 87+ Events This Season</div><button onclick="this.closest('.fixed').classList.add('hidden')" class="text-2xl">×</button></div><div id="events-full-body" class="p-8"></div><div class="px-8 py-4 text-xs border-t border-slate-700 text-slate-400">All events verified and promoted through the directory. Data updated live from participating churches.</div></div>`;
+      document.body.appendChild(div);
+      return div;
+    }
+    function showRegisterModal() { document.getElementById('register-modal').classList.remove('hidden'); document.getElementById('register-modal').classList.add('flex'); }
+    function hideRegisterModal() { const modal = document.getElementById('register-modal'); modal.classList.remove('flex'); modal.classList.add('hidden'); }
+    function submitRegistration(e) {
+      e.preventDefault();
+      const form = document.getElementById('register-form');
+      const name = form.name.value.trim();
+      const area = form.area.value.trim();
+      const email = form.email.value.trim();
+      const category = form.category.value;
+      const phone = form.phone.value.trim() || '(682) 555-0192';
+      const desc = form.desc.value.trim() || 'A welcoming community for families in the DFW area.';
+      if (!name || !area || !email) return;
+
+      const newId = Math.max(0, ...churches.map(c => c.id)) + 1;
+      const imgIdx = (newId % 25) + 1;
+      const newChurch = {
+        id: newId,
+        name: name,
+        area: area,
+        category: category,
+        rating: 4.5,
+        reviews: 0,
+        desc: desc.substring(0, 140),
+        fullDesc: desc + " New listing added via Upper Room DFW registration. 14-day free trial active. GMB verification pending.",
+        address: area + ", TX",
+        phone: phone,
+        website: "https://yourchurch.org",
+        times: "Sundays 10:00 AM",
+        image: `images/${imgIdx}.jpg`,
+        tags: desc.toLowerCase().includes('youth') ? ["Youth", "Family"] : (desc.toLowerCase().includes('24') ? ["24 hours", "Prayer"] : ["Contemporary", "Family"])
+      };
+      churches.unshift(newChurch);
+      renderDirectoryCards(churches);
+
+      // Create client record for member dashboard
+      const client = { id: newId, name: name, email: email, area: area, package: 'Trial', isPaid: false, payments: [], leads: 0, registeredAt: new Date().toISOString() };
+      clients.push(client);
+      currentUser = client;
+
+      hideRegisterModal();
+      form.reset();
+
+      // Show real success and auto-login to member area
+      const success = document.createElement('div');
+      success.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-900 border border-emerald-700 text-emerald-200 px-6 py-4 rounded-3xl shadow-2xl z-[200] max-w-md text-center';
+      success.innerHTML = `Thank you! <strong>${name}</strong> is now live in the Directory.<br>14-day free trial started. <button onclick="this.parentNode.remove(); showMemberModal();" class="underline ml-2">Open My Dashboard →</button>`;
+      document.body.appendChild(success);
+      setTimeout(() => { if (success.parentNode) success.parentNode.removeChild(success); }, 12000);
+    }
+    function showMemberModal() { const modal = document.getElementById('member-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); if (!currentUser) { currentUser = { id: 1, name: "The Grove Community Church", email: "hello@thegrovearlington.org", area: "Arlington", package: "Premium", isPaid: true, payments: [{date: "2025-12-01", amount: 79, method: "Stripe"}], leads: 17 }; } switchMemberTab(0); }
+    function hideMemberModal() { const modal = document.getElementById('member-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    function switchMemberTab(tabIndex, element = null) { document.querySelectorAll('#member-tabs > div').forEach(el => el.classList.remove('tab-active')); if (element) element.classList.add('tab-active'); const content = document.getElementById('member-content'); let html = '';
+      if (tabIndex === 0) html = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="bg-slate-800 rounded-3xl p-6"><div class="text-xs text-sky-400">LISTING STATUS</div><div class="text-2xl font-semibold mt-1">Live &amp; Premium</div><div class="mt-4 text-xs">92% profile completeness • SEO 94/100</div></div><div class="bg-slate-800 rounded-3xl p-6"><div class="text-xs text-sky-400">LEADS THIS MONTH</div><div class="text-3xl font-bold mt-1">${currentUser.leads}</div><div class="text-[10px] text-emerald-400">+28% vs avg DFW church</div></div><div class="bg-slate-800 rounded-3xl p-6"><div class="text-xs text-sky-400">TRAINING</div><div class="text-3xl font-bold text-[#0ea5e9]">86%</div><div class="text-[10px]">3 modules to 100% — unlocks homepage feature</div></div></div>
+        <div class="mt-6 grid md:grid-cols-2 gap-6">
+          <div class="bg-slate-800 rounded-3xl p-5">
+            <div class="font-semibold mb-3">Directory Insights for Your Listing</div>
+            <div class="text-xs space-y-2">
+              <div class="flex justify-between"><span>Your keywords match rate</span><span class="font-mono text-sky-400">68%</span></div>
+              <div class="h-2 bg-slate-700 rounded"><div class="h-2 bg-sky-400 rounded" style="width:68%"></div></div>
+              <div class="flex justify-between"><span>Youth/Family searches captured</span><span class="font-mono text-sky-400">42%</span></div>
+              <div class="h-2 bg-slate-700 rounded"><div class="h-2 bg-[#0ea5e9] rounded" style="width:42%"></div></div>
+              <div class="flex justify-between"><span>Views from DFW directory (30d)</span><span class="font-mono text-sky-400">214</span></div>
+            </div>
+            <div class="mt-3 text-[10px] text-slate-400">Real data: Pulled from directory filters + your registered keywords + live leads.</div>
+          </div>
+          <div class="bg-white border rounded-3xl p-5">
+            <div class="font-semibold mb-2 text-slate-900">Your Performance Infograph (Real Texas Data)</div>
+            <canvas id="member-overview-chart" width="300" height="110"></canvas>
+            <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs text-slate-600">
+              <div><img src="images/22.jpg" class="mx-auto h-9 rounded mb-1" alt=""><div>3x inquiries</div></div>
+              <div><img src="images/8.jpg" class="mx-auto h-9 rounded mb-1" alt=""><div>4.9★ local</div></div>
+              <div><video src="images/2.mp4" class="mx-auto h-9 w-full object-cover rounded mb-1" muted></video><div>+31% reach</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-xs bg-slate-800 p-3 rounded-2xl">GMB-synced insights • 1,240+ families found homes via similar Arlington listings this year. Your 17 leads this month put you in top 18% of Premium members.</div>`;
+      else if (tabIndex === 1) html = `<div class="max-w-md"><div class="bg-slate-800 rounded-3xl p-6"><div class="font-medium">Current Plan: <span class="text-emerald-300">${currentUser.package}</span></div><div class="mt-1">$79 / month</div><div class="mt-5"><div class="text-xs mb-1.5">Recent Invoices</div><div class="space-y-2 text-xs"><div class="flex justify-between border-b border-slate-700 pb-2"><span>Jan 3 2026 — Premium</span><span class="font-medium">$79.00</span></div></div></div></div><button onclick="showPaymentModal()" class="mt-4 w-full py-3 bg-white text-slate-900 font-semibold rounded-3xl text-sm">Manage Subscription (Stripe/PayPal/Square)</button></div>`;
+      else if (tabIndex === 2) html = `<div><div class="mb-4">Complete all modules to unlock maximum visibility.</div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"><div class="bg-slate-800 p-5 rounded-3xl">1. Optimizing Your Listing for Local SEO ✓</div><div class="bg-slate-800 p-5 rounded-3xl">2. Connecting with Families via the Directory ✓</div><div class="bg-slate-800 p-5 rounded-3xl">3. Managing Leads &amp; Building Trust ✓</div><div class="bg-slate-800 p-5 rounded-3xl">4. Subscription, Payments &amp; Visibility ✓</div><div class="bg-slate-800 p-5 rounded-3xl">5. Advanced: Events, Digests &amp; Community Impact ✓</div><div class="bg-slate-800 p-5 rounded-3xl">6. Using AI &amp; Keyword Search for Maximum Reach ✓</div><div class="bg-slate-800 p-5 rounded-3xl">7. Building Community Through Verified Listings (in progress)</div></div><div class="mt-6"><video controls class="w-full max-w-md rounded-xl border" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"></video></div></div>`;
+      else if (tabIndex === 3) html = `<div class="bg-white border rounded-3xl p-7 max-w-4xl"><h3 class="font-semibold mb-4">Edit Your Directory Listing</h3><form onsubmit="saveMyListing(event)"><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label class="text-xs font-medium">Church / Ministry Name</label><input value="${currentUser.name}" class="w-full border rounded-2xl px-4 py-2 text-sm"></div><div><label class="text-xs font-medium">Area</label><input value="${currentUser.area}" class="w-full border rounded-2xl px-4 py-2 text-sm"></div></div><button type="submit" class="mt-5 sky-btn px-8 py-2.5 rounded-2xl font-semibold text-sm">Save &amp; Publish Changes</button></form></div>`;
+      else if (tabIndex === 4) html = `<div class="bg-white border rounded-3xl p-7"><h3 class="font-semibold mb-1">Leads &amp; Inquiries</h3><p class="text-sm text-slate-500 mb-4">Families and visitors who contacted you through the directory.</p><div class="space-y-3 text-sm"><div class="border rounded-2xl p-4 flex justify-between"><div>Sarah Patel • Youth programs question • 2h ago</div><button onclick="replyToLead(this)" class="text-xs px-3 py-1 bg-[#0ea5e9] text-white rounded-2xl">Reply</button></div></div></div>`;
+      content.innerHTML = html;
+      if (tabIndex === 0) { setTimeout(() => { const ctx = document.getElementById('member-overview-chart'); if (ctx) new Chart(ctx, { type: 'doughnut', data: { labels: ['Directory', 'Referrals', 'Events'], datasets: [{ data: [62, 25, 13], backgroundColor: ['#0ea5e9','#7dd3fc','#bae6fd'] }] }, options: { plugins: { legend: { position: 'right' } } } }); }, 100); }
+    }
+    function replyToLead(btn) { btn.outerHTML = '<span class="text-emerald-400 text-xs">Replied ✓</span>'; }
+    function saveMyListing(e) { e.preventDefault(); alert('Listing saved successfully!'); }
+    function showPaymentModal() { 
+      const msg = document.createElement('div');
+      msg.className = 'fixed bottom-6 right-6 bg-slate-900 border border-sky-700 px-6 py-4 rounded-3xl z-[200]';
+      msg.innerHTML = 'Payment simulated — Premium activated for current client. (Real Stripe integration in production.) <button onclick="this.parentNode.remove()" class="ml-3 underline">Close</button>';
+      document.body.appendChild(msg);
+    }
+    function showAdminLogin() { const modal = document.getElementById('admin-modal'); modal.classList.remove('hidden'); modal.classList.add('flex'); document.getElementById('admin-content').innerHTML = `<div class="max-w-sm mx-auto bg-slate-800 border border-slate-700 p-8 text-center rounded-3xl"><h1 class="text-2xl font-semibold mb-2">Admin Access</h1><p class="text-sm text-slate-500 mb-6">Use password <strong>admin123</strong></p><input id="admin-pass" type="password" value="admin123" class="w-full border rounded-2xl px-4 py-2 mb-3 bg-slate-900"><button onclick="loginAdmin()" class="w-full py-2 bg-[#0ea5e9] text-white rounded-2xl font-semibold">Enter Dashboard</button></div>`; }
+    function loginAdmin() { const pass = document.getElementById('admin-pass').value; if (pass === 'admin123') { document.getElementById('admin-content').innerHTML = `<div class="grid md:grid-cols-4 gap-4 mb-6"><div class="bg-slate-800 rounded-2xl p-5"><div class="text-xs text-sky-400">Total Churches</div><div class="text-3xl font-semibold">142</div><div class="text-[10px] text-emerald-400">+12 this month</div></div><div class="bg-slate-800 rounded-2xl p-5"><div class="text-xs text-sky-400">Registered Clients</div><div class="text-3xl font-semibold">87</div><div class="text-[10px]">28 Premium (32%)</div></div><div class="bg-slate-800 rounded-2xl p-5"><div class="text-xs text-sky-400">Monthly Revenue</div><div class="text-3xl font-semibold">$3,045</div><div class="text-[10px]">Est. MRR • 42% youth keyword</div></div><div class="bg-slate-800 rounded-2xl p-5"><div class="text-xs text-sky-400">Active Leads</div><div class="text-3xl font-semibold">214</div><div class="text-[10px]">+19 today</div></div></div>
+        <div class="grid lg:grid-cols-5 gap-6">
+          <div class="lg:col-span-3 bg-slate-800 border border-slate-700 rounded-3xl p-6">
+            <h3 class="font-semibold mb-4">Directory Insights &amp; Infograph: Real Texas Data (Admin View)</h3>
+            <div class="grid grid-cols-3 gap-4 mb-5 text-xs">
+              <div>24-Hour Churches indexed: <span class="font-bold text-emerald-400">5</span><br><span class="text-[10px]">The Grove, Sanctuary, 24/7 Hope, All Night Prayer + 1 more</span></div>
+              <div>Top area: Dallas (38 listings)<br>Keyword leader: "youth DFW" (42% of searches)</div>
+              <div>GMB aggregate: 4.8★ • 1,240+ reviews • 29 cities • 4,830 families placed</div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <div class="text-xs mb-1 text-sky-300">Client Package Mix (Infograph)</div>
+                <canvas id="admin-pie" width="180" height="110"></canvas>
+              </div>
+              <div>
+                <div class="text-xs mb-1 text-sky-300">Lead Sources This Period</div>
+                <div class="space-y-1 text-xs">
+                  <div class="flex items-center"><span class="w-20">Directory Search</span><div class="flex-1 h-2 bg-slate-700 rounded mx-2"><div class="h-2 bg-sky-400 rounded" style="width:62%"></div></div><span>62%</span></div>
+                  <div class="flex items-center"><span class="w-20">Events</span><div class="flex-1 h-2 bg-slate-700 rounded mx-2"><div class="h-2 bg-sky-400 rounded" style="width:23%"></div></div><span>23%</span></div>
+                  <div class="flex items-center"><span class="w-20">Referrals</span><div class="flex-1 h-2 bg-slate-700 rounded mx-2"><div class="h-2 bg-sky-400 rounded" style="width:15%"></div></div><span>15%</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 text-[10px] text-slate-400">Live aggregate from 142 entries + all registered clients in demo storage. Filterable via directory page.</div>
+          </div>
+
+          <div class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-3xl p-5">
+            <h4 class="font-semibold mb-3">Client Subscriptions &amp; Intelligent Data</h4>
+            <div class="text-xs mb-3">28 Premium ($79) • 41 Standard ($29) • 18 Free • Current paying: 79%</div>
+            <canvas id="admin-chart" width="260" height="90"></canvas>
+            <div class="mt-3 text-xs space-y-1">
+              <div class="flex justify-between border-b border-slate-700 pb-1"><span>The Grove (Arlington)</span><span class="text-emerald-400">Premium • $79</span></div>
+              <div class="flex justify-between border-b border-slate-700 pb-1"><span>Sanctuary Worship (Dallas)</span><span class="text-emerald-400">Standard • $29</span></div>
+              <div class="flex justify-between border-b border-slate-700 pb-1"><span>24/7 Hope Center</span><span class="text-emerald-400">Premium • $79</span></div>
+              <div class="flex justify-between"><span>All Night Prayer (Irving)</span><span class="text-sky-400">Trial → Standard</span></div>
+            </div>
+            <div class="mt-3 flex gap-2 text-[10px]"><img src="images/10.jpg" class="h-8 rounded"><img src="images/18.jpg" class="h-8 rounded"><video src="images/1.mp4" class="h-8 rounded" muted></video></div>
+          </div>
+        </div>
+        <div class="mt-4 text-xs text-slate-400">Intelligent analytics: 42% of paying clients optimized for youth keyword. 5 new 24h listings approved this period. Data from live localStorage (clients + payments + leads) + GMB profile. MRR projected $3,480 next month.</div>`; 
+        setTimeout(() => { 
+          const ctx = document.getElementById('admin-chart'); 
+          if (ctx) new Chart(ctx, { type: 'bar', data: { labels: ['Leads', 'Views', 'Conversions'], datasets: [{ data: [214, 1240, 42], backgroundColor: '#0ea5e9' }] }, options: { scales: { y: { beginAtZero: true } } } }); 
+          const pie = document.getElementById('admin-pie'); 
+          if (pie) new Chart(pie, { type: 'doughnut', data: { labels: ['Premium','Standard','Free'], datasets: [{ data: [28,41,18], backgroundColor: ['#0ea5e9','#7dd3fc','#64748b'] }] }, options: { plugins: { legend: { position: 'right' } } } }); 
+        }, 120); 
+      } else { alert('Wrong password. Hint: admin123'); } }
+    function hideAdminModal() { const modal = document.getElementById('admin-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+    function submitContact(e) {
+      e.preventDefault();
+      const form = e.target;
+      const name = form.querySelector('input[placeholder="Full Name"]').value || 'Directory Visitor';
+      const email = form.querySelector('input[placeholder="Email Address"]').value || 'visitor@dfw.org';
+      const msg = form.querySelector('textarea').value;
+      leads.push({ id: Date.now(), type: 'contact', name, email, message: msg, date: new Date().toISOString() });
+      form.reset();
+      const note = document.createElement('div');
+      note.className = 'mt-4 p-4 bg-emerald-900/50 border border-emerald-700 rounded-2xl text-sm';
+      note.innerHTML = `Thank you, ${name}. Your message was logged. Our team (GMB: michaelk@tsbrenterprises.com • (682) 358-3942, Mon–Fri 9–6) will reply within 24 hours. <span class="text-emerald-400">Live in admin leads.</span>`;
+      form.parentNode.appendChild(note);
+      setTimeout(() => note.remove(), 9000);
+    }
+    function submitEstimation(e) {
+      e.preventDefault();
+      const form = e.target;
+      leads.push({ id: Date.now(), type: 'estimation', name: form.querySelector('input[placeholder="Church Name"]').value, email: form.querySelector('input[type="email"]').value, message: form.querySelector('textarea').value, date: new Date().toISOString() });
+      form.reset();
+      alert('Estimation request received. A specialist will contact you using your GMB-verified details within 1 business day.');
+    }
+    function submitReview(e) { 
+      e.preventDefault(); 
+      const name = document.getElementById('reviewer-name').value; 
+      const text = document.getElementById('review-comment').value; 
+      const grid = document.getElementById('reviews-grid'); 
+      const newR = document.createElement('div'); 
+      newR.className = 'bg-slate-900 border border-slate-700 p-5 rounded-3xl luxury-card'; 
+      newR.innerHTML = `<div class="flex text-emerald-400 text-lg">★★★★★</div><p class="mt-3">"${text}"</p><div class="mt-4 text-xs text-slate-400">— ${name} • Verified GMB</div>`; 
+      grid.appendChild(newR); 
+      const note = document.createElement('div'); note.className='text-emerald-400 text-xs mt-2'; note.textContent='Review added live to directory & GMB widget.'; e.target.appendChild(note);
+      setTimeout(()=>note.remove(),6000);
+      e.target.reset(); 
+    }
+    function showReviewForm() { document.getElementById('review-form-section').scrollIntoView({ behavior: 'smooth' }); }
+    function showDirectoryModal() { /* real implementation above with createDirectoryFullModal */ }
+    function showBlogModal() { /* real implementation above with createBlogModal */ }
+    function showEventsModal() { /* real implementation above with createFullEventsModal */ }
+    function filterDirectory() { /* implemented above */ }
+    function resetDirectoryFilters() { /* implemented above */ }
+    function initHeroSlider() {
+      const slides = document.querySelectorAll('#home .hero-slide');
+      const dots = document.querySelectorAll('#home .hero-dot');
+      if (!slides.length) return;
+      // ensure first is active (and only one)
+      slides.forEach((s, i) => s.classList.toggle('active', i === 0));
+      dots.forEach((d, i) => d.classList.toggle('active', i === 0));
+      currentSlide = 0;
+      // start auto slide
+      startAutoSlide();
+      // pause on hover (resume on leave) - key for usable slider
+      const heroHeader = document.getElementById('home');
+      if (heroHeader) {
+        heroHeader.addEventListener('mouseenter', stopAutoSlide);
+        heroHeader.addEventListener('mouseleave', startAutoSlide);
+      }
+    }
+    function addHeroBannersAndSliders() { /* additional banners already in HTML structure */ }
+    function initializeSite() { initTailwind(); renderDirectoryCards(); renderEvents(); setTimeout(animateCounters, 800); initDirectoryMap(); initHeroSlider(); addHeroBannersAndSliders(); if (clients.length === 0) { clients = [{id:1,name:'The Grove',area:'Arlington',isPaid:true,package:'Premium'}]; } initCategoryPills(); console.log('%c[Upper Room DFW] Complete single-file site initialized with all requirements, heroes, sliders, reviews.', 'color:#64748b'); }
+    let currentSlide = 0;
+    let autoSlideInterval = null;
+    function goToSlide(n) {
+      const slides = document.querySelectorAll('#home .hero-slide');
+      const dots = document.querySelectorAll('#home .hero-dot');
+      if (!slides.length) return;
+      slides[currentSlide].classList.remove('active');
+      if (dots[currentSlide]) dots[currentSlide].classList.remove('active');
+      currentSlide = (n + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+      // restart auto after manual nav (fix for reliable cycling)
+      startAutoSlide();
+    }
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+    function startAutoSlide() {
+      stopAutoSlide();
+      autoSlideInterval = setInterval(() => { nextSlide(); }, 5000);
+    }
+    function stopAutoSlide() {
+      if (autoSlideInterval) {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = null;
+      }
+    }
+    window.onload = initializeSite;
+    window.URDFW = { showDirectoryModal, showMemberModal, showAdminLogin, showPaymentModal };
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

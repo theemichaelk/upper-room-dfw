@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Collections | Upper Room DFW</title>
+  <meta name="description" content="Save and organize favorite DFW churches and ministries into collections on Upper Room DFW.">
+  <link rel="canonical" href="https://upperroomdfw.com/collections.html">
+  <meta property="og:url" content="https://upperroomdfw.com/collections.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">Bookmarks & Collections</h1>
+  <div id="collections" class="mt-4 space-y-3"></div>
+  <button onclick="newCol()" class="mt-4 px-4 py-2 border rounded">+ New Collection</button>
+  <script src="js/platform/loader.js"></script>
+  <script>
+    function render() {
+      const P = window.URDFWPlatform;
+      const cols = P.getCollections();
+      const bm = P.getBookmarks();
+      document.getElementById('collections').innerHTML = `
+        <div class="border rounded p-4"><h3 class="font-semibold">Saved Listings (${bm.listings?.length || 0})</h3></div>
+        <div class="border rounded p-4"><h3 class="font-semibold">Saved Reviews (${bm.reviews?.length || 0})</h3></div>
+        <div class="border rounded p-4"><h3 class="font-semibold">Saved Photos (${bm.photos?.length || 0})</h3></div>
+        ${cols.map(c => `<div class="border rounded p-4"><h3 class="font-semibold">${c.name}</h3><p class="text-xs">${c.items.length} items</p></div>`).join('')}`;
+    }
+    function newCol() {
+      const name = prompt('Collection name');
+      if (name) { window.URDFWPlatform.createCollection(name); render(); }
+    }
+    setTimeout(render, 800);
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

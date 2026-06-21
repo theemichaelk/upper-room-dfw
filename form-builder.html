@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Form Builder | Upper Room DFW</title>
+  <meta name="description" content="Create contact and lead capture forms for church listings on Upper Room DFW.">
+  <link rel="canonical" href="https://upperroomdfw.com/form-builder.html">
+  <meta property="og:url" content="https://upperroomdfw.com/form-builder.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/platform.css">
+</head>
+<body class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">Drag & Drop Listing Form Builder</h1>
+  <div id="form-dropzone" class="dd-dropzone mt-4">Drop form fields here</div>
+  <div id="form-palette" class="mt-4 flex flex-wrap gap-2">
+    <div class="dd-item" draggable="true" data-id="name">Name</div>
+    <div class="dd-item" draggable="true" data-id="email">Email</div>
+    <div class="dd-item" draggable="true" data-id="phone">Phone</div>
+    <div class="dd-item" draggable="true" data-id="description">Description</div>
+    <div class="dd-item" draggable="true" data-id="youtube">YouTube URL</div>
+  </div>
+  <script src="js/platform/loader.js"></script>
+  <script>setTimeout(() => URDFWPlatform.initDragDrop('form-dropzone'), 800);</script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

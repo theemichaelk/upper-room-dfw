@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Billing & Payments | Upper Room DFW</title>
+  <meta name="description" content="Billing and payment hub for Upper Room DFW church partners — Stripe, PayPal, subscriptions, invoices, and membership plans.">
+  <link rel="canonical" href="https://upperroomdfw.com/billing-hub.html">
+  <meta property="og:url" content="https://upperroomdfw.com/billing-hub.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/platform.css">
+</head>
+<body class="max-w-3xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">Billing & Payment Gateways</h1>
+  <div class="grid md:grid-cols-2 gap-4 mt-6">
+    <div class="border rounded-xl p-5">
+      <h3 class="font-semibold">Pricing Table</h3>
+      <div id="pricing-table" class="mt-3 space-y-2 text-sm"></div>
+    </div>
+    <div class="border rounded-xl p-5">
+      <h3 class="font-semibold">Process Payment</h3>
+      <form id="pay-form" class="mt-3 space-y-2 text-sm">
+        <select name="gateway" class="w-full border rounded px-3 py-2">
+          <option value="stripe">Stripe</option><option value="paypal">PayPal</option>
+          <option value="2checkout">2Checkout</option><option value="woocommerce">WooCommerce</option>
+        </select>
+        <select name="plan" class="w-full border rounded px-3 py-2">
+          <option value="29">Standard $29/mo</option><option value="79">Premium $79/mo</option>
+        </select>
+        <label class="flex items-center gap-2"><input type="checkbox" name="recurring"> Recurring subscription</label>
+        <input name="coupon" placeholder="Coupon code (DFW10, CHURCH50)" class="w-full border rounded px-3 py-2">
+        <button type="submit" class="w-full py-2 bg-[#0369a1] text-white rounded">Charge</button>
+      </form>
+    </div>
+  </div>
+  <div class="mt-6 border rounded-xl p-5">
+    <h3 class="font-semibold">Invoices</h3>
+    <div id="invoices" class="mt-2 text-sm"></div>
+  </div>
+  <script src="js/platform/loader.js"></script>
+  <script>
+    setTimeout(() => {
+      const P = window.URDFWPlatform;
+      document.getElementById('pricing-table').innerHTML = P.getPricingTable().map(p =>
+        `<div class="flex justify-between border-b py-2"><span>${p.name}</span><span>$${p.price}/mo • ${p.maxLinks} links</span></div>`).join('');
+      document.getElementById('pay-form').onsubmit = (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const coupon = P.validateCoupon(fd.get('coupon'));
+        let amt = +fd.get('plan');
+        if (coupon) amt = coupon.type === 'percent' ? amt * (1 - coupon.discount / 100) : amt - coupon.discount;
+        const order = P.processPayment({ gateway: fd.get('gateway'), amount: Math.round(amt), plan: +fd.get('plan') === 79 ? 'premium' : 'standard', recurring: fd.get('recurring') === 'on', coupon: fd.get('coupon'), email: 'user@demo.com' });
+        alert('Paid! Ref: ' + order.ref);
+        renderInvoices();
+      };
+      function renderInvoices() {
+        document.getElementById('invoices').innerHTML = (P.get('invoices', []) || []).map(i =>
+          `<div class="py-1">${i.id} — $${i.amount} via ${i.gateway} (${new Date(i.date).toLocaleDateString()})</div>`).join('') || 'No invoices yet.';
+      }
+      renderInvoices();
+    }, 800);
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

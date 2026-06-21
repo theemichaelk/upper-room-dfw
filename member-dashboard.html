@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Church Member Dashboard | Upper Room DFW</title>
+  <meta name="description" content="Manage your DFW church listing, leads, training, and billing in one member portal.">
+  <link rel="canonical" href="https://upperroomdfw.com/member-dashboard.html">
+  <meta property="og:url" content="https://upperroomdfw.com/member-dashboard.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/portal.css">
+  <link rel="stylesheet" href="css/member-portal.css">
+</head>
+<body class="member-app">
+
+  <header class="member-site-nav" id="member-nav">
+    <a href="index.html" class="member-brand">
+      <span class="member-brand-mark"><i class="fa-solid fa-church"></i></span>
+      <span>Upper Room DFW</span>
+    </a>
+    <nav class="member-site-links member-site-links--public">
+      <a href="directory.html">Directory</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="register.html">Register</a>
+    </nav>
+    <nav class="member-site-links member-site-links--app">
+      <a href="directory.html">Directory</a>
+      <a href="support.html">Support</a>
+    </nav>
+    <div class="member-site-actions">
+      <span id="nav-client-name" class="member-chip hidden"></span>
+      <button type="button" id="nav-logout-btn" class="member-btn-text" style="display:none" onclick="logoutClient()">Sign out</button>
+      <a href="index.html" class="member-btn-text member-site-links--app">Exit site</a>
+    </div>
+  </header>
+
+  <!-- Login -->
+  <section id="login-gate" class="member-login portal-login">
+    <div class="member-login-visual">
+      <img src="images/10.jpg" alt="DFW church community" class="member-login-photo">
+      <div class="member-login-visual-copy">
+        <p class="member-login-kicker">Church partner portal</p>
+        <h1>Sign in to manage your listing</h1>
+        <p>Leads, billing, training, and directory tools — one place for your ministry team.</p>
+      </div>
+    </div>
+    <div class="member-login-panel">
+      <div class="portal-login-card member-login-card">
+        <h2>Member login</h2>
+        <p class="member-login-hint">Use the email from registration. Demo: <code>hello@thegrovearlington.org</code> / <code>demo1234</code></p>
+        <form id="client-login-form" onsubmit="handleClientLogin(event)">
+          <label>Email</label>
+          <input type="email" id="client-email" required class="portal-field" value="hello@thegrovearlington.org">
+          <label>Password <span class="text-slate-400">(optional in demo)</span></label>
+          <input type="password" id="client-pass" class="portal-field" placeholder="••••••••">
+          <button type="submit" class="portal-btn portal-btn-primary">
+            <i class="fa-solid fa-right-to-bracket"></i> Open dashboard
+          </button>
+        </form>
+        <a href="#" id="member-demo-fill" class="portal-quick-link">
+          <i class="fa-solid fa-bolt text-amber-500"></i>
+          <span>Use demo account</span>
+        </a>
+        <div class="member-login-links">
+          <a href="#" id="member-forgot-pass">Forgot password?</a>
+          <a href="register.html">Register church</a>
+          <a href="admin.html">Admin</a>
+        </div>
+        <div id="member-api-status" class="mt-3"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <div id="dashboard-main" class="member-shell hidden">
+    <div class="member-drawer-backdrop" id="member-drawer-backdrop"></div>
+    <aside class="member-drawer" id="member-sidebar">
+      <div class="member-drawer-head">Member</div>
+      <nav id="member-sidebar-nav" class="member-drawer-nav">
+        <button type="button" class="member-drawer-link active" data-member-tab="overview" onclick="switchMemberTab(0,'overview')"><i class="fa-solid fa-gauge"></i> Overview</button>
+        <button type="button" class="member-drawer-link" data-member-tab="listing" onclick="switchMemberTab(3,'listing')"><i class="fa-solid fa-church"></i> My Listing</button>
+        <button type="button" class="member-drawer-link" data-member-tab="leads" onclick="switchMemberTab(4,'leads')"><i class="fa-solid fa-envelope-open-text"></i> Leads</button>
+        <button type="button" class="member-drawer-link" data-member-tab="training" onclick="switchMemberTab(2,'training')"><i class="fa-solid fa-graduation-cap"></i> Training</button>
+        <button type="button" class="member-drawer-link" data-member-tab="billing" onclick="switchMemberTab(1,'billing')"><i class="fa-solid fa-credit-card"></i> Billing</button>
+        <button type="button" class="member-drawer-link" data-member-tab="analytics" onclick="switchMemberTab(13,'analytics')"><i class="fa-solid fa-chart-line"></i> Analytics</button>
+        <hr class="member-drawer-rule">
+        <button type="button" class="member-drawer-link" data-member-tab="profile" onclick="switchMemberTab(5,'profile')"><i class="fa-solid fa-user"></i> Profile</button>
+        <button type="button" class="member-drawer-link" data-member-tab="messages" onclick="switchMemberTab(6,'messages')"><i class="fa-solid fa-comments"></i> Messages</button>
+        <button type="button" class="member-drawer-link" data-member-tab="notifications" onclick="switchMemberTab(10,'notifications')"><i class="fa-solid fa-bell"></i> Notifications</button>
+        <button type="button" class="member-drawer-link" data-member-tab="reviews" onclick="switchMemberTab(11,'reviews')"><i class="fa-solid fa-star"></i> Reviews</button>
+        <button type="button" class="member-drawer-link" data-member-tab="claims" onclick="switchMemberTab(12,'claims')"><i class="fa-solid fa-hand-holding"></i> Claims</button>
+        <button type="button" class="member-drawer-link" data-member-tab="media" onclick="switchMemberTab(7,'media')"><i class="fa-solid fa-photo-film"></i> Media</button>
+        <button type="button" class="member-drawer-link" data-member-tab="saved" onclick="switchMemberTab(8,'saved')"><i class="fa-solid fa-bookmark"></i> Saved</button>
+        <button type="button" class="member-drawer-link" data-member-tab="support" onclick="switchMemberTab(9,'support')"><i class="fa-solid fa-life-ring"></i> Support</button>
+      </nav>
+      <button type="button" class="member-drawer-link member-drawer-signout" onclick="logoutClient()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
+    </aside>
+
+    <div class="member-workspace">
+      <header class="member-command-bar">
+        <button type="button" id="member-sidebar-toggle" class="member-menu-btn" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+        <div class="member-identity">
+          <div class="member-identity-avatar" id="member-topbar-avatar"></div>
+          <div>
+            <h1 id="welcome-name">Church</h1>
+            <p id="welcome-sub">email · area</p>
+          </div>
+        </div>
+        <div class="member-command-meta">
+          <span id="status-pill" class="member-pill"></span>
+          <span id="member-dash-api-status"></span>
+          <button type="button" onclick="refreshDashboard()" class="member-icon-btn" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i></button>
+        </div>
+      </header>
+
+      <div id="member-quick-stats" class="member-metrics"></div>
+      <span id="stat-listing" class="hidden"></span>
+      <span id="stat-training" class="hidden"></span>
+      <span id="stat-leads" class="hidden"></span>
+      <span id="stat-plan" class="hidden"></span>
+
+      <div id="member-tab-0" class="member-pane">
+        <div class="member-bento">
+          <article class="member-card member-card--focus" id="member-focus-step"></article>
+          <article class="member-card member-card--wide">
+            <h2>Activity</h2>
+            <canvas id="member-overview-chart" height="100"></canvas>
+          </article>
+          <article class="member-card">
+            <h2>Setup progress</h2>
+            <div id="member-onboarding" class="member-steps"></div>
+          </article>
+          <article class="member-card">
+            <h2>Recent leads</h2>
+            <div id="overview-leads-preview" class="member-lead-preview-list"></div>
+          </article>
+        </div>
+      </div>
+
+      <div id="member-tab-1" class="member-pane hidden">
+        <article class="member-card member-card--page">
+          <header class="member-card-head">
+            <h2>Billing</h2>
+            <p id="billing-status"></p>
+          </header>
+          <div class="member-plans" id="member-plans">
+            <button type="button" class="member-plan is-selected" data-plan="29">
+              <strong>Standard</strong>
+              <span class="member-plan-price">$29<small>/mo</small></span>
+              <ul><li>Live listing</li><li>Leads &amp; CRM</li><li>Training</li></ul>
+            </button>
+            <button type="button" class="member-plan member-plan--featured" data-plan="79">
+              <span class="member-plan-tag">Popular</span>
+              <strong>Premium</strong>
+              <span class="member-plan-price">$79<small>/mo</small></span>
+              <ul><li>Homepage rotation</li><li>Priority leads</li><li>Advanced analytics</li></ul>
+            </button>
+          </div>
+          <div id="payment-form" class="member-pay-form hidden">
+            <select id="payment-plan" class="hidden" onchange="updatePaymentAmount()">
+              <option value="29">Standard</option>
+              <option value="79">Premium</option>
+            </select>
+            <div class="member-form-grid">
+              <div>
+                <label>Payment method</label>
+                <select id="payment-method" class="member-input" onchange="updatePaymentAmount()">
+                  <option value="stripe">Stripe</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="2checkout">2Checkout</option>
+                  <option value="woocommerce">WooCommerce</option>
+                </select>
+              </div>
+              <div>
+                <label>Coupon</label>
+                <input id="payment-coupon" placeholder="DFW10 or CHURCH50" class="member-input">
+              </div>
+            </div>
+            <div id="card-fields" class="member-form-grid">
+              <div class="member-form-span2">
+                <label>Card</label>
+                <input id="card-number" value="4242 4242 4242 4242" class="member-input font-mono">
+              </div>
+              <div><label>Expiry</label><input id="card-expiry" value="12/28" class="member-input font-mono"></div>
+              <div><label>CVC</label><input id="card-cvc" value="123" class="member-input font-mono"></div>
+            </div>
+            <div id="paypal-fields" class="hidden member-note">PayPal redirect simulated on charge.</div>
+            <button type="button" onclick="processPayment()" class="member-btn-primary">
+              <i class="fa-solid fa-lock"></i> <span id="charge-btn-text">Charge $29.00</span>
+            </button>
+            <button type="button" id="member-billing-portal" class="member-btn-secondary mt-2 hidden" onclick="openBillingPortal()">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Manage subscription
+            </button>
+          </div>
+          <div id="member-platform-invoices"></div>
+          <h3 class="member-subhead">Payment history</h3>
+          <div id="payment-history"></div>
+        </article>
+      </div>
+
+      <div id="member-tab-2" class="member-pane hidden">
+        <article class="member-card member-card--page">
+          <header class="member-card-head member-card-head--row">
+            <div>
+              <h2>Training</h2>
+              <p>Complete modules to improve directory visibility.</p>
+            </div>
+            <div class="member-training-ring" id="training-ring">
+              <svg viewBox="0 0 72 72"><circle cx="36" cy="36" r="30" class="ring-track"/><circle cx="36" cy="36" r="30" class="ring-progress" id="training-ring-fill"/></svg>
+              <span id="training-pct-ring">0%</span>
+            </div>
+          </header>
+          <span id="training-pct" class="hidden">0</span>
+          <div id="training-modules" class="member-module-grid"></div>
+        </article>
+      </div>
+
+      <div id="member-tab-3" class="member-pane hidden">
+        <article class="member-card member-card--page">
+          <header class="member-card-head"><h2>My listing</h2><p>Changes publish to the live directory when saved.</p></header>
+          <div class="member-split">
+            <form id="listing-form" class="member-form-grid" onsubmit="saveMyListing(event)">
+              <div><label>Name</label><input id="l-name" class="member-input"></div>
+              <div><label>Area</label><input id="l-area" class="member-input" placeholder="Arlington, Dallas…"></div>
+              <div class="member-form-span2"><label>Description</label><textarea id="l-desc" rows="3" class="member-input"></textarea></div>
+              <div><label>Phone</label><input id="l-phone" class="member-input"></div>
+              <div><label>Website</label><input id="l-website" class="member-input"></div>
+              <div><label>Service times</label><input id="l-times" class="member-input"></div>
+              <div><label>Category</label><input id="l-category" class="member-input"></div>
+              <div class="member-form-span2"><label>Keywords</label><input id="l-keywords" class="member-input" placeholder="youth, DFW, family"></div>
+              <div class="member-form-span2"><label>Photo</label><input type="file" id="l-photo" onchange="simulatePhotoUpload(this)"></div>
+              <div class="member-form-span2 member-form-actions">
+                <button type="submit" class="member-btn-primary">Save listing</button>
+                <button type="button" onclick="previewMyListing()" class="member-btn-secondary">Preview in directory</button>
+              </div>
+            </form>
+            <aside>
+              <p class="member-label">Preview</p>
+              <div id="listing-preview" class="member-listing-card"></div>
+            </aside>
+          </div>
+          <div id="member-platform-upgrade"></div>
+        </article>
+      </div>
+
+      <div id="member-tab-4" class="member-pane hidden">
+        <article class="member-card member-card--page">
+          <header class="member-card-head"><h2>Leads &amp; CRM</h2><p>Inquiries from families who found you in the directory.</p></header>
+          <div id="leads-list"></div>
+        </article>
+      </div>
+
+      <div id="member-tab-5" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-profile"></article></div>
+      <div id="member-tab-6" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-messages"></article></div>
+      <div id="member-tab-7" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-media"></article></div>
+      <div id="member-tab-8" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-saved"></article></div>
+      <div id="member-tab-9" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-support"></article></div>
+      <div id="member-tab-10" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-notifications"></article></div>
+      <div id="member-tab-11" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-reviews"></article></div>
+      <div id="member-tab-12" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-claims"></article></div>
+      <div id="member-tab-13" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-analytics"></article></div>
+    </div>
+  </div>
+
+  <footer class="member-footer">
+    <div class="member-footer-inner">© Upper Room DFW · <a href="directory.html">Directory</a> · <a href="contact.html">Contact</a></div>
+  
+    <div class="text-center text-xs py-3 text-slate-500 border-t border-white/10 urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+
+  <svg width="0" height="0" aria-hidden="true"><defs><linearGradient id="trainingGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0369a1"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs></svg>
+
+  <script src="js/main.js"></script>
+  <script src="js/platform/loader.js"></script>
+  <script src="js/member-dashboard.js"></script>
+</body>
+</html>

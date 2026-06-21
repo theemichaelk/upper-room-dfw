@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#1e3a8a"/>
+  <!-- Multiple smaller figures for youth -->
+  <circle cx="130" cy="120" r="20" fill="#f1e7c7"/>
+  <circle cx="200" cy="105" r="25" fill="#f1e7c7"/>
+  <circle cx="270" cy="125" r="18" fill="#f1e7c7"/>
+  <rect x="115" y="145" width="30" height="50" rx="4" fill="#f1e7c7"/>
+  <rect x="185" y="135" width="30" height="55" rx="4" fill="#f1e7c7"/>
+  <rect x="258" y="148" width="30" height="47" rx="4" fill="#f1e7c7"/>
+  <text x="200" y="270" font-family="sans-serif" font-size="16" fill="#ffffff" text-anchor="middle" font-weight="600">Youth &amp; Next Gen</text>
+</svg>

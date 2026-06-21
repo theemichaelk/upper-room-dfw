@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listing | Upper Room DFW</title>
+  <meta name="description" content="Upper Room DFW &quot;youth&quot; single-page listing template for DFW churches and ministries.">
+  <link rel="canonical" href="https://upperroomdfw.com/templates/single/youth.html">
+  <meta property="og:url" content="https://upperroomdfw.com/templates/single/youth.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../../css/main.css">
+  <link rel="stylesheet" href="../../css/platform.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="tail-container urdfw-platform tpl-youth">
+  <nav class="p-4 border-b bg-white sticky top-0"><a href="../../directory.html">← Directory</a> <span class="text-xs ml-2 px-2 py-0.5 bg-sky-100 rounded">Template: youth</span></nav>
+  <main class="max-w-4xl mx-auto p-6">
+    <h1 id="listing-name" class="text-3xl font-bold"></h1>
+    <p id="listing-meta" class="text-slate-600"></p>
+    <img id="listing-image" class="w-full h-64 object-cover rounded-xl my-4" alt="">
+    <p id="listing-desc"></p>
+    <div id="urdfw-reviews" class="mt-6"></div>
+    <div id="urdfw-contact" class="mt-4"></div>
+    
+  </main>
+  <script src="../../js/main.js"></script>
+  <script src="../../js/platform/00-core.js"></script>
+  <script src="../../js/platform/06-reviews.js"></script>
+  <script src="../../js/platform/11-integrations.js"></script>
+  <script>
+    (async function() {
+      const res = await fetch('../../data/churches.json');
+      const churches = await res.json();
+      const slug = new URLSearchParams(location.search).get('slug') || 'youth-demo';
+      const c = churches.find(x => x.slug === slug) || churches[0];
+      document.getElementById('listing-name').textContent = c.name;
+      document.getElementById('listing-meta').textContent = c.area + ', TX • ' + c.category;
+      document.getElementById('listing-image').src = '../../' + c.image;
+      document.getElementById('listing-desc').textContent = c.fullDescription || c.description;
+      document.title = c.name + ' | ' + c.area + ' | Upper Room DFW';
+      await URDFWPlatform.initCore();
+      URDFWPlatform.renderReviewForm(document.getElementById('urdfw-reviews'), c.id);
+      URDFWPlatform.renderContactForm(document.getElementById('urdfw-contact'), c);
+    })();
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Embed Directory</title>
+  <meta name="description" content="Embed the Upper Room DFW church directory on your website with a customizable widget.">
+  <link rel="canonical" href="https://upperroomdfw.com/embed.html">
+  <meta property="og:url" content="https://upperroomdfw.com/embed.html">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/platform.css">
+</head>
+<body class="p-4">
+  <div data-urdfw-embed data-mode="grid" data-count="6"></div>
+  <script src="js/platform/loader.js"></script>
+  <script>
+    (async () => {
+      const params = new URLSearchParams(location.search);
+      const el = document.querySelector('[data-urdfw-embed]');
+      el.dataset.mode = params.get('mode') || 'grid';
+      el.dataset.count = params.get('count') || '6';
+      await new Promise(r => setTimeout(r, 800));
+      const res = await fetch('data/churches.json');
+      const listings = await res.json();
+      window.URDFWPlatform.initWidgetsOnPage(listings);
+    })();
+  </script>
+
+  <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
+    <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  </footer>
+</body>
+</html>

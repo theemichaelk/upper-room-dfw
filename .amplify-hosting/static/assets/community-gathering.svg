@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#1e3a8a"/>
+  <circle cx="120" cy="140" r="35" fill="#f1e7c7"/>
+  <circle cx="200" cy="130" r="40" fill="#f1e7c7"/>
+  <circle cx="280" cy="145" r="32" fill="#f1e7c7"/>
+  <!-- People icons -->
+  <rect x="105" y="175" width="30" height="60" rx="5" fill="#f1e7c7"/>
+  <rect x="185" y="170" width="30" height="65" rx="5" fill="#f1e7c7"/>
+  <rect x="265" y="177" width="30" height="58" rx="5" fill="#f1e7c7"/>
+  <text x="200" y="270" font-family="sans-serif" font-size="16" fill="#ffffff" text-anchor="middle" font-weight="600">Community &amp; Fellowship</text>
+</svg>

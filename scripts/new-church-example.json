@@ -1,0 +1,15 @@
+{
+  "name": "Grace City Church",
+  "area": "Frisco",
+  "category": "Church",
+  "description": "Dynamic, Spirit-filled church passionate about next-gen ministry and city transformation in Frisco.",
+  "fullDescription": "Grace City Church is a modern, multi-ethnic congregation focused on authentic worship, practical teaching, and serving the growing Frisco community through local outreach and global missions.",
+  "address": "12345 Main St, Frisco, TX 75034",
+  "phone": "(469) 555-2233",
+  "email": "hello@gracecityfrisco.org",
+  "website": "https://gracecityfrisco.org",
+  "times": "Sundays 9:30am & 11:15am",
+  "denomination": "Non-denominational",
+  "tags": ["Contemporary", "Next-Gen", "Missions"],
+  "image": "assets/community-gathering.svg"
+}
