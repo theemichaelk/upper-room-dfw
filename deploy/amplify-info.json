@@ -1,0 +1,22 @@
+{
+  "appId": "dbtc2f3y8pyam",
+  "appName": "upper-room-dfw",
+  "platform": "WEB_COMPUTE",
+  "branch": "main",
+  "amplifyUrl": "https://main.dbtc2f3y8pyam.amplifyapp.com",
+  "apiHealth": "https://main.dbtc2f3y8pyam.amplifyapp.com/api/health",
+  "defaultDomain": "dbtc2f3y8pyam.amplifyapp.com",
+  "buildSpec": "amplify.yml",
+  "githubRepo": "https://github.com/theemichaelk/upper-room-dfw",
+  "repositoryConnected": true,
+  "autoBuild": true,
+  "lastGitBuildJob": "4",
+  "lastGitBuildStatus": "SUCCEED",
+  "cloudFrontApi": "https://d4lzb9pq4mfuf.cloudfront.net/api/health",
+  "environmentVariables": {
+    "PORT": "3000",
+    "APP_URL": "https://upperroomdfw.com",
+    "NODE_ENV": "production"
+  },
+  "requiredSecrets": ["JWT_SECRET", "ADMIN_PASSWORD", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]
+}

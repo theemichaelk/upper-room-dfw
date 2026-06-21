@@ -1,35 +1,42 @@
 # Upper Room DFW — Deployment
 
-## Stack (this repo)
+## Stack
 
-- **NOT Next.js** — there is no `.next` folder. This is **Express + static HTML**.
-- **S3** (`upperroomdfw.com`) — static files (HTML, JS, CSS, images)
-- **CloudFront** — CDN in front of S3 website endpoint
-- **Amplify / App Runner / EC2** — Node.js host for `server/index.js` (API, auth, Stripe)
+- **NOT Next.js** — Express + static HTML (no `.next`)
+- **S3** `upperroomdfw.com` — static HTML/JS/CSS/images (index: `index.html`)
+- **CloudFront** `d4lzb9pq4mfuf.cloudfront.net` — CDN; `/api/*` proxies to Amplify
+- **Amplify** `main.dbtc2f3y8pyam.amplifyapp.com` — WEB_COMPUTE Express API + SSR routes
+- **GitHub** https://github.com/theemichaelk/upper-room-dfw (branch `main`)
 
-## Quick deploy static to S3
+## Live URLs
+
+| Service | URL |
+|---------|-----|
+| CDN (static + API) | https://d4lzb9pq4mfuf.cloudfront.net |
+| API health | https://d4lzb9pq4mfuf.cloudfront.net/api/health |
+| Amplify | https://main.dbtc2f3y8pyam.amplifyapp.com |
+
+## Deploy static to S3
 
 ```powershell
-cd "E:\OneDrive\Documents\Factory AI.02.20.26\ai-upper-room-dir"
-node scripts/add-powered-by-footer.js
-aws s3 sync . s3://upperroomdfw.com --region us-east-2 --delete `
-  --exclude "node_modules/*" --exclude ".env" --exclude "server/data/*" `
-  --exclude ".git/*" --exclude ".vscode/*"
+npm run deploy:s3
 ```
 
-## CloudFront (one-time)
+## Deploy API (Amplify via GitHub)
+
+Push to GitHub — Amplify auto-builds `.amplify-hosting/` from `amplify.yml`:
 
 ```powershell
-aws cloudfront create-distribution --distribution-config file://deploy/cloudfront-distribution.json
+git push github main
 ```
 
-Point `upperroomdfw.com` DNS CNAME to the CloudFront domain (e.g. `d1234.cloudfront.net`).
+Set Amplify env vars: `JWT_SECRET`, `ADMIN_PASSWORD`, `STRIPE_*`, `APP_URL=https://upperroomdfw.com`
 
-## Amplify (full API + site)
+## DNS
 
-1. Connect GitHub repo to Amplify Console
-2. Build spec: `amplify.yml` (npm ci, no Next build)
-3. **Start command:** `node server/index.js`
-4. Env vars: `JWT_SECRET`, `ADMIN_PASSWORD`, `STRIPE_*`, `APP_URL=https://upperroomdfw.com`, `PORT=8080`
+Point `upperroomdfw.com` CNAME → `d4lzb9pq4mfuf.cloudfront.net`
 
-API routes (`/api/*`) only work on the Node host — not on S3 alone.
+## Demo logins (seeded on API boot)
+
+- Admin: password `admin123` (or `ADMIN_PASSWORD` env)
+- Member: `hello@thegrovearlington.org` / `demo1234`

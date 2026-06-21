@@ -2,7 +2,9 @@
   "distributionId": "EI9QWFII46LGX",
   "domainName": "d4lzb9pq4mfuf.cloudfront.net",
   "origin": "upperroomdfw.com.s3-website.us-east-2.amazonaws.com",
-  "status": "InProgress",
-  "created": "2026-06-21",
+  "apiOrigin": "main.dbtc2f3y8pyam.amplifyapp.com",
+  "apiPathPattern": "/api/*",
+  "defaultRootObject": "index.html",
+  "status": "Deployed",
   "dnsNote": "Point upperroomdfw.com CNAME to d4lzb9pq4mfuf.cloudfront.net"
 }
