@@ -13,7 +13,8 @@
     },
     {
       "path": "/*",
-      "target": { "kind": "Compute", "src": "default" }
+      "target": { "kind": "Static", "cacheControl": "public, max-age=300" },
+      "fallback": { "kind": "Compute", "src": "default" }
     }
   ],
   "computeResources": [

@@ -75,10 +75,18 @@ execSync('npm install --omit=dev --no-package-lock', { cwd: COMPUTE, stdio: 'inh
 const serverJs = `'use strict';
 process.env.PORT = process.env.PORT || '3000';
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
+process.env.DATABASE_PATH = process.env.DATABASE_PATH || '/tmp/urdfw.db';
+if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'amplify-production-change-me';
+if (!process.env.ADMIN_PASSWORD) process.env.ADMIN_PASSWORD = 'admin123';
 const path = require('path');
 process.chdir(__dirname);
 require('dotenv').config({ path: path.join(__dirname, '.env') });
-require('./server/index.js');
+try {
+  require('./server/index.js');
+} catch (err) {
+  console.error('Server failed to start:', err);
+  process.exit(1);
+}
 `;
 fs.writeFileSync(path.join(COMPUTE, 'server.js'), serverJs);
 
