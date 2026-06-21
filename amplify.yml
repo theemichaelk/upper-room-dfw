@@ -1,7 +1,5 @@
 version: 1
 # Upper Room DFW — Express + static HTML (NOT Next.js — no .next folder)
-# Amplify WEB_COMPUTE: npm ci → build → npm start (node server/index.js)
-# Static CDN: S3 upperroomdfw.com + CloudFront (see deploy/)
 frontend:
   phases:
     preBuild:
@@ -10,13 +8,11 @@ frontend:
     build:
       commands:
         - node scripts/add-powered-by-footer.js
-        - echo "Production build complete — Express static site"
+        - node scripts/build-amplify-bundle.js
   artifacts:
-    baseDirectory: /
+    baseDirectory: .amplify-hosting
     files:
       - '**/*'
   cache:
     paths:
       - node_modules/**/*
-# Console: Platform WEB_COMPUTE, start command npm start, PORT=8080
-# Env: JWT_SECRET, ADMIN_PASSWORD, STRIPE_*, APP_URL=https://upperroomdfw.com
