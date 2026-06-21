@@ -17,7 +17,24 @@ ensureAdmins(db);
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
+const ALLOWED_ORIGINS = [
+  process.env.APP_URL,
+  'https://upperroomdfw.com',
+  'https://www.upperroomdfw.com',
+  'https://d4lzb9pq4mfuf.cloudfront.net',
+  'https://main.dbtc2f3y8pyam.amplifyapp.com',
+  'https://dbtc2f3y8pyam.amplifyapp.com',
+  'http://localhost:8000',
+  'http://127.0.0.1:8000',
+].filter(Boolean);
+
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin || ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o))) return cb(null, true);
+    return cb(null, true);
+  },
+  credentials: true,
+}));
 
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   handleStripeWebhook(db, req, res);

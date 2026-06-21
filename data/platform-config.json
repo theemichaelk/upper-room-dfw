@@ -19,6 +19,7 @@
   "integrations": ["mailchimp", "vbout", "acumbamail", "contact-form", "support-form"],
   "api": {
     "mode": "remote",
+    "fallbackBase": "https://main.dbtc2f3y8pyam.amplifyapp.com",
     "endpoints": {
       "base": "",
       "auth": "/api/auth",
