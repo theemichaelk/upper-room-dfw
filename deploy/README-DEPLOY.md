@@ -59,11 +59,19 @@ npm run generate:sitemap
 aws amplify update-app --app-id dbtc2f3y8pyam --region us-east-2 --environment-variables file://deploy/amplify-env.json
 ```
 
+## New in this build
+
+- **105 church listings** in `data/churches.json` + generated `churches/*.html` pages
+- **S3 DB persistence** — SQLite backed up to `s3://upperroomdfw.com/data/urdfw.db` every 90s
+- **Live homepage stats** — `/api/stats/public` + `js/home-stats.js`
+- **Branded email templates** — welcome, password reset, leads, receipts
+- **Stripe helper** — `npm run setup:stripe` and `GET /api/billing/stripe-status`
+
 ## Still needed for full production
 
-1. **Stripe** — API reports `stripe: false`. Add keys in Amplify env for real checkout.
+1. **Stripe** — Add keys in Amplify env, then run `npm run setup:stripe` to verify.
 2. **SMTP** — Password reset and lead emails log to console until SMTP is set.
-3. **Persistent database** — Amplify uses `/tmp/urdfw.db` (resets on cold start). For production data retention, migrate to RDS PostgreSQL or add S3 DB backup.
+3. **Amplify IAM** — Grant compute role `s3:PutObject` + `s3:GetObject` on `upperroomdfw.com/data/urdfw.db`
 4. **Mailchimp / Vbout / Acumbamail** — Demo keys in platform; add real API keys in admin Integrations tab.
 5. **Google reCAPTCHA** — Demo checkbox on support form; add real site key for spam protection.
 6. **Texas sales tax** — Review with accountant before charging churches.

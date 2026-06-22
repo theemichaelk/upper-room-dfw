@@ -12,6 +12,9 @@
     "generate:missing": "node scripts/generate-missing-pages.js",
     "generate:templates": "node scripts/generate-templates.js",
     "generate:sitemap": "node scripts/generate-sitemap.js",
+    "expand:churches": "node scripts/expand-churches-bulk.js",
+    "setup:stripe": "node scripts/setup-stripe.js",
+    "expand:all": "node scripts/expand-churches-bulk.js && node scripts/generate-sitemap.js",
     "inject:platform": "node scripts/inject-platform.js",
     "test:features": "node scripts/test-features.js",
     "test:api": "node scripts/test-api.js",
@@ -22,9 +25,16 @@
     "build:static": "node scripts/add-powered-by-footer.js",
     "deploy:s3": "npm run build:static && aws s3 sync . s3://upperroomdfw.com --region us-east-2 --delete --exclude node_modules/* --exclude .amplify-hosting/* --exclude .env --exclude .env.example --exclude server/data/* --exclude .git/* --exclude .vscode/* --exclude *.db --exclude *.db-shm --exclude *.db-wal"
   },
-  "keywords": ["dfw", "church", "directory", "saas", "stripe"],
+  "keywords": [
+    "dfw",
+    "church",
+    "directory",
+    "saas",
+    "stripe"
+  ],
   "author": "Grok Build",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1073.0",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",

@@ -90,4 +90,66 @@ function seedIfNeeded(db) {
   console.log('[seed] Database seeded with', churches.length, 'listings');
 }
 
-module.exports = { seedIfNeeded };
+/** Upsert new entries from churches.json (after bulk import or JSON updates). */
+function syncListingsFromJson(db) {
+  const churchesPath = path.join(__dirname, '..', 'data', 'churches.json');
+  if (!fs.existsSync(churchesPath)) return 0;
+
+  const churches = JSON.parse(fs.readFileSync(churchesPath, 'utf8'));
+  const insertListing = db.prepare(`
+    INSERT INTO listings (id, slug, name, area, category, description, full_description, phone, email, website, times, address, lat, lng, denomination, size, tags_json, image, status, featured, sticky, level, source, updated_at)
+    VALUES (@id, @slug, @name, @area, @category, @description, @full_description, @phone, @email, @website, @times, @address, @lat, @lng, @denomination, @size, @tags_json, @image, @status, @featured, @sticky, @level, @source, @updated_at)
+  `);
+  const updateListing = db.prepare(`
+    UPDATE listings SET name=@name, area=@area, category=@category, description=@description, full_description=@full_description,
+      phone=@phone, email=@email, website=@website, times=@times, address=@address, lat=@lat, lng=@lng,
+      denomination=@denomination, size=@size, tags_json=@tags_json, image=@image, featured=@featured, updated_at=@updated_at
+    WHERE slug=@slug
+  `);
+
+  let added = 0;
+  let updated = 0;
+  const tx = db.transaction((items) => {
+    for (const c of items) {
+      const row = {
+        id: String(c.id),
+        slug: c.slug || uniqueSlug(db, c.name),
+        name: c.name,
+        area: c.area,
+        category: c.category,
+        description: c.description,
+        full_description: c.fullDescription || c.description,
+        phone: c.phone || '',
+        email: c.email || '',
+        website: c.website || '',
+        times: c.times || '',
+        address: c.address || '',
+        lat: c.lat || null,
+        lng: c.lng || null,
+        denomination: c.denomination || '',
+        size: c.size || '',
+        tags_json: JSON.stringify(c.tags || []),
+        image: c.image || 'images/10.jpg',
+        status: 'live',
+        featured: c.featured ? 1 : 0,
+        sticky: 0,
+        level: 'standard',
+        source: 'seed',
+        updated_at: new Date().toISOString(),
+      };
+      const exists = db.prepare('SELECT id FROM listings WHERE slug = ?').get(row.slug);
+      if (exists) {
+        updateListing.run(row);
+        updated++;
+      } else {
+        insertListing.run(row);
+        added++;
+      }
+    }
+  });
+  tx(churches);
+  if (added || updated) console.log('[seed] Synced listings: +' + added + ' new, ~' + updated + ' updated');
+  return added;
+}
+
+module.exports = { seedIfNeeded, syncListingsFromJson };

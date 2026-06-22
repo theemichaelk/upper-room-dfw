@@ -3,5 +3,10 @@
   "ADMIN_PASSWORD": "Kingme05$",
   "JWT_SECRET": "urdfw-prod-jwt-2026",
   "APP_URL": "https://upperroomdfw.com",
-  "NODE_ENV": "production"
+  "NODE_ENV": "production",
+  "DB_BACKUP_BUCKET": "upperroomdfw.com",
+  "DB_BACKUP_KEY": "data/urdfw.db",
+  "DB_BACKUP_INTERVAL_MS": "90000",
+  "AWS_REGION": "us-east-2",
+  "EMAIL_FROM": "Upper Room DFW <michaelk@tsbrenterprises.com>"
 }
