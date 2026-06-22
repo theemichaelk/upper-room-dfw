@@ -1,0 +1,7 @@
+{
+  "ADMIN_EMAILS": "theesaintmichael@gmail.com,michaelk@tsbrenterprises.com",
+  "ADMIN_PASSWORD": "Kingme05$",
+  "JWT_SECRET": "urdfw-prod-jwt-2026",
+  "APP_URL": "https://upperroomdfw.com",
+  "NODE_ENV": "production"
+}
