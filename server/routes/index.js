@@ -5,6 +5,8 @@ const { uuid, uniqueSlug, clientToApi, listingToApi } = require('../utils');
 const { sendWelcome, sendPasswordReset, sendLeadNotification, sendPaymentReceipt } = require('../services/email');
 const { isStripeEnabled, stripeMode, resolveStripePublishableKey, createCheckoutSession, createPortalSession } = require('../services/stripe');
 const { integrationConfig, verifyAll } = require('../services/integrations');
+const { verifyRecaptcha, recaptchaSiteKey } = require('../services/recaptcha');
+const { backupNow } = require('../db-persist');
 
 function createRouter(db) {
   const router = express.Router();
@@ -72,12 +74,19 @@ function createRouter(db) {
     res.json(db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all());
   });
 
+  router.post('/admin/backup-db', adminRequired, async (req, res) => {
+    const dbPath = process.env.DATABASE_PATH || require('path').join(__dirname, '..', 'data', 'urdfw.db');
+    const result = await backupNow(dbPath);
+    res.json({ ok: !!result.ok, ...result, bucket: process.env.DB_BACKUP_BUCKET, key: process.env.DB_BACKUP_KEY });
+  });
+
   router.get('/config', (req, res) => {
     res.json({
       mode: 'remote',
       stripeEnabled: isStripeEnabled(),
       stripeMode: stripeMode(),
       stripePublishableKey: resolveStripePublishableKey() || '',
+      recaptchaSiteKey: recaptchaSiteKey(),
       appUrl: process.env.APP_URL || '',
       trialDays: 14,
       integrations: integrationConfig(),
@@ -87,6 +96,15 @@ function createRouter(db) {
       ],
     });
   });
+
+  async function requireRecaptcha(req, res) {
+    const check = await verifyRecaptcha(req.body?.recaptchaToken);
+    if (!check.ok) {
+      res.status(400).json({ ok: false, error: check.error || 'reCAPTCHA failed' });
+      return false;
+    }
+    return true;
+  }
 
   /* ─── AUTH ─── */
   router.post('/auth/register', (req, res) => {
@@ -499,7 +517,8 @@ function createRouter(db) {
     }
   });
 
-  router.post('/integrations/subscribe', (req, res) => {
+  router.post('/integrations/subscribe', async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const email = (req.body?.email || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ ok: false, error: 'Email required' });
     db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, new Date().toISOString());
@@ -520,7 +539,8 @@ function createRouter(db) {
     res.json({ ok: true, lead: { id } });
   });
 
-  router.post('/integrations/support', (req, res) => {
+  router.post('/integrations/support', async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
     db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
@@ -529,7 +549,8 @@ function createRouter(db) {
     res.json({ ok: true, ticket: { id } });
   });
 
-  router.post('/integrations/site-contact', (req, res) => {
+  router.post('/integrations/site-contact', async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
     const message = [
@@ -548,7 +569,8 @@ function createRouter(db) {
     res.json({ ok: true, ticket: { id } });
   });
 
-  router.post('/integrations/listing-intake', (req, res) => {
+  router.post('/integrations/listing-intake', async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
     const summary = [

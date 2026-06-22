@@ -29,6 +29,7 @@
         e.preventDefault();
         if (!URDFWPlatform.verifyRecaptcha()) return alert('Complete reCAPTCHA');
         const payload = Object.fromEntries(new FormData(e.target).entries());
+        payload.recaptchaToken = URDFWPlatform.getRecaptchaToken?.() || null;
         const btn = e.target.querySelector('button[type="submit"]');
         const btnHtml = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.innerHTML = 'Submitting…'; }
