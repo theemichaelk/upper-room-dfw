@@ -6,5 +6,8 @@
   "apiPathPattern": "/api/*",
   "defaultRootObject": "index.html",
   "status": "Deployed",
-  "dnsNote": "Point upperroomdfw.com CNAME to d4lzb9pq4mfuf.cloudfront.net"
+  "aliases": ["upperroomdfw.com", "www.upperroomdfw.com"],
+  "acmCertificate": "arn:aws:acm:us-east-1:647366717768:certificate/8f892f3a-a1f2-45bd-89d1-d022a677f469",
+  "route53HostedZone": "Z03688642MOTFG2SPA0LU",
+  "dnsNote": "Route53 A/AAAA alias records point to CloudFront"
 }
