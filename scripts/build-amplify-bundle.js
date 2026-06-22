@@ -11,7 +11,7 @@ const COMPUTE = path.join(OUT, 'compute', 'default');
 
 const STATIC_EXCLUDE = new Set([
   'node_modules', '.git', '.amplify-hosting', 'server', 'scripts', 'deploy',
-  '.env', '.vscode', 'package-lock.json',
+  '.env', '.env.example', '.vscode', 'package-lock.json',
 ]);
 const STATIC_SKIP_FILES = new Set(['deploy-manifest.json']);
 

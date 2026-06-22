@@ -22,19 +22,21 @@
 
 ## Your launch steps (configure once)
 
-- [x] `.env` created for local dev (change `JWT_SECRET` + `ADMIN_PASSWORD` before public launch)
-- [ ] Set strong `ADMIN_PASSWORD` (not `admin123`) before going live
+- [x] `.env` created for local dev
+- [x] Strong `ADMIN_PASSWORD` set in Amplify (`Kingme05$`)
+- [x] Admin emails: `michaelk@tsbrenterprises.com`, `theesaintmichael@gmail.com`
+- [x] `APP_URL=https://upperroomdfw.com`
+- [x] Deploy server with HTTPS (Amplify WEB_COMPUTE + CloudFront `/api/*`)
+- [x] Point domain DNS to CloudFront
+- [x] Contact, support, newsletter, listing intake → live API
 - [ ] Create [Stripe account](https://dashboard.stripe.com) and add:
   - [ ] `STRIPE_SECRET_KEY`
-  - [ ] `STRIPE_WEBHOOK_SECRET` (endpoint: `https://yourdomain.com/api/billing/webhook`)
+  - [ ] `STRIPE_WEBHOOK_SECRET` (endpoint: `https://upperroomdfw.com/api/billing/webhook`)
   - [ ] `STRIPE_PRICE_STANDARD` — recurring $29/mo price ID
   - [ ] `STRIPE_PRICE_PREMIUM` — recurring $79/mo price ID
-- [ ] Configure SMTP for transactional email (or use dev console logging)
-- [ ] Set `APP_URL=https://upperroomdfw.com` (your real domain)
-- [ ] Deploy server with HTTPS (Railway, Render, Fly.io, VPS, etc.)
-- [ ] Point domain DNS to deployment
-- [ ] Run `npm start` in production (not static-only `serve`)
-- [ ] Test full flow: register → login → subscribe → listing live → lead received
+- [ ] Configure SMTP for transactional email
+- [ ] Persistent database (RDS or S3 backup) — Amplify `/tmp` resets on cold start
+- [ ] Test full paid flow: register → login → Stripe subscribe → listing live → lead received
 - [ ] Have accountant review sales tax for Texas SaaS
 
 ## Quick start (local)
@@ -50,4 +52,4 @@ npm run test:features
 ```
 
 Demo member: `hello@thegrovearlington.org` / `demo1234`  
-Admin: password from `ADMIN_PASSWORD` (default `admin123` until you change it)
+Admin: `michaelk@tsbrenterprises.com` or `theesaintmichael@gmail.com` / `Kingme05$`

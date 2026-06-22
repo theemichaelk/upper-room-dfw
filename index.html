@@ -400,10 +400,10 @@
       </div>
       <form onsubmit="submitContact(event)" class="bg-slate-50 p-7 rounded-3xl border">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label class="text-xs font-medium">Full Name</label><input class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm" required></div>
-          <div><label class="text-xs font-medium">Email</label><input type="email" class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm" required></div>
-          <div><label class="text-xs font-medium">Phone</label><input class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm"></div>
-          <div class="sm:col-span-2"><label class="text-xs font-medium">How can we help you find the right church?</label><textarea class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm" rows="3" required></textarea></div>
+          <div><label class="text-xs font-medium">Full Name</label><input name="name" class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm" required></div>
+          <div><label class="text-xs font-medium">Email</label><input name="email" type="email" class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm" required></div>
+          <div><label class="text-xs font-medium">Phone</label><input name="phone" class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm"></div>
+          <div class="sm:col-span-2"><label class="text-xs font-medium">How can we help you find the right church?</label><textarea name="message" class="w-full border rounded-2xl px-4 py-2.5 mt-1 text-sm" rows="3" required></textarea></div>
         </div>
         <button type="submit" class="mt-4 w-full py-3 bg-[#0369a1] text-white rounded-2xl font-semibold text-sm">Send Message</button>
       </form>
@@ -425,6 +425,7 @@
     <div class="text-center text-xs py-3 text-slate-500 border-t border-white/10 urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
   </footer>
 
+  <script src="js/site-forms.js"></script>
   <script src="js/main.js"></script>
   <script>
     function enhanceChurchForHome(ch) {
@@ -491,7 +492,23 @@
       a.download = 'upper-room-dfw-directory.csv';
       a.click();
     }
-    function submitContact(e) { e.preventDefault(); alert('Thank you! Your message has been received (demo). We respond within 2 hours.'); e.target.reset(); }
+    async function submitContact(e) {
+      e.preventDefault();
+      const form = e.target;
+      const btn = form.querySelector('button[type="submit"]');
+      const btnHtml = btn?.innerHTML;
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Sending…'; }
+      const fd = new FormData(form);
+      try {
+        await window.URDFW.submitSiteContact(Object.fromEntries(fd.entries()));
+        window.showToast?.('Thank you! Your message was received. We respond within 2 hours on business days.');
+        form.reset();
+      } catch (err) {
+        alert(err.message || 'Could not send message. Email michaelk@tsbrenterprises.com');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+      }
+    }
 
     // Hero Slider - Full featured with dots + arrows + auto
     let currentSlide = 0;

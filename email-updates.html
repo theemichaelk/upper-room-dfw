@@ -93,17 +93,25 @@
     </div>
   </div>
 
+  <script src="js/site-forms.js"></script>
   <script src="js/main.js"></script>
   <script>
-    function subscribeEmail(e) {
+    async function subscribeEmail(e) {
       e.preventDefault();
       const input = document.getElementById('email-input');
-      let subs = JSON.parse(localStorage.getItem('urdfw_subscribers') || '[]');
-      if (!subs.includes(input.value)) subs.push(input.value);
-      localStorage.setItem('urdfw_subscribers', JSON.stringify(subs));
-      alert('Thank you! You are now subscribed. Check the history below — it updates live.');
-      input.value = '';
-      renderSubscriptions();
+      const email = (input.value || '').trim();
+      if (!email) return;
+      try {
+        await window.URDFW.subscribeEmail(email);
+        let subs = JSON.parse(localStorage.getItem('urdfw_subscribers') || '[]');
+        if (!subs.includes(email)) subs.push(email);
+        localStorage.setItem('urdfw_subscribers', JSON.stringify(subs));
+        window.showToast?.('Thank you! You are subscribed to DFW faith updates.');
+        input.value = '';
+        renderSubscriptions();
+      } catch (err) {
+        alert(err.message || 'Could not subscribe. Try again later.');
+      }
     }
 
     function renderSubscriptions() {

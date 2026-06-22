@@ -70,7 +70,7 @@
 
   <div class="max-w-3xl mx-auto px-6 py-12">
     <h1 class="text-5xl tracking-tighter font-semibold">Contact &amp; Submit a Listing</h1>
-    <p class="mt-2 text-lg text-slate-600">Everything you submit here is stored privately in your browser. It will appear immediately in your local copy of the directory.</p>
+    <p class="mt-2 text-lg text-slate-600">Submit your church or ministry for review. Our team verifies listings before they go live in the public directory.</p>
 
     <div class="mt-8 grid md:grid-cols-5 gap-8">
       <!-- Contact Info -->
@@ -87,7 +87,7 @@
           <div class="font-semibold">Social</div>
           @TheUpperRoomDFW on Instagram, Facebook, and X
         </div>
-        <div class="pt-4 text-xs text-slate-500">This is a local demonstration site. For production use, this form would connect to a real backend.</div>
+        <div class="pt-4 text-xs text-slate-500">Submissions are sent to our admin team for review. For full church registration with dashboard access, use <a href="register.html" class="text-sky-700 underline">Register Church</a>.</div>
         <div class="mt-4 text-xs">GMB: 4.8★ (1,240+ reviews) • info@upperroomdfw.com • (214) 555-1234 • Serving all DFW: Arlington, Dallas, Fort Worth, Plano, Frisco + more.</div>
       </div>
 
@@ -137,8 +137,8 @@
             </div>
           </div>
 
-          <button type="submit" class="mt-6 w-full py-3 bg-[#0369a1] text-white rounded-2xl font-semibold">Submit to My Local Directory</button>
-          <p class="text-center text-xs text-slate-500 mt-3">Your listing will be added locally and appear in the directory immediately.</p>
+          <button type="submit" class="mt-6 w-full py-3 bg-[#0369a1] text-white rounded-2xl font-semibold">Submit for Review</button>
+          <p class="text-center text-xs text-slate-500 mt-3">We review submissions within 1–2 business days. Register for instant dashboard access.</p>
         </form>
       </div>
     </div>
@@ -170,49 +170,26 @@
   <p class="text-xs mt-2">Real GMB data and local listings power our verified directory. All submissions stay in your browser. <a href="blog.html">See more on Blog</a>.</p>
 </div>
 
+  <script src="js/site-forms.js"></script>
   <script src="js/main.js"></script>
   <script>
     async function handleSubmit(e) {
       e.preventDefault();
       const form = e.target;
-      const fd = new FormData(form);
-
-      const newItem = {
-        id: Date.now(),
-        slug: 'user-' + Date.now().toString(36),
-        name: fd.get('name'),
-        area: fd.get('area'),
-        category: fd.get('category'),
-        address: fd.get('area') + ', TX',
-        phone: fd.get('phone') || '',
-        website: fd.get('website') || '',
-        times: fd.get('times') || '',
-        description: fd.get('description'),
-        fullDescription: fd.get('description') + ' (Community-submitted listing)',
-        denomination: 'Community Submitted',
-        size: 'Unknown',
-        tags: [fd.get('category')],
-        image: 'images/37.jpg',
-        lat: 32.78,
-        lng: -96.8
-      };
-
-      let localData = JSON.parse(localStorage.getItem('urdfw_custom_listings') || '[]');
-      localData.unshift(newItem);
-      localStorage.setItem('urdfw_custom_listings', JSON.stringify(localData));
-
-      const P = window.URDFWPlatform;
-      if (P && P.submitListing) {
-        P.submitListing({ ...newItem, status: 'pending', source: 'contact-page' });
+      const btn = form.querySelector('button[type="submit"]');
+      const btnHtml = btn?.innerHTML;
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Submitting…'; }
+      const payload = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await window.URDFW.submitListingIntake(payload);
+        window.showToast?.(res.message || 'Submission received! Our team will review shortly.');
+        form.reset();
+        setTimeout(() => { window.location.href = 'register.html'; }, 1800);
+      } catch (err) {
+        alert(err.message || 'Could not submit. Try register.html or email michaelk@tsbrenterprises.com');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
       }
-
-      window.showToast('Thank you! Your listing has been added to your local directory.');
-      form.reset();
-
-      // Optional: redirect to directory
-      setTimeout(() => {
-        window.location.href = 'directory.html';
-      }, 1200);
     }
   </script>
 

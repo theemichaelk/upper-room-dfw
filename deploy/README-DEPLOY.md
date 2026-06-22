@@ -1,42 +1,79 @@
-# Upper Room DFW — Deployment
+# Upper Room DFW — Deployment & Launch Status
 
-## Stack
+## Live stack (production)
 
-- **NOT Next.js** — Express + static HTML (no `.next`)
-- **S3** `upperroomdfw.com` — static HTML/JS/CSS/images (index: `index.html`)
-- **CloudFront** `d4lzb9pq4mfuf.cloudfront.net` — CDN; `/api/*` proxies to Amplify
-- **Amplify** `main.dbtc2f3y8pyam.amplifyapp.com` — WEB_COMPUTE Express API + SSR routes
-- **GitHub** https://github.com/theemichaelk/upper-room-dfw (branch `main`)
+| Layer | Status | URL / ID |
+|-------|--------|----------|
+| Domain + SSL | Live | https://upperroomdfw.com |
+| CloudFront CDN | Live | `EI9QWFII46LGX` → static + `/api/*` proxy |
+| S3 static site | Live | `s3://upperroomdfw.com` |
+| Amplify API | Live | `dbtc2f3y8pyam` / `main.dbtc2f3y8pyam.amplifyapp.com` |
+| GitHub CI | Live | https://github.com/theemichaelk/upper-room-dfw (`main`) |
 
-## Live URLs
+## What's working now
 
-| Service | URL |
-|---------|-----|
-| CDN (static + API) | https://d4lzb9pq4mfuf.cloudfront.net |
-| API health | https://d4lzb9pq4mfuf.cloudfront.net/api/health |
-| Amplify | https://main.dbtc2f3y8pyam.amplifyapp.com |
+- Public site: home, directory (29 churches), church detail pages, pricing, features, about, training, events
+- API health, listings, member login, admin login (both admin emails)
+- Church registration → member dashboard
+- Contact, support, newsletter, and listing intake forms → production API
+- Admin dashboard: listings, users, claims, billing (dev mode), email, SEO, integrations
+- Footer on all pages: Powered By The Stone Builders Rejected Michael K
 
-## Deploy static to S3
+## Admin logins
+
+| Email | Password |
+|-------|----------|
+| `michaelk@tsbrenterprises.com` | `Kingme05$` |
+| `theesaintmichael@gmail.com` | `Kingme05$` |
+
+Demo member: `hello@thegrovearlington.org` / `demo1234`
+
+## Deploy commands
 
 ```powershell
+# Static site → S3 + CloudFront
 npm run deploy:s3
+
+# API → push to GitHub (Amplify auto-builds)
+git push github main
+
+# Regenerate sitemap before deploy
+npm run generate:sitemap
 ```
 
-## Deploy API (Amplify via GitHub)
+## Amplify environment variables (set in Console or `deploy/amplify-env.json`)
 
-Push to GitHub — Amplify auto-builds `.amplify-hosting/` from `amplify.yml`:
+| Variable | Purpose |
+|----------|---------|
+| `ADMIN_EMAILS` | Comma-separated admin accounts |
+| `ADMIN_PASSWORD` | Admin password (hashed on boot) |
+| `JWT_SECRET` | Token signing — use a long random string |
+| `APP_URL` | `https://upperroomdfw.com` |
+| `STRIPE_SECRET_KEY` | Live Stripe billing |
+| `STRIPE_WEBHOOK_SECRET` | Webhook at `/api/billing/webhook` |
+| `STRIPE_PRICE_STANDARD` | $29/mo price ID |
+| `STRIPE_PRICE_PREMIUM` | $79/mo price ID |
+| `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` | Transactional email |
 
 ```powershell
-git push github main
+aws amplify update-app --app-id dbtc2f3y8pyam --region us-east-2 --environment-variables file://deploy/amplify-env.json
 ```
 
-Set Amplify env vars: `JWT_SECRET`, `ADMIN_PASSWORD`, `STRIPE_*`, `APP_URL=https://upperroomdfw.com`
+## Still needed for full production
+
+1. **Stripe** — API reports `stripe: false`. Add keys in Amplify env for real checkout.
+2. **SMTP** — Password reset and lead emails log to console until SMTP is set.
+3. **Persistent database** — Amplify uses `/tmp/urdfw.db` (resets on cold start). For production data retention, migrate to RDS PostgreSQL or add S3 DB backup.
+4. **Mailchimp / Vbout / Acumbamail** — Demo keys in platform; add real API keys in admin Integrations tab.
+5. **Google reCAPTCHA** — Demo checkbox on support form; add real site key for spam protection.
+6. **Texas sales tax** — Review with accountant before charging churches.
 
 ## DNS
 
-Point `upperroomdfw.com` CNAME → `d4lzb9pq4mfuf.cloudfront.net`
+`upperroomdfw.com` + `www` → CloudFront alias `d4lzb9pq4mfuf.cloudfront.net`
 
-## Demo logins (seeded on API boot)
+## Invalidate CloudFront cache after deploy
 
-- Admin: password `admin123` (or `ADMIN_PASSWORD` env)
-- Member: `hello@thegrovearlington.org` / `demo1234`
+```powershell
+aws cloudfront create-invalidation --distribution-id EI9QWFII46LGX --paths "/*"
+```

@@ -492,6 +492,50 @@ function createRouter(db) {
     res.json({ ok: true, ticket: { id } });
   });
 
+  router.post('/integrations/site-contact', (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    const message = [
+      body.message || '',
+      body.phone ? 'Phone: ' + body.phone : '',
+    ].filter(Boolean).join('\n');
+    db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+      id,
+      body.email || '',
+      body.name || '',
+      'Site Contact',
+      message,
+      'open',
+      new Date().toISOString()
+    );
+    res.json({ ok: true, ticket: { id } });
+  });
+
+  router.post('/integrations/listing-intake', (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    const summary = [
+      'Listing intake submission',
+      'Name: ' + (body.name || ''),
+      'Area: ' + (body.area || ''),
+      'Category: ' + (body.category || ''),
+      'Phone: ' + (body.phone || ''),
+      'Website: ' + (body.website || ''),
+      'Times: ' + (body.times || ''),
+      'Description: ' + (body.description || ''),
+    ].join('\n');
+    db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+      id,
+      body.email || body.phone || 'intake@upperroomdfw.com',
+      body.name || 'Listing Intake',
+      'Listing Submission',
+      summary,
+      'open',
+      new Date().toISOString()
+    );
+    res.json({ ok: true, ticket: { id }, message: 'Submission received. Our team will review within 1–2 business days.' });
+  });
+
   return router;
 }
 
