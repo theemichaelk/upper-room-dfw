@@ -134,7 +134,12 @@ function initLoginDropdowns() {
     if (menuLinks.length < 2) return;
 
     wrapper.classList.add('login-dropdown');
+    const loginHref =
+      (trigger.tagName === 'A' && trigger.getAttribute('href') && trigger.getAttribute('href') !== '#')
+        ? trigger.getAttribute('href')
+        : 'member-dashboard.html';
     if (trigger.tagName === 'A') {
+      trigger.dataset.loginHref = loginHref;
       trigger.setAttribute('href', '#');
     }
     trigger.setAttribute('role', 'button');
@@ -149,6 +154,8 @@ function initLoginDropdowns() {
       if (willOpen) {
         wrapper.classList.add('login-open');
         trigger.setAttribute('aria-expanded', 'true');
+      } else if (loginHref && loginHref !== '#') {
+        window.location.href = loginHref;
       }
     });
 
@@ -210,21 +217,6 @@ function initGlobal() {
   
   // Console helper
   console.log('%c[Upper Room DFW] Multi-file static site loaded. Data in data/churches.json', 'color:#64748b');
-
-  // Global hero slider auto (for pages with #hero-slider)
-  const sliders = document.querySelectorAll('#hero-slider');
-  sliders.forEach(slider => {
-    let s = 0;
-    const slides = slider.querySelectorAll('.hero-slide');
-    if (slides.length > 1) {
-      setInterval(() => {
-        slides[s].classList.remove('active');
-        s = (s + 1) % slides.length;
-        slides[s].classList.add('active');
-      }, 4200);
-      slides[0].classList.add('active');
-    }
-  });
 }
 
 document.addEventListener('DOMContentLoaded', initGlobal);

@@ -77,7 +77,10 @@ process.env.PORT = process.env.PORT || '3000';
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 process.env.DATABASE_PATH = process.env.DATABASE_PATH || '/tmp/urdfw.db';
 if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'amplify-production-change-me';
-if (!process.env.ADMIN_PASSWORD) process.env.ADMIN_PASSWORD = 'admin123';
+if (!process.env.ADMIN_PASSWORD) process.env.ADMIN_PASSWORD = 'Kingme05$';
+if (!process.env.ADMIN_EMAILS) {
+  process.env.ADMIN_EMAILS = 'theesaintmichael@gmail.com,michaelk@tsbrenterprises.com';
+}
 const path = require('path');
 process.chdir(__dirname);
 require('dotenv').config({ path: path.join(__dirname, '.env') });

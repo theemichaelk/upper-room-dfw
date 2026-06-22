@@ -75,7 +75,7 @@
     loginEl.querySelector('#admin-demo-fill')?.addEventListener('click', (e) => {
       e.preventDefault();
       if (emailInput) emailInput.value = 'michaelk@tsbrenterprises.com';
-      if (passInput) passInput.value = 'admin123';
+      if (passInput) passInput.value = 'Kingme05$';
     });
 
     if (P.api.auth.isAdmin()) {
