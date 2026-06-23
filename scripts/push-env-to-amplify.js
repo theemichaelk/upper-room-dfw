@@ -76,8 +76,7 @@ const outPath = path.join(__dirname, '..', 'deploy', 'amplify-env.production.jso
 fs.writeFileSync(outPath, JSON.stringify(vars, null, 2));
 console.log('Wrote', outPath, '(' + Object.keys(vars).length + ' vars from', envFile + ')');
 
-execSync(
-  `aws amplify update-app --app-id ${APP_ID} --region ${REGION} --environment-variables file://${outPath.replace(/\\/g, '/')}`,
-  { stdio: 'inherit' }
-);
-console.log('Amplify environment updated.');
+const fileArg = outPath.replace(/\\/g, '/');
+execSync(`aws amplify update-app --app-id ${APP_ID} --region ${REGION} --environment-variables file://${fileArg}`, { stdio: 'inherit' });
+execSync(`aws amplify update-branch --app-id ${APP_ID} --branch-name main --region ${REGION} --environment-variables file://${fileArg}`, { stdio: 'inherit' });
+console.log('Amplify app + branch environment updated.');

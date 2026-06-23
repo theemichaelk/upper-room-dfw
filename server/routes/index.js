@@ -26,6 +26,13 @@ function createRouter(db) {
       stripeMode: stripeMode(),
       dbBackup: !!(process.env.DB_BACKUP_BUCKET && process.env.DB_BACKUP_KEY),
       mode: process.env.NODE_ENV || 'development',
+      envReady: {
+        stripe: !!(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE),
+        smtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER),
+        mailchimp: !!process.env.MAILCHIMP_API_KEY,
+        vbout: !!process.env.VBOUT_API_KEY,
+        appUrl: process.env.APP_URL || '',
+      },
     });
   });
 
