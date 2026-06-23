@@ -71,6 +71,27 @@ fs.writeFileSync(path.join(COMPUTE, 'package.json'), JSON.stringify(computePkg, 
 console.log('Installing compute dependencies...');
 execSync('npm install --omit=dev --no-package-lock', { cwd: COMPUTE, stdio: 'inherit' });
 
+// Bake Amplify branch env into compute .env (WEB_COMPUTE runtime injection is unreliable)
+const ENV_KEYS = [
+  'PORT', 'NODE_ENV', 'APP_URL', 'JWT_SECRET', 'ADMIN_EMAILS', 'ADMIN_PASSWORD',
+  'STRIPE_MODE', 'STRIPE_SECRET_KEY', 'STRIPE_SECRET_KEY_LIVE', 'STRIPE_SECRET_KEY_TEST',
+  'STRIPE_PUBLISHABLE_KEY', 'STRIPE_PUBLISHABLE_KEY_LIVE', 'STRIPE_PUBLISHABLE_KEY_TEST',
+  'STRIPE_PRICE_STANDARD', 'STRIPE_PRICE_PREMIUM', 'STRIPE_WEBHOOK_SECRET',
+  'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SMTP_SECURE', 'EMAIL_FROM',
+  'MAILCHIMP_API_KEY', 'MAILCHIMP_SERVER_PREFIX', 'MAILCHIMP_LIST_ID',
+  'VBOUT_API_KEY', 'VBOUT_LIST_ID', 'ACUMBAMAIL_API_KEY', 'ACUMBAMAIL_LIST_ID',
+  'PAYPAL_CLIENT_ID', 'PAYPAL_CLIENT_SECRET', 'PAYPAL_MODE',
+  'PAYPAL_API_USERNAME', 'PAYPAL_API_PASSWORD', 'PAYPAL_API_SIGNATURE',
+  'DB_BACKUP_BUCKET', 'DB_BACKUP_KEY', 'DB_BACKUP_INTERVAL_MS',
+  'RECAPTCHA_SITE_KEY', 'RECAPTCHA_SECRET_KEY', 'DATABASE_PATH',
+];
+const envLines = ENV_KEYS.filter((k) => process.env[k]).map((k) => `${k}=${process.env[k]}`);
+if (!envLines.some((l) => l.startsWith('DATABASE_PATH='))) {
+  envLines.push('DATABASE_PATH=/tmp/urdfw.db');
+}
+fs.writeFileSync(path.join(COMPUTE, '.env'), envLines.join('\n') + '\n');
+console.log('Wrote compute .env with', envLines.length, 'keys');
+
 // Amplify compute must listen on port 3000
 const serverJs = `'use strict';
 process.env.PORT = process.env.PORT || '3000';
@@ -86,7 +107,7 @@ if (!process.env.DB_BACKUP_KEY) process.env.DB_BACKUP_KEY = 'data/urdfw.db';
 
 const path = require('path');
 process.chdir(__dirname);
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 try {
   require('./server/index.js');
 } catch (err) {
