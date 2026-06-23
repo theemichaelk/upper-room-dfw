@@ -83,9 +83,9 @@
           <div class="font-semibold">Phone</div>
           (214) 555-1234
         </div>
-        <div>
+        <div id="contact-social-links">
           <div class="font-semibold">Social</div>
-          @TheUpperRoomDFW on Instagram, Facebook, and X
+          <div class="flex flex-wrap gap-2 mt-1 text-sky-700 text-sm" id="social-link-list">Loading…</div>
         </div>
         <div class="pt-4 text-xs text-slate-500">Submissions are sent to our admin team for review. For full church registration with dashboard access, use <a href="register.html" class="text-sky-700 underline">Register Church</a>.</div>
         <div class="mt-4 text-xs">GMB: 4.8★ (1,240+ reviews) • info@upperroomdfw.com • (214) 555-1234 • Serving all DFW: Arlington, Dallas, Fort Worth, Plano, Frisco + more.</div>
@@ -173,6 +173,18 @@
   <script src="js/site-forms.js"></script>
   <script src="js/main.js"></script>
   <script>
+    fetch('/api/platform/social').then((r) => r.json()).then((d) => {
+      const el = document.getElementById('social-link-list');
+      if (!el || !d.links) return;
+      const icons = { facebook: 'fa-facebook', instagram: 'fa-instagram', twitter: 'fa-x-twitter', youtube: 'fa-youtube', linkedin: 'fa-linkedin' };
+      el.innerHTML = Object.entries(d.links).map(([k, url]) =>
+        url ? `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2 py-1 border rounded-lg hover:bg-sky-50"><i class="fa-brands ${icons[k] || 'fa-link'}"></i> ${k}</a>` : ''
+      ).join('') || '@TheUpperRoomDFW';
+    }).catch(() => {
+      const el = document.getElementById('social-link-list');
+      if (el) el.textContent = '@TheUpperRoomDFW on Instagram, Facebook, and X';
+    });
+
     async function handleSubmit(e) {
       e.preventDefault();
       const form = e.target;

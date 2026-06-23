@@ -19,6 +19,7 @@
     'js/platform/13-seo.js',
     'js/platform/14-bookmarks.js',
     'js/platform/15-global-init.js',
+    'js/analytics-live.js',
     'js/platform/16-dashboards.js',
     'js/platform/17-api-bridge.js',
     'js/platform/18-portal.js',

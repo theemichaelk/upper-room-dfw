@@ -72,7 +72,20 @@ function showToast(message, duration = 3800) {
   }, duration);
 }
 
-function fakeAction(title, detail) {
+function fakeAction(title, detail, opts) {
+  opts = opts || {};
+  if (opts.maps && detail) {
+    window.open('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(detail), '_blank');
+    return;
+  }
+  if (opts.mailto && opts.email) {
+    window.location.href = 'mailto:' + opts.email + '?subject=' + encodeURIComponent(title);
+    return;
+  }
+  if (opts.tel && opts.phone) {
+    window.location.href = 'tel:' + opts.phone.replace(/\D/g, '');
+    return;
+  }
   const modal = document.createElement('div');
   modal.className = 'fixed inset-0 bg-black/60 flex items-center justify-center z-[110] p-6';
   modal.innerHTML = `

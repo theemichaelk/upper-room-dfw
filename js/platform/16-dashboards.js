@@ -456,23 +456,43 @@
     if (tabId === 'api') return P.renderAdminApi(el);
   };
 
-  P.renderAdminOverview = function (el) {
+  P.renderAdminOverview = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 py-8 text-center"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading live command center…</div>';
+    const A = global.URDFWAnalytics;
+    try {
+      if (P.apiConfig?.mode === 'remote' && A?.fetchAdmin) {
+        const data = await A.fetchAdmin();
+        A.renderKpiGrid(el, data.kpis);
+        const chartsHost = document.createElement('div');
+        el.appendChild(chartsHost);
+        A.renderAdminCharts(chartsHost, data);
+        const actions = document.createElement('div');
+        actions.className = 'flex flex-wrap gap-2 mt-4';
+        actions.innerHTML = `
+          <button type="button" id="admin-backup-now" class="px-4 py-2 text-xs bg-slate-900 text-white rounded-xl">Backup DB to S3</button>
+          <button type="button" id="admin-refresh-stats" class="px-4 py-2 text-xs border rounded-xl">Refresh Live Data</button>`;
+        el.appendChild(actions);
+        actions.querySelector('#admin-backup-now')?.addEventListener('click', async () => {
+          const token = localStorage.getItem('urdfw_api_token');
+          const r = await fetch('/api/admin/backup-db', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+          const j = await r.json();
+          P.portalToast?.(j.ok ? 'DB backed up (' + j.bytes + ' bytes)' : (j.error || 'Backup failed'));
+        });
+        actions.querySelector('#admin-refresh-stats')?.onclick = () => P.renderAdminOverview(el);
+        return;
+      }
+    } catch { /* fallback */ }
     const clients = P.get('clients', []);
     const users = P.get('users', []);
     const orders = P.get('orders', []);
     const claims = P.get('claims', []);
-    const stats = P.getClickStats();
     el.innerHTML = `
+      <div class="portal-panel mb-4 text-amber-700 bg-amber-50 text-xs">Local mode — connect API for live analytics.</div>
       <div class="grid md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Registered Clients</div><div class="text-2xl font-bold">${clients.length}</div></div>
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Platform Users</div><div class="text-2xl font-bold">${users.length}</div></div>
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Orders</div><div class="text-2xl font-bold">${orders.length}</div></div>
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Pending Claims</div><div class="text-2xl font-bold">${claims.filter((c) => c.status === 'pending').length}</div></div>
-      </div>
-      <div class="bg-white border rounded-3xl p-6">
-        <h3 class="font-semibold mb-2">Click Analytics Summary</h3>
-        <div class="text-sm">Total tracked clicks: <strong>${stats.total}</strong></div>
-        <div class="text-xs mt-2 text-slate-500">${Object.entries(stats.byType || {}).map(([k, v]) => `${k}: ${v}`).join(' • ') || 'No data yet'}</div>
       </div>`;
   };
 
@@ -638,18 +658,30 @@
           <form id="admin-test-email" class="space-y-2 text-sm">
             <select name="template" class="w-full border rounded px-3 py-2">${Object.keys(templates).map((k) => `<option value="${k}">${k}</option>`).join('')}</select>
             <input name="email" placeholder="recipient@email.com" class="w-full border rounded px-3 py-2">
-            <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-2xl text-sm">Send (simulated)</button>
+            <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-2xl text-sm">Send Test via SMTP</button>
           </form>
           <h4 class="font-semibold text-sm mt-6 mb-2">Email Log (${log.length})</h4>
           <div class="text-xs max-h-48 overflow-auto">${log.slice(0, 20).map((e) => `<div class="py-1 border-b">${e.template}: ${e.subject} → ${e.to}</div>`).join('') || 'Empty.'}</div>
         </div>
       </div>`;
 
-    el.querySelector('#admin-test-email').onsubmit = (e) => {
+    el.querySelector('#admin-test-email').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      P.sendEmail(fd.get('template'), { email: fd.get('email'), name: 'Admin Test' });
-      alert('Email logged (simulated send).');
+      const email = fd.get('email');
+      if (P.apiConfig?.mode === 'remote') {
+        const token = localStorage.getItem('urdfw_api_token');
+        const r = await fetch('/api/admin/test-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ email }),
+        });
+        const j = await r.json();
+        P.portalToast?.(j.ok ? 'Test email sent to ' + email : (j.error || 'Send failed'));
+      } else {
+        P.sendEmail(fd.get('template'), { email, name: 'Admin Test' });
+        P.portalToast?.('Email logged (local mode).');
+      }
       P.renderAdminEmail(el);
     };
   };
@@ -690,9 +722,35 @@
     const stats = P.getIntegrationStats?.() || providers.map((p) => ({ provider: p, syncedCount: 0, enabled: true }));
     const subs = P.get('subscribers', []);
     const apiBase = P.apiConfig?.endpoints?.integrations || '/api/integrations';
-    const log = P.getIntegrationLog?.(null, 12) || [];
+    let log = P.getIntegrationLog?.(null, 12) || [];
+    let connections = null;
+    if (P.apiConfig?.mode === 'remote') {
+      try {
+        const token = localStorage.getItem('urdfw_api_token');
+        const [connRes, logRes] = await Promise.all([
+          fetch('/api/platform/connections', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/integrations/log', { headers: { Authorization: 'Bearer ' + token } }),
+        ]);
+        if (connRes.ok) connections = await connRes.json();
+        if (logRes.ok) {
+          const lj = await logRes.json();
+          log = (lj.entries || []).map((e) => ({ action: e.action, provider: e.provider, status: e.status, email: e.email, at: e.at }));
+        }
+      } catch { /* ignore */ }
+    }
+
+    const connCards = connections?.results ? `
+      <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
+        ${connections.results.map((r) => `
+          <div class="rounded-xl px-3 py-2 text-xs border ${r.ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-700'}">
+            <i class="fa-solid ${r.ok ? 'fa-circle-check' : 'fa-circle-xmark'} mr-1"></i>
+            <strong class="capitalize">${r.provider}</strong>
+            <div class="text-[10px] mt-0.5 truncate">${r.ok ? (r.message || 'Connected') : (r.error || 'Not configured')}</div>
+          </div>`).join('')}
+      </div>` : '';
 
     el.innerHTML = `
+      ${connCards}
       <div class="portal-panel mb-4 text-xs text-slate-600">
         <strong>Integrations API:</strong> <code class="bg-slate-100 px-2 py-0.5 rounded">${apiBase}</code>
         <span class="ml-2">Endpoints: <code>GET /{provider}</code> · <code>POST /{provider}/config</code> · <code>POST /{provider}/test</code> · <code>POST /{provider}/sync-all</code> · <code>POST /subscribe</code></span>
@@ -738,6 +796,17 @@
             ${log.length ? log.map((e) => `<div class="py-1 border-b"><span class="text-sky-700">${e.action}</span> · ${e.provider || '—'} · ${e.status || ''} · ${e.email || ''} <span class="text-slate-400">${new Date(e.at).toLocaleString()}</span></div>`).join('') : '<span class="text-slate-500">No API calls yet.</span>'}
           </div>
         </div>
+      </div>
+      <div class="portal-panel mt-4 text-sm">
+        <h3 class="font-semibold mb-2"><i class="fa-solid fa-share-nodes text-sky-600 mr-1"></i> Social Media Links</h3>
+        <form id="admin-social-form" class="grid md:grid-cols-2 gap-2 text-xs">
+          <input name="facebook" placeholder="Facebook URL" class="border rounded-lg px-2 py-1.5">
+          <input name="instagram" placeholder="Instagram URL" class="border rounded-lg px-2 py-1.5">
+          <input name="twitter" placeholder="X / Twitter URL" class="border rounded-lg px-2 py-1.5">
+          <input name="youtube" placeholder="YouTube URL" class="border rounded-lg px-2 py-1.5">
+          <input name="linkedin" placeholder="LinkedIn URL" class="border rounded-lg px-2 py-1.5 col-span-2">
+          <button type="submit" class="md:col-span-2 py-2 bg-slate-800 text-white rounded-lg">Save Social Links</button>
+        </form>
       </div>`;
 
     el.querySelectorAll('.admin-int-config').forEach((form) => {
@@ -795,6 +864,30 @@
       e.target.reset();
       P.renderAdminIntegrations(el);
     });
+
+    if (P.apiConfig?.mode === 'remote') {
+      fetch('/api/platform/social').then((r) => r.json()).then((d) => {
+        const form = el.querySelector('#admin-social-form');
+        if (!form || !d.links) return;
+        Object.entries(d.links).forEach(([k, v]) => {
+          const inp = form.querySelector('[name="' + k + '"]');
+          if (inp) inp.value = v || '';
+        });
+      }).catch(() => {});
+    }
+
+    el.querySelector('#admin-social-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      const token = localStorage.getItem('urdfw_api_token');
+      const r = await fetch('/api/platform/social', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      P.portalToast?.(j.ok ? 'Social links saved' : (j.error || 'Save failed'));
+    });
   };
 
   P.renderAdminReviews = function (el) {
@@ -830,18 +923,30 @@
     });
   };
 
-  P.renderAdminAnalytics = function (el) {
+  P.renderAdminAnalytics = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 py-8 text-center">Loading analytics…</div>';
+    const A = global.URDFWAnalytics;
     const stats = P.getClickStats();
+    try {
+      if (P.apiConfig?.mode === 'remote' && A?.fetchAdmin) {
+        const data = await A.fetchAdmin();
+        el.innerHTML = '<div id="admin-analytics-live"></div><div id="admin-analytics-clicks" class="mt-6"></div>';
+        A.renderAdminCharts(el.querySelector('#admin-analytics-live'), data);
+        const clickEl = el.querySelector('#admin-analytics-clicks');
+        clickEl.innerHTML = `
+          <div class="portal-panel">
+            <h3 class="font-semibold mb-2 text-sm">On-Site Click Tracking</h3>
+            <div class="text-2xl font-bold text-[#0369a1]">${stats.total}</div>
+            <div class="text-xs text-slate-500 mt-2">${Object.entries(stats.byType || {}).map(([k, v]) => k + ': ' + v).join(' · ') || 'No clicks yet'}</div>
+          </div>`;
+        return;
+      }
+    } catch { /* fallback */ }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-6">
-        <h3 class="font-semibold mb-4">Click Statistics</h3>
+        <h3 class="font-semibold mb-4">Click Statistics (local)</h3>
         <div class="text-3xl font-bold text-[#0369a1]">${stats.total}</div>
         <div class="text-sm text-slate-500 mt-1">total tracked interactions</div>
-        <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(stats.byType || {}).map(([k, v]) => `
-          <div class="p-3 bg-sky-50 rounded-2xl text-center"><div class="text-xl font-bold">${v}</div><div class="text-xs">${k}</div></div>`).join('') || '<p class="text-slate-500 text-sm col-span-4">Browse the directory and church pages to generate click data.</p>'}
-        </div>
-        <h4 class="font-semibold text-sm mt-6 mb-2">Recent Activity</h4>
-        <div class="text-xs space-y-1">${(stats.recent || []).slice().reverse().map((s) => `<div class="py-1 border-b">${s.type} — ${s.target || s.id} — ${new Date(s.at || Date.now()).toLocaleString()}</div>`).join('') || 'No recent clicks.'}</div>
       </div>`;
   };
 

@@ -146,30 +146,32 @@
     });
   };
 
-  P.renderMemberAnalytics = function (el, client) {
+  P.renderMemberAnalytics = async function (el, client) {
     if (!el) return;
+    el.innerHTML = '<div class="text-sm text-slate-500 py-6">Loading your analytics…</div>';
+    const A = global.URDFWAnalytics;
+    if (P.apiConfig?.mode === 'remote' && A?.fetchMember) {
+      try {
+        const data = await A.fetchMember();
+        el.innerHTML = '<div id="member-analytics-root"></div>';
+        A.renderMemberCharts(el.querySelector('#member-analytics-root'), data);
+        const links = document.createElement('div');
+        links.className = 'mt-4 flex flex-wrap gap-2 text-xs';
+        const slug = data.listing?.slug;
+        links.innerHTML = `
+          <a href="directory.html" class="px-3 py-1.5 border rounded-lg">Directory</a>
+          ${slug ? `<a href="churches/${slug}.html" class="px-3 py-1.5 bg-[#0369a1] text-white rounded-lg">View Live Listing</a>` : ''}`;
+        el.appendChild(links);
+        return;
+      } catch { /* fallback */ }
+    }
     const stats = P.getClickStats?.() || { total: 0, byType: {}, recent: [] };
     const leads = global.getRelevantLeadsCount?.(client) || 0;
-    const listingId = client?.listingId || client?.id;
     el.innerHTML = `
-      <h3 class="font-semibold mb-4"><i class="fa-solid fa-chart-line text-sky-600 mr-2"></i>Your Listing Analytics</h3>
+      <h3 class="font-semibold mb-4">Listing Analytics (local)</h3>
       <div class="grid md:grid-cols-4 gap-3 mb-6">
-        <div class="portal-stat"><div class="portal-stat-label">Profile Clicks</div><div class="portal-stat-value">${stats.byType?.listing || stats.byType?.view || 0}</div></div>
-        <div class="portal-stat"><div class="portal-stat-label">Contact Clicks</div><div class="portal-stat-value">${stats.byType?.contact || 0}</div></div>
         <div class="portal-stat"><div class="portal-stat-label">Your Leads</div><div class="portal-stat-value">${leads}</div></div>
-        <div class="portal-stat"><div class="portal-stat-label">Listing ID</div><div class="portal-stat-value text-sm">${listingId || '—'}</div></div>
-      </div>
-      <div class="portal-panel">
-        <h4 class="font-semibold text-sm mb-2">Recent Directory Activity</h4>
-        <div class="text-xs space-y-1 max-h-48 overflow-auto font-mono">
-          ${(stats.recent || []).slice().reverse().slice(0, 15).map((s) => `
-            <div class="py-1 border-b">${s.type} — ${s.id || s.target || ''} — ${new Date(s.at || s.ts || Date.now()).toLocaleString()}</div>`).join('') || '<span class="text-slate-500">Browse your listing in the directory to generate click data.</span>'}
-        </div>
-      </div>
-      <div class="mt-4 flex flex-wrap gap-2 text-xs">
-        <a href="directory.html" class="px-3 py-1.5 border rounded-lg">View in Directory</a>
-        <a href="user-directory.html" class="px-3 py-1.5 border rounded-lg">User Directory</a>
-        <a href="billing-hub.html" class="px-3 py-1.5 border rounded-lg">Billing Hub</a>
+        <div class="portal-stat"><div class="portal-stat-label">Clicks</div><div class="portal-stat-value">${stats.total}</div></div>
       </div>`;
   };
 })(window);

@@ -101,6 +101,7 @@
   }
 
   function seedDemoLeadsIfNeeded(client) {
+    if (global.URDFWPlatform?.apiConfig?.mode === 'remote') return;
     const key = 'urdfw_leads_seeded_' + (client.email || client.id || '').toLowerCase();
     if (localStorage.getItem(key)) return;
 
@@ -747,7 +748,17 @@
       }).join('') : '<div class="member-empty">No leads for this filter.</div>'}`;
   }
 
-  function replyToLead(leadId) {
+  async function replyToLead(leadId) {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (token && global.URDFWPlatform?.apiConfig?.mode === 'remote') {
+      try {
+        await fetch('/api/leads/' + leadId, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ status: 'contacted' }),
+        });
+      } catch { /* local fallback */ }
+    }
     const leads = JSON.parse(localStorage.getItem('urdfw_leads') || '[]');
     const lead = leads.find((l) => l.id === leadId);
     if (lead) {
@@ -755,8 +766,9 @@
       lead.repliedAt = new Date().toISOString();
       localStorage.setItem('urdfw_leads', JSON.stringify(leads));
     }
-    global.URDFWPlatform?.portalToast?.('Reply logged — lead marked contacted.');
+    global.URDFWPlatform?.portalToast?.('Lead marked contacted.');
     if (currentClient) {
+      await loadApiLeads();
       renderLeads(currentClient);
       renderOverview(currentClient);
       updateQuickStats(currentClient);
@@ -766,7 +778,18 @@
   function viewLeadDetail(leadId) {
     const leads = JSON.parse(localStorage.getItem('urdfw_leads') || '[]');
     const l = leads.find((x) => x.id === leadId) || { name: 'Lead', message: 'No details.', status: 'new' };
-    alert('Lead: ' + l.name + '\n' + l.email + '\n\n' + l.message + '\n\nStatus: ' + (l.status || 'new'));
+    const panel = document.createElement('div');
+    panel.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4';
+    panel.innerHTML = `
+      <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl text-sm">
+        <h3 class="font-bold text-lg mb-2">${l.name || 'Lead'}</h3>
+        <p class="text-slate-500">${l.email || ''} ${l.phone ? '· ' + l.phone : ''}</p>
+        <p class="mt-4 text-slate-700">${l.message || ''}</p>
+        <p class="mt-3 text-xs"><span class="font-semibold">Status:</span> ${l.status || 'new'}</p>
+        ${l.email ? `<a href="mailto:${l.email}" class="inline-block mt-4 px-4 py-2 bg-[#0369a1] text-white rounded-xl">Reply via Email</a>` : ''}
+        <button type="button" class="block mt-3 w-full py-2 border rounded-xl" onclick="this.closest('.fixed').remove()">Close</button>
+      </div>`;
+    document.body.appendChild(panel);
   }
 
   function logActivity() {

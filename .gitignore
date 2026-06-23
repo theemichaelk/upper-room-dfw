@@ -1,5 +1,6 @@
 node_modules/
 .env
+deploy/amplify-env.production.json
 server/data/*.db
 server/data/*.db-*
 *.log

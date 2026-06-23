@@ -4,9 +4,15 @@ const { signToken, authRequired, adminRequired } = require('../middleware/auth')
 const { uuid, uniqueSlug, clientToApi, listingToApi } = require('../utils');
 const { sendWelcome, sendPasswordReset, sendLeadNotification, sendPaymentReceipt } = require('../services/email');
 const { isStripeEnabled, stripeMode, resolveStripePublishableKey, createCheckoutSession, createPortalSession } = require('../services/stripe');
-const { integrationConfig, verifyAll } = require('../services/integrations');
+const { integrationConfig, verifyAll, verifyMailchimp, verifyVbout } = require('../services/integrations');
 const { verifyRecaptcha, recaptchaSiteKey } = require('../services/recaptcha');
 const { backupNow } = require('../db-persist');
+const { buildAdminAnalytics, buildMemberAnalytics, buildPublicStats } = require('../services/analytics');
+const { syncEmailToProviders, syncToMailchimp, syncToVbout, syncToAcumbamail } = require('../services/newsletter-sync');
+const {
+  getIntegrationSettings, setIntegrationSettings, getSocialLinks, setSocialLinks,
+} = require('../services/platform-settings');
+const { sendEmail } = require('../services/email');
 
 function createRouter(db) {
   const router = express.Router();
@@ -24,21 +30,35 @@ function createRouter(db) {
   });
 
   router.get('/stats/public', (req, res) => {
-    const churches = db.prepare("SELECT COUNT(*) AS c FROM listings WHERE status = 'live'").get().c;
-    const events = db.prepare("SELECT COUNT(*) AS c FROM listings WHERE status = 'live' AND (category LIKE '%Event%' OR category LIKE '%Gathering%')").get().c;
-    const subscribers = db.prepare('SELECT COUNT(*) AS c FROM subscribers').get().c;
-    const clients = db.prepare('SELECT COUNT(*) AS c FROM clients').get().c;
-    const leads = db.prepare('SELECT COUNT(*) AS c FROM leads').get().c;
-    const familiesConnected = Math.max(12840, subscribers * 48 + clients * 22 + leads * 3 + churches * 42);
-    const reviewCount = Math.max(1240, churches * 9 + clients * 4);
+    res.json(buildPublicStats(db));
+  });
+
+  router.get('/analytics/admin', adminRequired, (req, res) => {
+    res.json(buildAdminAnalytics(db));
+  });
+
+  router.get('/analytics/member', authRequired, (req, res) => {
+    res.json(buildMemberAnalytics(db, req.user.email));
+  });
+
+  router.get('/platform/social', (req, res) => {
+    res.json({ ok: true, links: getSocialLinks(db) });
+  });
+
+  router.patch('/platform/social', adminRequired, (req, res) => {
+    const links = setSocialLinks(db, req.body || {});
+    res.json({ ok: true, links });
+  });
+
+  router.get('/platform/connections', adminRequired, async (req, res) => {
+    const checks = await verifyAll();
     res.json({
       ok: true,
-      churches,
-      familiesConnected,
-      eventsThisMonth: Math.max(events, Math.ceil(churches * 0.35)),
-      averageRating: 4.8,
-      reviewCount,
-      subscribers,
+      appUrl: process.env.APP_URL || '',
+      dbBackup: !!(process.env.DB_BACKUP_BUCKET && process.env.DB_BACKUP_KEY),
+      recaptcha: !!process.env.RECAPTCHA_SITE_KEY,
+      results: checks.results,
+      config: checks.config,
     });
   });
 
@@ -78,6 +98,22 @@ function createRouter(db) {
     const dbPath = process.env.DATABASE_PATH || require('path').join(__dirname, '..', 'data', 'urdfw.db');
     const result = await backupNow(dbPath);
     res.json({ ok: !!result.ok, ...result, bucket: process.env.DB_BACKUP_BUCKET, key: process.env.DB_BACKUP_KEY });
+  });
+
+  router.post('/admin/test-email', adminRequired, async (req, res) => {
+    const to = (req.body?.email || req.user.email || '').trim();
+    if (!to) return res.status(400).json({ ok: false, error: 'Email required' });
+    try {
+      await sendEmail({
+        to,
+        subject: 'Upper Room DFW — Test Email',
+        html: '<p>Your SMTP connection is working. Sent at ' + new Date().toISOString() + '</p>',
+        text: 'Your SMTP connection is working.',
+      });
+      res.json({ ok: true, to });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
   });
 
   router.get('/config', (req, res) => {
@@ -461,6 +497,17 @@ function createRouter(db) {
     res.json(rows);
   });
 
+  router.patch('/leads/:id', authRequired, (req, res) => {
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    if (!lead) return res.status(404).json({ ok: false, error: 'Lead not found' });
+    if (lead.church_email !== req.user.email && req.user.role !== 'admin') {
+      return res.status(403).json({ ok: false, error: 'Forbidden' });
+    }
+    const status = req.body?.status || 'contacted';
+    db.prepare('UPDATE leads SET status = ? WHERE id = ?').run(status, req.params.id);
+    res.json({ ok: true, id: req.params.id, status });
+  });
+
   /* ─── MESSAGES ─── */
   router.get('/messages', authRequired, (req, res) => {
     const rows = db.prepare('SELECT * FROM messages WHERE user_id = ? ORDER BY created_at DESC').all(req.user.sub);
@@ -522,10 +569,67 @@ function createRouter(db) {
     const email = (req.body?.email || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ ok: false, error: 'Email required' });
     db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, new Date().toISOString());
-    db.prepare('INSERT INTO integration_log (action, provider, status, email, at) VALUES (?, ?, ?, ?, ?)').run(
-      'subscribe', 'all', 'ok', email, new Date().toISOString()
-    );
-    res.json({ ok: true, synced: 3, email });
+    const sync = await syncEmailToProviders(email, db);
+    res.json({ ok: true, synced: sync.synced, email, results: sync.results });
+  });
+
+  const PROVIDERS = ['mailchimp', 'vbout', 'acumbamail'];
+
+  router.get('/integrations/log', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM integration_log ORDER BY at DESC LIMIT 50').all();
+    res.json({ ok: true, entries: rows });
+  });
+
+  router.get('/integrations/:provider', adminRequired, (req, res) => {
+    const provider = req.params.provider;
+    if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    const cfg = getIntegrationSettings(db, provider);
+    const synced = db.prepare('SELECT COUNT(*) AS c FROM integration_log WHERE provider = ? AND status = ?').get(provider, 'ok').c;
+    res.json({ ok: true, provider, config: cfg, syncedCount: synced });
+  });
+
+  router.post('/integrations/:provider/config', adminRequired, (req, res) => {
+    const provider = req.params.provider;
+    if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    const body = req.body?.config || req.body || {};
+    const cfg = setIntegrationSettings(db, provider, {
+      listId: body.listId,
+      apiKey: body.apiKey,
+      enabled: body.enabled !== false,
+    });
+    res.json({ ok: true, config: cfg });
+  });
+
+  router.post('/integrations/:provider/test', adminRequired, async (req, res) => {
+    const provider = req.params.provider;
+    const t0 = Date.now();
+    let result;
+    if (provider === 'mailchimp') result = await verifyMailchimp();
+    else if (provider === 'vbout') result = await verifyVbout();
+    else if (provider === 'acumbamail') result = { ok: !!process.env.ACUMBAMAIL_API_KEY, provider: 'acumbamail', error: process.env.ACUMBAMAIL_API_KEY ? null : 'ACUMBAMAIL_API_KEY not set' };
+    else return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    result.latencyMs = Date.now() - t0;
+    res.json(result);
+  });
+
+  router.post('/integrations/:provider/sync-all', adminRequired, async (req, res) => {
+    const provider = req.params.provider;
+    if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    const emails = db.prepare('SELECT email FROM subscribers').all().map((r) => r.email);
+    if (!emails.length) return res.json({ ok: false, error: 'No subscribers to sync' });
+    const cfg = getIntegrationSettings(db, provider);
+    let synced = 0;
+    for (const email of emails) {
+      let r;
+      if (provider === 'mailchimp') r = await syncToMailchimp(email, cfg.listId);
+      else if (provider === 'vbout') r = await syncToVbout(email, cfg.listId);
+      else r = await syncToAcumbamail(email, cfg.listId);
+      if (r.ok) synced++;
+      db.prepare('INSERT INTO integration_log (action, provider, status, email, at) VALUES (?, ?, ?, ?, ?)').run(
+        'sync-all', provider, r.ok ? 'ok' : 'error', email, new Date().toISOString()
+      );
+    }
+    res.json({ ok: synced > 0, provider, synced, total: emails.length });
   });
 
   router.post('/integrations/contact', (req, res) => {

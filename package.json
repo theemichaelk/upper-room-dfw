@@ -15,6 +15,7 @@
     "expand:churches": "node scripts/expand-churches-bulk.js",
     "setup:stripe": "node scripts/setup-stripe.js",
     "setup:amplify-iam": "node scripts/setup-amplify-iam.js",
+    "push:env": "node scripts/push-env-to-amplify.js",
     "expand:all": "node scripts/expand-churches-bulk.js && node scripts/generate-sitemap.js",
     "inject:platform": "node scripts/inject-platform.js",
     "test:features": "node scripts/test-features.js",

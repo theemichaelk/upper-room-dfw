@@ -174,6 +174,12 @@ function initDb() {
       at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS platform_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
     CREATE INDEX IF NOT EXISTS idx_leads_church ON leads(church_email);
     CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);
