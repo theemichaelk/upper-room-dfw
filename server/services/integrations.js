@@ -160,11 +160,13 @@ function integrationConfig() {
     tinyurl: { enabled: !!process.env.TINYURL_API_TOKEN },
     mailchimpListId: process.env.MAILCHIMP_LIST_ID || null,
     vboutListId: process.env.VBOUT_LIST_ID || null,
+    route53: { enabled: !!process.env.ROUTE53_HOSTED_ZONE_ID, hostedZoneId: process.env.ROUTE53_HOSTED_ZONE_ID || null },
   };
 }
 
 async function verifyAll() {
   const { verifyTinyUrl } = require('./tinyurl');
+  const { verifyDns } = require('./dns');
   const results = await Promise.all([
     verifyStripe(),
     verifyMailchimp(),
@@ -172,6 +174,7 @@ async function verifyAll() {
     verifyPaypal(),
     verifySmtp(),
     verifyTinyUrl(),
+    verifyDns(),
   ]);
   return {
     ok: results.every((r) => r.ok),

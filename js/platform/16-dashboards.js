@@ -400,6 +400,7 @@
     { id: 'support', label: 'Support' },
     { id: 'analytics', label: 'Analytics' },
     { id: 'api', label: 'API & Webhooks' },
+    { id: 'dns', label: 'DNS' },
   ];
 
   P._adminDashState = { root: null, panels: null, show: null };
@@ -454,6 +455,7 @@
     if (tabId === 'support') return P.renderAdminSupport(el);
     if (tabId === 'analytics') return P.renderAdminAnalytics(el);
     if (tabId === 'api') return P.renderAdminApi(el);
+    if (tabId === 'dns') return P.renderAdminDns(el);
   };
 
   P.renderAdminOverview = async function (el) {

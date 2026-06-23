@@ -17,12 +17,12 @@
     { id: 7, title: 'Verified Listings & Community Trust', content: 'Complete profile, safety policies, and training for the verified badge families trust.', tip: 'Verified churches rank higher in Best Match sort.' },
   ];
 
-  const TAB_MAP = ['overview', 'billing', 'training', 'listing', 'leads', 'profile', 'messages', 'media', 'saved', 'support', 'notifications', 'reviews', 'claims', 'analytics'];
+  const TAB_MAP = ['overview', 'billing', 'training', 'listing', 'leads', 'profile', 'messages', 'media', 'saved', 'support', 'notifications', 'reviews', 'claims', 'analytics', 'dns'];
 
   const MEMBER_TAB_INDEX = {
     overview: 0, billing: 1, training: 2, listing: 3, leads: 4,
     profile: 5, messages: 6, media: 7, saved: 8, support: 9,
-    notifications: 10, reviews: 11, claims: 12, analytics: 13,
+    notifications: 10, reviews: 11, claims: 12, analytics: 13, dns: 14,
   };
 
   function bindMemberSidebarNav() {
@@ -811,6 +811,7 @@
     if (id === 'reviews') P.renderMemberReviews?.(document.getElementById('member-platform-reviews'), client);
     if (id === 'claims') P.renderMemberClaims?.(document.getElementById('member-platform-claims'), client);
     if (id === 'analytics') P.renderMemberAnalytics?.(document.getElementById('member-platform-analytics'), client);
+    if (id === 'dns') P.renderMemberDns?.(document.getElementById('member-platform-dns'));
   }
 
   function switchMemberTab(n, tabId) {

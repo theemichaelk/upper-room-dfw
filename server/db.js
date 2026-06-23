@@ -213,6 +213,40 @@ function initDb() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS sites (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      name TEXT NOT NULL,
+      domain TEXT UNIQUE NOT NULL,
+      type TEXT DEFAULT 'client',
+      hosted_zone_id TEXT,
+      status TEXT DEFAULT 'active',
+      cloudfront_domain TEXT,
+      amplify_domain TEXT,
+      source TEXT DEFAULT 'manual',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS dns_records (
+      id TEXT PRIMARY KEY,
+      site_id TEXT NOT NULL,
+      record_type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      value TEXT NOT NULL,
+      ttl INTEGER DEFAULT 300,
+      priority INTEGER,
+      route53_synced INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'pending',
+      error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sites_client ON sites(client_id);
+    CREATE INDEX IF NOT EXISTS idx_sites_domain ON sites(domain);
+    CREATE INDEX IF NOT EXISTS idx_dns_site ON dns_records(site_id);
+
     CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
     CREATE INDEX IF NOT EXISTS idx_leads_church ON leads(church_email);
     CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);

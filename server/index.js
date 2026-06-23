@@ -6,6 +6,7 @@ const { initDb, DB_PATH } = require('./db');
 const { seedIfNeeded, syncListingsFromJson } = require('./seed');
 const { ensureAdmins } = require('./ensure-admins');
 const { ensureIntegrations } = require('./ensure-integrations');
+const { ensureDnsSites } = require('./ensure-dns');
 const { createRouter } = require('./routes');
 const { handleStripeWebhook } = require('./webhooks');
 const { restoreDbIfNeeded, scheduleBackup, wrapDbForAutoBackup } = require('./db-persist');
@@ -27,6 +28,7 @@ async function bootstrap() {
   syncListingsFromJson(db);
   ensureAdmins(db);
   ensureIntegrations(db);
+  ensureDnsSites(db).catch((err) => console.warn('DNS seed:', err.message));
   scheduleBackup(DB_PATH);
   initEvents(db);
 

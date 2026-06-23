@@ -18,6 +18,7 @@ const {
   getIntegrationSettings, setIntegrationSettings, getSocialLinks, setSocialLinks,
 } = require('../services/platform-settings');
 const { sendEmail } = require('../services/email');
+const dnsService = require('../services/dns');
 
 function allowDevBilling() {
   return !isStripeEnabled() && !isProduction();
@@ -353,6 +354,9 @@ function createRouter(db, limiters = {}) {
     const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id));
     if (patch.status === 'approved' && row.status !== 'approved') {
       events.emit('client.approved', { email: updated.email, name: updated.name, clientId: updated.id }).catch(() => {});
+    }
+    if (patch.website) {
+      dnsService.ensureClientSite(db, { id: updated.id, name: updated.name, website: updated.website }).catch(() => {});
     }
     res.json(updated);
   });
@@ -822,6 +826,106 @@ function createRouter(db, limiters = {}) {
     const row = db.prepare('SELECT * FROM short_links WHERE id = ? OR alias = ?').get(req.params.id, req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Link not found' });
     res.json({ ok: true, id: row.id, url: row.target_url, tinyUrl: row.tiny_url });
+  });
+
+  /* ─── DNS (Route53 + multi-site) ─── */
+  function canAccessSite(req, site) {
+    if (!site) return false;
+    if (req.user?.role === 'admin') return true;
+    return site.clientId === req.user?.clientId;
+  }
+
+  router.get('/dns/status', authRequired, async (req, res) => {
+    const status = await dnsService.verifyDns();
+    res.json({ ok: true, route53: status, ready: dnsService.route53Ready() });
+  });
+
+  router.get('/dns/sites', authRequired, (req, res) => {
+    const sites = req.user.role === 'admin'
+      ? dnsService.listSites(db)
+      : dnsService.listSites(db, { clientId: req.user.clientId });
+    res.json({ ok: true, sites });
+  });
+
+  router.post('/dns/sites', authRequired, async (req, res) => {
+    const body = req.body || {};
+    const domain = dnsService.normalizeDomain(body.domain);
+    if (!domain) return res.status(400).json({ ok: false, error: 'Domain required' });
+
+    const isAdmin = req.user.role === 'admin';
+    const clientId = isAdmin ? (body.clientId || null) : req.user.clientId;
+    const type = isAdmin ? (body.type || (clientId ? 'client' : 'platform')) : 'client';
+
+    if (!isAdmin && type !== 'client') {
+      return res.status(403).json({ ok: false, error: 'Members can only add client sites' });
+    }
+
+    try {
+      const site = await dnsService.createSite(db, {
+        domain,
+        name: body.name || domain,
+        clientId,
+        type,
+        createZone: !!body.createZone && isAdmin,
+        autoDefaults: body.autoDefaults !== false,
+        source: body.source || 'portal',
+      });
+      res.json({ ok: true, site });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/dns/sites/:id', authRequired, async (req, res) => {
+    const site = dnsService.getSite(db, req.params.id);
+    if (!site) return res.status(404).json({ ok: false, error: 'Site not found' });
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    const nameservers = site.hostedZoneId
+      ? await dnsService.getNameservers(site.hostedZoneId)
+      : [];
+    res.json({ ok: true, site, nameservers });
+  });
+
+  router.get('/dns/sites/:id/records', authRequired, (req, res) => {
+    const site = dnsService.getSite(db, req.params.id);
+    if (!site) return res.status(404).json({ ok: false, error: 'Site not found' });
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    res.json({ ok: true, records: dnsService.listRecords(db, site.id) });
+  });
+
+  router.post('/dns/sites/:id/records', authRequired, async (req, res) => {
+    const site = dnsService.getSite(db, req.params.id);
+    if (!site) return res.status(404).json({ ok: false, error: 'Site not found' });
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    try {
+      const record = await dnsService.addRecord(db, site.id, req.body || {});
+      res.json({ ok: true, record });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.delete('/dns/records/:id', authRequired, async (req, res) => {
+    const row = db.prepare('SELECT site_id FROM dns_records WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Record not found' });
+    const site = dnsService.getSite(db, row.site_id);
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    try {
+      await dnsService.removeRecord(db, req.params.id);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.post('/dns/sites/:id/sync', authRequired, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ ok: false, error: 'Admin only' });
+    try {
+      const result = await dnsService.syncSiteFromRoute53(db, req.params.id);
+      res.json(result);
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
   });
 
   return router;

@@ -20,12 +20,13 @@
     { id: 'analytics', label: 'Analytics', icon: 'chart-line' },
     { id: 'notifications', label: 'Notifications', icon: 'bell' },
     { id: 'support', label: 'Support', icon: 'life-ring' },
+    { id: 'dns', label: 'DNS', icon: 'globe' },
   ];
 
   P._memberTabIndex = {
     overview: 0, billing: 1, training: 2, listing: 3, leads: 4,
     profile: 5, messages: 6, media: 7, saved: 8, support: 9,
-    notifications: 10, reviews: 11, claims: 12, analytics: 13,
+    notifications: 10, reviews: 11, claims: 12, analytics: 13, dns: 14,
   };
 
   P._memberShellClientId = null;

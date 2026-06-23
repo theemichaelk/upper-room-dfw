@@ -24,6 +24,7 @@
     'js/platform/17-api-bridge.js',
     'js/platform/18-portal.js',
     'js/platform/19-member-portal.js',
+    'js/platform/20-dns.js',
   ];
 
   function loadSequential(i) {
