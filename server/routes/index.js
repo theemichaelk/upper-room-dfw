@@ -1,8 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { signToken, authRequired, adminRequired } = require('../middleware/auth');
-const { uuid, uniqueSlug, clientToApi, listingToApi } = require('../utils');
-const { sendWelcome, sendPasswordReset, sendLeadNotification, sendPaymentReceipt } = require('../services/email');
+const { uuid, uniqueSlug, clientToApi, listingToApi, leadToApi } = require('../utils');
+const { sendPasswordReset } = require('../services/email');
+const { listCampaigns, sendCampaign } = require('../services/campaigns');
+const { shortenUrl } = require('../services/tinyurl');
+const { getEvents } = require('../services/events');
+const { registerWebhook, listWebhooks, deactivateWebhook } = require('../services/webhook-dispatcher');
+const { isProduction } = require('../middleware/security');
 const { isStripeEnabled, stripeMode, resolveStripePublishableKey, createCheckoutSession, createPortalSession } = require('../services/stripe');
 const { integrationConfig, verifyAll, verifyMailchimp, verifyVbout } = require('../services/integrations');
 const { verifyRecaptcha, recaptchaSiteKey } = require('../services/recaptcha');
@@ -14,8 +19,15 @@ const {
 } = require('../services/platform-settings');
 const { sendEmail } = require('../services/email');
 
-function createRouter(db) {
+function allowDevBilling() {
+  return !isStripeEnabled() && !isProduction();
+}
+
+function createRouter(db, limiters = {}) {
   const router = express.Router();
+  const events = getEvents(db);
+  const authLimiter = limiters.authLimiter || ((req, res, next) => next());
+  const formLimiter = limiters.formLimiter || ((req, res, next) => next());
 
   router.get('/health', (req, res) => {
     res.json({
@@ -107,17 +119,34 @@ function createRouter(db) {
     res.json({ ok: !!result.ok, ...result, bucket: process.env.DB_BACKUP_BUCKET, key: process.env.DB_BACKUP_KEY });
   });
 
+  router.get('/admin/campaigns', adminRequired, (req, res) => {
+    res.json({ ok: true, campaigns: listCampaigns() });
+  });
+
   router.post('/admin/test-email', adminRequired, async (req, res) => {
     const to = (req.body?.email || req.user.email || '').trim();
+    const template = req.body?.template || 'contact_auto_reply';
     if (!to) return res.status(400).json({ ok: false, error: 'Email required' });
     try {
-      await sendEmail({
-        to,
-        subject: 'Upper Room DFW — Test Email',
-        html: '<p>Your SMTP connection is working. Sent at ' + new Date().toISOString() + '</p>',
-        text: 'Your SMTP connection is working.',
+      if (template === 'smtp_ping') {
+        await sendEmail({
+          to,
+          subject: 'Upper Room DFW — SMTP Test',
+          html: '<p>Amazon SES SMTP is working. Sent at ' + new Date().toISOString() + '</p>',
+          text: 'Amazon SES SMTP is working.',
+        });
+        return res.json({ ok: true, to, template: 'smtp_ping' });
+      }
+      const result = await sendCampaign(template, {
+        email: to,
+        name: req.body?.name || 'Admin Test',
+        message: 'This is a test message from the admin panel.',
+        amount: 29,
+        plan: 'Standard',
+        gateway: 'stripe',
+        token: 'test-reset-token',
       });
-      res.json({ ok: true, to });
+      res.json({ ok: true, ...result });
     } catch (err) {
       res.status(500).json({ ok: false, error: err.message });
     }
@@ -150,7 +179,7 @@ function createRouter(db) {
   }
 
   /* ─── AUTH ─── */
-  router.post('/auth/register', (req, res) => {
+  router.post('/auth/register', authLimiter, (req, res) => {
     const body = req.body || {};
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || uuid().slice(0, 12);
@@ -193,14 +222,14 @@ function createRouter(db) {
     });
     tx();
 
-    sendWelcome(email, name).catch(() => {});
+    events.emit('user.registered', { email, name, area: body.area, clientId }).catch(() => {});
 
     const client = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(clientId));
     const token = signToken({ sub: userId, email, role: 'church-owner', clientId });
     res.json({ ok: true, client, user: { id: userId, email, name, role: 'church-owner' }, token });
   });
 
-  router.post('/auth/member', (req, res) => {
+  router.post('/auth/member', authLimiter, (req, res) => {
     const email = (req.body?.email || '').trim().toLowerCase();
     const password = req.body?.password || '';
 
@@ -226,10 +255,10 @@ function createRouter(db) {
     res.json({ ok: true, client: clientToApi(client), user: { id: user.id, email, name: user.name, role: user.role }, token });
   });
 
-  router.post('/auth/admin', (req, res) => {
+  router.post('/auth/admin', authLimiter, (req, res) => {
     const password = req.body?.password || '';
     const email = (req.body?.email || '').trim().toLowerCase();
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminPass = isProduction() ? null : (process.env.ADMIN_PASSWORD || 'admin123');
 
     if (email) {
       const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, 'admin');
@@ -247,7 +276,7 @@ function createRouter(db) {
       return res.json({ ok: true, role: 'admin', email: matched.email, token });
     }
 
-    if (password === adminPass && admins.length > 0) {
+    if (adminPass && password === adminPass && admins.length > 0) {
       const user = admins[0];
       const token = signToken({ sub: user.id, email: user.email, role: 'admin' });
       return res.json({ ok: true, role: 'admin', email: user.email, token });
@@ -256,14 +285,14 @@ function createRouter(db) {
     return res.status(401).json({ ok: false, error: 'Invalid credentials' });
   });
 
-  router.post('/auth/forgot', async (req, res) => {
+  router.post('/auth/forgot', authLimiter, async (req, res) => {
     const email = (req.body?.email || '').trim().toLowerCase();
     const user = db.prepare('SELECT email FROM users WHERE email = ?').get(email);
     if (user) {
       const token = uuid();
       const expires = new Date(Date.now() + 3600000).toISOString();
       db.prepare('INSERT OR REPLACE INTO password_resets (token, email, expires_at) VALUES (?, ?, ?)').run(token, email, expires);
-      await sendPasswordReset(email, token);
+      await sendCampaign('forgot_password', { email, token, name: email.split('@')[0] }).catch(() => sendPasswordReset(email, token));
     }
     res.json({ ok: true, message: 'If that email exists, a reset link has been sent.' });
   });
@@ -321,7 +350,11 @@ function createRouter(db) {
     if (patch.status === 'approved' && row.listing_id) {
       db.prepare('UPDATE listings SET status = ? WHERE id = ?').run('live', row.listing_id);
     }
-    res.json(clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id)));
+    const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id));
+    if (patch.status === 'approved' && row.status !== 'approved') {
+      events.emit('client.approved', { email: updated.email, name: updated.name, clientId: updated.id }).catch(() => {});
+    }
+    res.json(updated);
   });
 
   /* ─── LISTINGS ─── */
@@ -399,6 +432,9 @@ function createRouter(db) {
       }
     }
 
+    if (!allowDevBilling()) {
+      return res.status(503).json({ ok: false, error: 'Billing unavailable — configure Stripe for production.' });
+    }
     const amount = plan === 'premium' ? 79 : 29;
     const orderId = uuid();
     const now = new Date().toISOString();
@@ -417,7 +453,7 @@ function createRouter(db) {
         1, plan === 'premium' ? 1 : 0, plan, client.listingId
       );
     }
-    sendPaymentReceipt(client.email, amount, plan).catch(() => {});
+    events.emit('payment.completed', { email: client.email, amount, plan, clientId: client.id, gateway: 'dev' }).catch(() => {});
     const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id));
     res.json({ ok: true, order: { ref, amount, plan }, client: updated, devMode: true });
   });
@@ -465,6 +501,9 @@ function createRouter(db) {
         return res.status(500).json({ ok: false, error: e.message });
       }
     }
+    if (!allowDevBilling()) {
+      return res.status(503).json({ ok: false, error: 'Billing unavailable — configure Stripe for production.' });
+    }
     const amount = plan === 'premium' ? 79 : 29;
     const orderId = uuid();
     const now = new Date().toISOString();
@@ -478,30 +517,31 @@ function createRouter(db) {
     db.prepare('UPDATE clients SET is_paid = 1, package = ?, subscription_status = ? WHERE id = ?').run(
       plan.charAt(0).toUpperCase() + plan.slice(1), 'active', client.id
     );
+    events.emit('payment.completed', { email: client.email, amount, plan, clientId: client.id, gateway: 'dev' }).catch(() => {});
     const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id));
     res.json({ ok: true, order: { ref, amount, plan }, client: updated });
   });
 
   /* ─── LEADS ─── */
-  router.post('/leads', (req, res) => {
+  router.post('/leads', formLimiter, (req, res) => {
     const body = req.body || {};
     const id = uuid();
     const now = new Date().toISOString();
     const listing = body.listingId
       ? db.prepare('SELECT email FROM listings WHERE id = ? OR slug = ?').get(body.listingId, body.listingId)
       : null;
-    const churchEmail = body.churchEmail || listing?.email || body.targetEmail || '';
+    const churchEmail = body.churchEmail || body.church_email || listing?.email || body.targetEmail || '';
     db.prepare('INSERT INTO leads (id, listing_id, church_email, name, email, phone, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
       id, body.listingId || null, churchEmail, body.name || '', body.email || '', body.phone || '', body.message || '', 'new', now
     );
-    if (churchEmail) sendLeadNotification(churchEmail, body).catch(() => {});
+    events.emit('lead.created', { id, listingId: body.listingId, churchEmail, ...body }).catch(() => {});
     res.json({ ok: true, id });
   });
 
   router.get('/leads', authRequired, (req, res) => {
     const email = req.user.email;
     const rows = db.prepare('SELECT * FROM leads WHERE church_email = ? ORDER BY created_at DESC').all(email);
-    res.json(rows);
+    res.json(rows.map(leadToApi));
   });
 
   router.patch('/leads/:id', authRequired, (req, res) => {
@@ -540,12 +580,14 @@ function createRouter(db) {
   });
 
   /* ─── SUPPORT ─── */
-  router.post('/support', (req, res) => {
+  router.post('/support', formLimiter, (req, res) => {
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      id, body.email || '', body.name || '', body.topic || 'General', body.message || body.topic || '', 'open', new Date().toISOString()
+      id, body.email || '', body.name || '', body.topic || 'General', body.message || body.topic || '', 'open', now
     );
+    events.emit('support.created', { id, ...body }).catch(() => {});
     res.json({ ok: true, id });
   });
 
@@ -571,11 +613,15 @@ function createRouter(db) {
     }
   });
 
-  router.post('/integrations/subscribe', async (req, res) => {
+  router.post('/integrations/subscribe', formLimiter, async (req, res) => {
     if (!(await requireRecaptcha(req, res))) return;
     const email = (req.body?.email || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ ok: false, error: 'Email required' });
-    db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, new Date().toISOString());
+    const now = new Date().toISOString();
+    const inserted = db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, now);
+    if (inserted.changes > 0) {
+      await events.emit('subscriber.added', { email });
+    }
     const sync = await syncEmailToProviders(email, db);
     res.json({ ok: true, synced: sync.synced, email, results: sync.results });
   });
@@ -639,31 +685,36 @@ function createRouter(db) {
     res.json({ ok: synced > 0, provider, synced, total: emails.length });
   });
 
-  router.post('/integrations/contact', (req, res) => {
+  router.post('/integrations/contact', formLimiter, (req, res) => {
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     const listing = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(body.listingId, body.listingId);
+    const churchEmail = body.churchEmail || body.church_email || listing?.email || '';
     db.prepare('INSERT INTO leads (id, listing_id, church_email, name, email, phone, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-      id, listing?.id || body.listingId, listing?.email || '', body.name || '', body.email || '', body.phone || '', body.message || '', 'new', new Date().toISOString()
+      id, listing?.id || body.listingId, churchEmail, body.name || '', body.email || '', body.phone || '', body.message || '', 'new', now
     );
-    if (listing?.email) sendLeadNotification(listing.email, body).catch(() => {});
+    events.emit('lead.created', { id, listingId: listing?.id || body.listingId, churchEmail, ...body }).catch(() => {});
     res.json({ ok: true, lead: { id } });
   });
 
-  router.post('/integrations/support', async (req, res) => {
+  router.post('/integrations/support', formLimiter, async (req, res) => {
     if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      id, body.email || '', body.name || '', body.topic || 'Support', body.message || '', 'open', new Date().toISOString()
+      id, body.email || '', body.name || '', body.topic || 'Support', body.message || '', 'open', now
     );
+    events.emit('support.created', { id, ...body }).catch(() => {});
     res.json({ ok: true, ticket: { id } });
   });
 
-  router.post('/integrations/site-contact', async (req, res) => {
+  router.post('/integrations/site-contact', formLimiter, async (req, res) => {
     if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     const message = [
       body.message || '',
       body.phone ? 'Phone: ' + body.phone : '',
@@ -675,15 +726,17 @@ function createRouter(db) {
       'Site Contact',
       message,
       'open',
-      new Date().toISOString()
+      now
     );
+    events.emit('support.created', { id, email: body.email, name: body.name, topic: 'Site Contact', message }).catch(() => {});
     res.json({ ok: true, ticket: { id } });
   });
 
-  router.post('/integrations/listing-intake', async (req, res) => {
+  router.post('/integrations/listing-intake', formLimiter, async (req, res) => {
     if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     const summary = [
       'Listing intake submission',
       'Name: ' + (body.name || ''),
@@ -701,9 +754,74 @@ function createRouter(db) {
       'Listing Submission',
       summary,
       'open',
-      new Date().toISOString()
+      now
     );
+    events.emit('support.created', { id, email: body.email, name: body.name, topic: 'Listing Submission', message: summary }).catch(() => {});
     res.json({ ok: true, ticket: { id }, message: 'Submission received. Our team will review within 1–2 business days.' });
+  });
+
+  /* ─── OUTBOUND WEBHOOKS ─── */
+  router.get('/webhooks', adminRequired, (req, res) => {
+    res.json({ ok: true, webhooks: listWebhooks(db) });
+  });
+
+  router.post('/webhooks', adminRequired, (req, res) => {
+    const url = (req.body?.url || '').trim();
+    if (!url || !/^https?:\/\//i.test(url)) {
+      return res.status(400).json({ ok: false, error: 'Valid webhook URL required' });
+    }
+    const hook = registerWebhook(db, {
+      url,
+      events: req.body?.events,
+      label: req.body?.label,
+    });
+    res.json({ ok: true, webhook: hook });
+  });
+
+  router.delete('/webhooks/:id', adminRequired, (req, res) => {
+    const ok = deactivateWebhook(db, req.params.id);
+    if (!ok) return res.status(404).json({ ok: false, error: 'Webhook not found' });
+    res.json({ ok: true });
+  });
+
+  router.get('/webhooks/log', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM webhook_log ORDER BY at DESC LIMIT 50').all();
+    res.json({ ok: true, entries: rows });
+  });
+
+  router.get('/events/log', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM event_log ORDER BY at DESC LIMIT 50').all();
+    res.json({ ok: true, entries: rows });
+  });
+
+  /* ─── SHORT LINKS (TinyURL) ─── */
+  router.post('/links/shorten', async (req, res) => {
+    const url = (req.body?.url || '').trim();
+    if (!url) return res.status(400).json({ ok: false, error: 'URL required' });
+    const result = await shortenUrl(url, { alias: req.body?.alias, tags: req.body?.tags });
+    if (!result.ok) return res.status(502).json(result);
+
+    const id = require('crypto').randomUUID().slice(0, 8);
+    const now = new Date().toISOString();
+    try {
+      db.prepare('INSERT INTO short_links (id, target_url, tiny_url, alias, created_at) VALUES (?, ?, ?, ?, ?)').run(
+        id, url, result.tinyUrl, result.alias || null, now
+      );
+    } catch { /* table optional */ }
+
+    res.json({
+      ok: true,
+      id,
+      url,
+      tinyUrl: result.tinyUrl,
+      goUrl: (process.env.APP_URL || '') + '/go.html?id=' + id,
+    });
+  });
+
+  router.get('/links/:id', (req, res) => {
+    const row = db.prepare('SELECT * FROM short_links WHERE id = ? OR alias = ?').get(req.params.id, req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Link not found' });
+    res.json({ ok: true, id: row.id, url: row.target_url, tinyUrl: row.tiny_url });
   });
 
   return router;

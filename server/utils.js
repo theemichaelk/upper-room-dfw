@@ -81,4 +81,21 @@ function listingToApi(row) {
   };
 }
 
-module.exports = { uuid, slugify, uniqueSlug, clientToApi, listingToApi };
+function leadToApi(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    listingId: row.listing_id,
+    churchEmail: row.church_email,
+    church_email: row.church_email,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    message: row.message,
+    status: row.status,
+    createdAt: row.created_at,
+    created_at: row.created_at,
+  };
+}
+
+module.exports = { uuid, slugify, uniqueSlug, clientToApi, listingToApi, leadToApi };

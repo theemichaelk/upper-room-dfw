@@ -180,6 +180,39 @@ function initDb() {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS webhooks (
+      id TEXT PRIMARY KEY,
+      url TEXT NOT NULL,
+      events_json TEXT NOT NULL DEFAULT '["*"]',
+      label TEXT,
+      active INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS webhook_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      webhook_id TEXT,
+      event TEXT,
+      status TEXT,
+      at TEXT NOT NULL,
+      error TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS event_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event TEXT NOT NULL,
+      payload_json TEXT,
+      at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS short_links (
+      id TEXT PRIMARY KEY,
+      target_url TEXT NOT NULL,
+      tiny_url TEXT,
+      alias TEXT,
+      created_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
     CREATE INDEX IF NOT EXISTS idx_leads_church ON leads(church_email);
     CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);

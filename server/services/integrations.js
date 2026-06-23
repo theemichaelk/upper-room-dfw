@@ -157,16 +157,21 @@ function integrationConfig() {
       nvp: !!(process.env.PAYPAL_API_USERNAME && process.env.PAYPAL_API_PASSWORD),
     },
     smtp: { enabled: !!(process.env.SMTP_HOST && process.env.SMTP_USER) },
+    tinyurl: { enabled: !!process.env.TINYURL_API_TOKEN },
+    mailchimpListId: process.env.MAILCHIMP_LIST_ID || null,
+    vboutListId: process.env.VBOUT_LIST_ID || null,
   };
 }
 
 async function verifyAll() {
+  const { verifyTinyUrl } = require('./tinyurl');
   const results = await Promise.all([
     verifyStripe(),
     verifyMailchimp(),
     verifyVbout(),
     verifyPaypal(),
     verifySmtp(),
+    verifyTinyUrl(),
   ]);
   return {
     ok: results.every((r) => r.ok),

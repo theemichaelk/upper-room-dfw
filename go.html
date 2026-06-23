@@ -20,10 +20,22 @@
       if (id === 'go' && parts.length > 1) id = parts[parts.length - 2];
       if (id === 'go' || id === 'go.html') id = null;
     }
-    const masks = JSON.parse(localStorage.getItem('urdfw_url_masks') || '{}');
-    const url = masks[id] || 'https://upperroomdfw.com';
-    document.getElementById('status').textContent = 'Redirecting to affiliate link...';
-    setTimeout(() => { window.location.href = url; }, 800);
+    async function resolveAndGo() {
+      const masks = JSON.parse(localStorage.getItem('urdfw_url_masks') || '{}');
+      let url = masks[id] || null;
+      if (id && !url) {
+        try {
+          const res = await fetch('/api/links/' + encodeURIComponent(id));
+          if (res.ok) {
+            const data = await res.json();
+            url = data.tinyUrl || data.url;
+          }
+        } catch { /* offline */ }
+      }
+      window.location.href = url || 'https://upperroomdfw.com';
+    }
+    document.getElementById('status').textContent = 'Redirecting...';
+    resolveAndGo();
   </script>
   <script src="js/platform/loader.js"></script>
 

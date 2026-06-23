@@ -674,7 +674,7 @@
         const r = await fetch('/api/admin/test-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, template: fd.get('template') }),
         });
         const j = await r.json();
         P.portalToast?.(j.ok ? 'Test email sent to ' + email : (j.error || 'Send failed'));

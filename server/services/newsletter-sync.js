@@ -67,12 +67,17 @@ async function syncToVbout(email, listId) {
   if (!key) return { ok: false, provider: 'vbout', error: 'VBOUT_API_KEY not set' };
   if (!list) return { ok: false, provider: 'vbout', error: 'Vbout list ID required' };
 
-  const url = `https://api.vbout.com/1/emailmarketing/addcontact.json?key=${encodeURIComponent(key)}&email=${encodeURIComponent(email)}&listid=${encodeURIComponent(list)}`;
+  const url = `https://api.vbout.com/1/emailmarketing/addcontact.json?key=${encodeURIComponent(key)}&email=${encodeURIComponent(email)}&listid=${encodeURIComponent(list)}&status=1`;
   const res = await httpsJson('GET', url);
-  if (res.status === 200 && res.body && !res.body.error) {
-    return { ok: true, provider: 'vbout', message: 'Added to Vbout list' };
+  const header = res.body?.response?.header;
+  const data = res.body?.response?.data;
+  if (res.status === 200 && header?.status === 'ok') {
+    const already = (data?.error || data?.item || '').toLowerCase().includes('already exists');
+    if (!data?.error || already) {
+      return { ok: true, provider: 'vbout', message: already ? 'Already on Vbout list' : 'Added to Vbout list' };
+    }
   }
-  const err = res.body?.error?.message || res.body?.message || `HTTP ${res.status}`;
+  const err = data?.error || data?.item || res.body?.error?.message || `HTTP ${res.status}`;
   return { ok: false, provider: 'vbout', error: err };
 }
 

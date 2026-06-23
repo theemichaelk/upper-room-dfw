@@ -5,14 +5,19 @@ const cors = require('cors');
 const { initDb, DB_PATH } = require('./db');
 const { seedIfNeeded, syncListingsFromJson } = require('./seed');
 const { ensureAdmins } = require('./ensure-admins');
+const { ensureIntegrations } = require('./ensure-integrations');
 const { createRouter } = require('./routes');
 const { handleStripeWebhook } = require('./webhooks');
 const { restoreDbIfNeeded, scheduleBackup, wrapDbForAutoBackup } = require('./db-persist');
+const { securityHeaders, assertProductionSecrets } = require('./middleware/security');
+const { authLimiter, formLimiter, apiLimiter } = require('./middleware/rate-limit');
+const { initEvents } = require('./services/events');
 
 const PORT = parseInt(process.env.PORT || '8000', 10);
 const ROOT = path.join(__dirname, '..');
 
 async function bootstrap() {
+  assertProductionSecrets();
   await restoreDbIfNeeded(DB_PATH);
 
   let db = initDb();
@@ -21,9 +26,13 @@ async function bootstrap() {
   seedIfNeeded(db);
   syncListingsFromJson(db);
   ensureAdmins(db);
+  ensureIntegrations(db);
   scheduleBackup(DB_PATH);
+  initEvents(db);
 
   const app = express();
+  app.set('trust proxy', 1);
+  app.use(securityHeaders);
 
   const ALLOWED_ORIGINS = [
     process.env.APP_URL,
@@ -36,10 +45,15 @@ async function bootstrap() {
     'http://127.0.0.1:8000',
   ].filter(Boolean);
 
+  const isProd = process.env.NODE_ENV === 'production'
+    || (process.env.APP_URL || '').includes('upperroomdfw.com');
+
   app.use(cors({
     origin(origin, cb) {
-      if (!origin || ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o))) return cb(null, true);
-      return cb(null, true);
+      if (!origin) return cb(null, true);
+      if (ALLOWED_ORIGINS.some((o) => origin === o)) return cb(null, true);
+      if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
+      return cb(new Error('CORS blocked: ' + origin), false);
     },
     credentials: true,
   }));
@@ -49,8 +63,9 @@ async function bootstrap() {
   });
 
   app.use(express.json({ limit: '2mb' }));
+  app.use('/api', apiLimiter);
 
-  const api = createRouter(db);
+  const api = createRouter(db, { authLimiter, formLimiter });
   app.use('/api', api);
 
   app.use(express.static(ROOT, {
