@@ -7,13 +7,50 @@
 
   P.INTEGRATION_PROVIDERS = ['mailchimp', 'vbout', 'acumbamail'];
 
+  P._platformIntegrations = null;
+  P._memberIntegrations = null;
+
   P.integrations = {
-    mailchimp: { enabled: true, listId: 'urdfw-dfw', apiKey: 'demo-key', serverPrefix: 'us21' },
-    vbout: { enabled: true, listId: 'vbout-dfw', apiKey: 'demo-key' },
-    acumbamail: { enabled: true, listId: 'acumba-dfw', apiKey: 'demo-key' },
+    mailchimp: { enabled: false, listId: '', apiKey: '', source: 'local' },
+    vbout: { enabled: false, listId: '', apiKey: '', source: 'local' },
+    acumbamail: { enabled: false, listId: '', apiKey: '', source: 'local' },
+  };
+
+  P.isPlatformAdmin = function () {
+    return P.getTokenRole?.() === 'admin' && P.apiConfig?.mode === 'remote';
+  };
+
+  P.applyPlatformIntegrations = function (data) {
+    if (!data) return;
+    P._platformIntegrations = data;
+    const providers = data.providers || data.providerConfig || {};
+    const stored = {};
+    Object.entries(providers).forEach(([p, cfg]) => {
+      stored[p] = { ...cfg, source: 'env' };
+      if (P.integrations[p]) Object.assign(P.integrations[p], stored[p]);
+    });
+    P.set('integration_config', stored);
+    P.emit('integrations:platform-loaded', data);
+  };
+
+  P.applyMemberIntegrations = function (data) {
+    if (!data?.integrations) return;
+    P._memberIntegrations = data.integrations;
+    P.set('member_integration_config', data.integrations);
+    P.emit('integrations:member-loaded', data);
   };
 
   P.getIntegrationConfig = function (provider) {
+    if (P.isPlatformAdmin() && P._platformIntegrations?.providers) {
+      if (provider) return P._platformIntegrations.providers[provider] || P.get('integration_config', {})[provider] || {};
+      return { ...P._platformIntegrations.providers };
+    }
+    if (!P.isPlatformAdmin() && P._memberIntegrations) {
+      if (provider) return P._memberIntegrations[provider] || P.get('member_integration_config', {})[provider] || {};
+      const out = {};
+      P.INTEGRATION_PROVIDERS.forEach((p) => { out[p] = P.getIntegrationConfig(p); });
+      return out;
+    }
     const stored = P.get('integration_config', {});
     if (provider) {
       const base = P.integrations[provider] || {};
@@ -170,6 +207,49 @@
     const log = P.get('integration_api_log', []);
     const filtered = provider ? log.filter((e) => e.provider === provider) : log;
     return filtered.slice(0, limit || 50);
+  };
+
+  P.renderMemberIntegrationsPanel = async function (el, client) {
+    if (!el) return;
+    const providers = P.INTEGRATION_PROVIDERS || ['mailchimp', 'vbout', 'acumbamail'];
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token') && !P.isPlatformAdmin()) {
+      try {
+        const data = await P.api?.integrations?.memberList?.();
+        if (data?.integrations) P.applyMemberIntegrations({ integrations: data.integrations });
+      } catch { /* ignore */ }
+    }
+    const cfgAll = P.getIntegrationConfig();
+    el.innerHTML = providers.map((p) => {
+      const cfg = cfgAll[p] || {};
+      return `<form class="member-int-form border rounded-2xl p-4 text-xs space-y-2" data-provider="${p}">
+        <div class="font-semibold capitalize">${p}</div>
+        <input name="listId" value="${(cfg.listId || '').replace(/"/g, '&quot;')}" placeholder="Your list ID" class="w-full border rounded-lg px-2 py-1.5">
+        <input name="apiKey" type="password" placeholder="${cfg.apiKeySet ? 'Saved (' + (cfg.apiKey || '••••') + ') — enter to replace' : 'Your API key'}" class="w-full border rounded-lg px-2 py-1.5">
+        <label class="flex items-center gap-2"><input type="checkbox" name="enabled" ${cfg.enabled ? 'checked' : ''}> Enabled</label>
+        <button type="submit" class="w-full py-1.5 bg-[#0369a1] text-white rounded-lg">Save my ${p} key</button>
+      </form>`;
+    }).join('');
+
+    el.querySelectorAll('.member-int-form').forEach((form) => {
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const provider = form.dataset.provider;
+        const fd = new FormData(form);
+        const body = {
+          listId: fd.get('listId'),
+          enabled: fd.get('enabled') === 'on',
+        };
+        const key = (fd.get('apiKey') || '').trim();
+        if (key) body.apiKey = key;
+        try {
+          const res = await P.api?.integrations?.memberSave?.(provider, body);
+          P.portalToast?.(res?.ok ? `${provider} saved to your account` : (res?.error || 'Save failed'));
+          P.renderMemberIntegrationsPanel(el, client);
+        } catch (err) {
+          P.portalToast?.(err.message || 'Save failed');
+        }
+      };
+    });
   };
 
   P.renderContactForm = function (container, listing) {

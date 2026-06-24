@@ -91,7 +91,14 @@
           </div>
           <p class="text-xs text-slate-500 mt-3">Role: <strong>${P.getUserRole(user)}</strong>. Package controls listing limits and featured placement.</p>
         </div>
+      </div>
+      <div class="mt-8 border-t pt-6" id="member-integrations-panel">
+        <h3 class="font-semibold mb-2">My API Integrations</h3>
+        <p class="text-xs text-slate-500 mb-4">Connect your own Mailchimp, Vbout, or Acumbamail accounts. Platform admin keys are not shared with members.</p>
+        <div class="grid md:grid-cols-3 gap-4" id="member-int-forms">Loading…</div>
       </div>`;
+
+    P.renderMemberIntegrationsPanel?.(el.querySelector('#member-int-forms'), client);
 
     el.querySelector('#member-profile-form').onsubmit = async (e) => {
       e.preventDefault();
@@ -824,26 +831,41 @@
   };
 
   P.renderAdminIntegrations = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading platform integrations from server…</div>';
     const providers = P.INTEGRATION_PROVIDERS || ['mailchimp', 'vbout', 'acumbamail'];
-    const stats = P.getIntegrationStats?.() || providers.map((p) => ({ provider: p, syncedCount: 0, enabled: true }));
-    const subs = P.get('subscribers', []);
+    let subs = P.get('subscribers', []);
     const apiBase = P.apiConfig?.endpoints?.integrations || '/api/integrations';
     let log = P.getIntegrationLog?.(null, 12) || [];
     let connections = null;
+    let platformData = null;
     if (P.apiConfig?.mode === 'remote') {
       try {
         const token = localStorage.getItem('urdfw_api_token');
-        const [connRes, logRes] = await Promise.all([
+        const [connRes, logRes, platRes, integRes] = await Promise.all([
           fetch('/api/platform/connections', { headers: { Authorization: 'Bearer ' + token } }),
           fetch('/api/integrations/log', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/platform/integrations', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/integrations', { headers: { Authorization: 'Bearer ' + token } }),
         ]);
         if (connRes.ok) connections = await connRes.json();
         if (logRes.ok) {
           const lj = await logRes.json();
           log = (lj.entries || []).map((e) => ({ action: e.action, provider: e.provider, status: e.status, email: e.email, at: e.at }));
         }
+        if (platRes.ok) {
+          platformData = await platRes.json();
+          P.applyPlatformIntegrations?.(platformData);
+        }
+        if (integRes.ok) {
+          const ij = await integRes.json();
+          if (ij.subscriberEmails) {
+            subs = ij.subscriberEmails;
+            P.set('subscribers', subs);
+          }
+        }
       } catch { /* ignore */ }
     }
+    const stats = P.getIntegrationStats?.() || providers.map((p) => ({ provider: p, syncedCount: 0, enabled: true }));
 
     const connCards = connections?.results ? `
       <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
@@ -855,29 +877,40 @@
           </div>`).join('')}
       </div>` : '';
 
+    const envBanner = platformData?.source === 'env' ? `
+      <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <strong><i class="fa-solid fa-server mr-1"></i> Platform credentials loaded from server .env</strong>
+        <div class="text-xs mt-1 text-emerald-800">Admin accounts use production API keys automatically. Members configure their own keys in Profile → My API Integrations.</div>
+      </div>` : '';
+
     el.innerHTML = `
+      ${envBanner}
       ${connCards}
       <div class="portal-panel mb-4 text-xs text-slate-600">
         <strong>Integrations API:</strong> <code class="bg-slate-100 px-2 py-0.5 rounded">${apiBase}</code>
-        <span class="ml-2">Endpoints: <code>GET /{provider}</code> · <code>POST /{provider}/config</code> · <code>POST /{provider}/test</code> · <code>POST /{provider}/sync-all</code> · <code>POST /subscribe</code></span>
+        <span class="ml-2">Admin keys: <code>server .env</code> · Members: <code>/api/member/integrations</code></span>
       </div>
       <div class="grid lg:grid-cols-3 gap-4 mb-6">
         ${stats.map((s) => {
           const cfg = P.getIntegrationConfig(s.provider);
+          const keyLabel = cfg.source === 'env'
+            ? (cfg.apiKeySet ? `API key: ${cfg.apiKey || 'configured'}` : 'API key not in .env')
+            : (cfg.apiKeySet ? 'API key set' : 'No API key');
           return `<div class="portal-panel" data-provider-card="${s.provider}">
             <div class="flex items-center justify-between mb-3">
               <div class="font-semibold capitalize flex items-center gap-2">
                 <i class="fa-solid fa-plug text-sky-600"></i> ${s.provider}
               </div>
-              <span class="text-[10px] px-2 py-0.5 rounded-full ${s.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${s.enabled ? 'Enabled' : 'Off'}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full ${cfg.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${cfg.enabled ? 'Enabled' : 'Off'}</span>
             </div>
             <div class="text-2xl font-bold text-[#0369a1]">${s.syncedCount}</div>
             <div class="text-xs text-slate-500 mb-3">synced contacts · list <code>${cfg.listId || '—'}</code></div>
+            <div class="text-[10px] text-slate-500 mb-2 font-mono">${keyLabel}</div>
             <form class="admin-int-config space-y-2 text-xs mb-3" data-provider="${s.provider}">
               <input name="listId" value="${(cfg.listId || '').replace(/"/g, '&quot;')}" placeholder="List ID" class="w-full border rounded-lg px-2 py-1.5">
-              <input name="apiKey" type="password" value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}" placeholder="API Key" class="w-full border rounded-lg px-2 py-1.5">
+              <input name="apiKey" type="text" value="${cfg.source === 'env' ? (cfg.apiKey || 'from .env') : ''}" placeholder="API key (admin: from .env)" class="w-full border rounded-lg px-2 py-1.5 bg-slate-50" readonly>
               <label class="flex items-center gap-2"><input type="checkbox" name="enabled" ${cfg.enabled ? 'checked' : ''}> Enabled</label>
-              <button type="submit" class="w-full py-1.5 border rounded-lg hover:bg-slate-50">Save via API</button>
+              <button type="submit" class="w-full py-1.5 border rounded-lg hover:bg-slate-50">Save list settings</button>
             </form>
             <div class="flex flex-wrap gap-1">
               <button type="button" data-test="${s.provider}" class="admin-int-test px-2 py-1 text-[11px] border rounded-lg">Test</button>
@@ -922,7 +955,6 @@
         const fd = new FormData(form);
         const res = await P.api.integrations.configure(provider, {
           listId: fd.get('listId'),
-          apiKey: fd.get('apiKey'),
           enabled: fd.get('enabled') === 'on',
         });
         P.portalToast?.(res.ok ? `${provider} config saved via API` : 'Config save failed');
@@ -1090,22 +1122,36 @@
   P.renderAdminApi = async function (el) {
     el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading API panel…</p>';
     const st = P.api?.getStatus?.() || { mode: 'local', connected: true, endpoints: {}, recentCalls: [] };
+    const onProd = typeof window !== 'undefined' && /upperroomdfw\.com|amplifyapp\.com|cloudfront\.net/i.test(window.location.hostname || '');
     let hooks = P.get('webhooks', []);
     let hookLog = P.get('webhook_log', []);
     let eventLog = [];
+    let platform = null;
     if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
       try {
-        hooks = await P.api.webhooks.list();
-        hookLog = await P.api.webhooks.log();
-        eventLog = await P.api.webhooks.eventsLog();
+        const [hookList, wlog, elog, plat] = await Promise.all([
+          P.api.webhooks.list(),
+          P.api.webhooks.log(),
+          P.api.webhooks.eventsLog(),
+          fetch('/api/platform/integrations', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } }).then((r) => r.ok ? r.json() : null),
+        ]);
+        hooks = hookList;
+        hookLog = wlog;
+        eventLog = elog;
+        platform = plat;
         P.set('webhooks', hooks);
       } catch { /* keep local */ }
     }
+    const platformRows = platform?.platform ? Object.entries(platform.platform).map(([k, v]) => {
+      const on = v && (v.enabled === true || v.enabled === undefined && v.host);
+      return `<div class="flex justify-between py-1 border-b text-xs"><span class="capitalize">${k}</span><span class="${on ? 'text-emerald-600' : 'text-slate-400'}">${on ? 'env ✓' : 'off'}</span></div>`;
+    }).join('') : '';
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="portal-panel">
           <h3 class="font-semibold mb-3">API Connection</h3>
-          <p class="text-xs text-slate-500 mb-4">Local mode uses browser storage. Switch to remote when your backend is ready.</p>
+          <p class="text-xs text-slate-500 mb-4">${onProd ? 'Production is locked to remote API — credentials load from server .env.' : 'Local mode uses browser storage. Switch to remote when your backend is ready.'}</p>
+          ${onProd ? `<div class="text-sm mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800"><i class="fa-solid fa-link mr-1"></i> Connected: <strong>${st.mode}</strong> → ${st.endpoints?.base || location.origin}</div>` : `
           <form id="admin-api-config" class="space-y-3 text-sm">
             <div>
               <label class="text-xs font-medium">Mode</label>
@@ -1119,7 +1165,8 @@
               <input name="base" value="${st.endpoints?.base || ''}" placeholder="https://api.yourdomain.com" class="w-full border rounded-xl px-3 py-2 text-sm">
             </div>
             <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl text-sm">Save API Config</button>
-          </form>
+          </form>`}
+          ${platformRows ? `<div class="mt-4"><h4 class="text-xs font-semibold mb-2">Platform .env services</h4>${platformRows}</div>` : ''}
           <div class="mt-4 text-xs space-y-1">
             <div><strong>Auth:</strong> ${st.endpoints?.auth || '/api/auth'}</div>
             <div><strong>Billing:</strong> ${st.endpoints?.billing || '/api/billing'}</div>

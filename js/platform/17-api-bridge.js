@@ -123,9 +123,20 @@
         P.apiConfig.mode = 'remote';
         P.apiConfig.endpoints.base = base;
         P.set('api_config', P.apiConfig);
-        P.emit('api:connected', await res.json());
+        const health = await res.json();
+        P.emit('api:connected', health);
+        if (isProductionHost()) {
+          try {
+            const cfgRes = await fetch((base || '') + '/api/config', { credentials: 'omit' });
+            if (cfgRes.ok) P._remoteConfig = await cfgRes.json();
+          } catch { /* ignore */ }
+        }
         return true;
       } catch { /* try next */ }
+    }
+    if (isProductionHost()) {
+      P.apiConfig.mode = 'remote';
+      P.set('api_config', P.apiConfig);
     }
     return false;
   };
@@ -407,12 +418,32 @@
     },
 
     integrations: {
+      platform() {
+        return call('integrations.platform', async () => P._platformIntegrations || {}, '/api/platform/integrations');
+      },
+
       list() {
         return call('integrations.list', async () => ({
           providers: P.getIntegrationStats?.() || [],
           config: P.getIntegrationConfig?.() || {},
           subscribers: P.get('subscribers', []).length,
         }), P.apiConfig.endpoints.integrations);
+      },
+
+      memberList() {
+        return call('integrations.memberList', async () => ({
+          integrations: P.get('member_integration_config', {}),
+        }), '/api/member/integrations');
+      },
+
+      memberSave(provider, config) {
+        return call('integrations.memberSave', async () => {
+          const stored = P.get('member_integration_config', {});
+          stored[provider] = { ...(stored[provider] || {}), ...config, source: 'member' };
+          P.set('member_integration_config', stored);
+          P._memberIntegrations = stored;
+          return { ok: true, config: stored[provider] };
+        }, '/api/member/integrations/' + provider, { method: 'PATCH', body: config });
       },
 
       get(provider) {
@@ -664,13 +695,16 @@
 
       const role = getTokenRole();
       if (role === 'admin') {
-        const [clients, orders, stats, claims, tickets, seo] = await Promise.all([
+        const [clients, orders, stats, claims, tickets, seo, platform, integList, integStatus] = await Promise.all([
           remoteFetch('/api/clients').catch(() => []),
           remoteFetch('/api/admin/orders').catch(() => []),
           remoteFetch('/api/admin/stats').catch(() => null),
           remoteFetch('/api/claims').catch(() => []),
           remoteFetch('/api/support').catch(() => []),
           remoteFetch('/api/seo/pages').catch(() => null),
+          remoteFetch('/api/platform/integrations').catch(() => null),
+          remoteFetch('/api/integrations').catch(() => null),
+          remoteFetch('/api/integrations/status').catch(() => null),
         ]);
         if (Array.isArray(clients)) P.set('clients', clients.map(normalizeClient));
         if (Array.isArray(orders)) P.set('orders', orders);
@@ -678,13 +712,17 @@
         if (Array.isArray(claims)) P.set('claims', claims);
         if (Array.isArray(tickets)) P.set('support_tickets', tickets);
         if (seo?.pages) P.set('page_settings', seo.pages);
+        if (platform?.ok) P.applyPlatformIntegrations?.(platform);
+        if (integList?.subscriberEmails) P.set('subscribers', integList.subscriberEmails);
+        if (integStatus) P.set('integration_status_cache', integStatus);
       } else if (me?.client) {
-        const [leads, invoices, claims, msgs, training] = await Promise.all([
+        const [leads, invoices, claims, msgs, training, memberInteg] = await Promise.all([
           remoteFetch('/api/leads').catch(() => []),
           remoteFetch('/api/billing/invoices').catch(() => []),
           remoteFetch('/api/claims').catch(() => []),
           remoteFetch('/api/messages').catch(() => []),
           remoteFetch('/api/training').catch(() => null),
+          remoteFetch('/api/member/integrations').catch(() => null),
         ]);
         if (Array.isArray(leads)) P.set('leads', leads.map(normalizeLead));
         if (Array.isArray(invoices)) P.set('invoices', invoices);
@@ -694,6 +732,7 @@
           const key = (me.client.email || me.client.id || '').toLowerCase();
           localStorage.setItem('training_' + key, JSON.stringify(training.completed));
         }
+        if (memberInteg?.ok) P.applyMemberIntegrations?.(memberInteg);
       }
       P.emit('api:synced', { role });
     } catch (e) {

@@ -212,6 +212,7 @@
 
     if (res?.token) P?.storeApiToken?.(res.token);
     if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+    await P?.syncPlatformFromApi?.();
     showDashboard(client);
     P?.portalToast?.('Welcome back, ' + (client.name || 'partner') + '!');
   }

@@ -1,24 +1,16 @@
-const { setIntegrationSettings } = require('./services/platform-settings');
+const {
+  seedPlatformIntegrations,
+  envProviderDefaults,
+} = require('./services/platform-integrations');
 
 function ensureIntegrations(db) {
-  const defaults = {
-    mailchimp: {
-      listId: process.env.MAILCHIMP_LIST_ID || '',
-      enabled: !!process.env.MAILCHIMP_API_KEY,
-    },
-    vbout: {
-      listId: process.env.VBOUT_LIST_ID || '',
-      enabled: !!process.env.VBOUT_API_KEY,
-    },
-  };
-
-  for (const [provider, cfg] of Object.entries(defaults)) {
-    if (!cfg.listId) continue;
-    const current = require('./services/platform-settings').getIntegrationSettings(db, provider);
-    if (!current.listId) {
-      setIntegrationSettings(db, provider, cfg);
-      console.log(`  Integrations: seeded ${provider} listId=${cfg.listId}`);
-    }
+  seedPlatformIntegrations(db);
+  const env = envProviderDefaults();
+  const active = Object.entries(env).filter(([, c]) => c.apiKeySet).map(([p]) => p);
+  if (active.length) {
+    console.log(`  Integrations: platform .env active — ${active.join(', ')}`);
+  } else {
+    console.log('  Integrations: no provider API keys in .env');
   }
 }
 

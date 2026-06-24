@@ -21,6 +21,13 @@ const { sendEmail } = require('../services/email');
 const dnsService = require('../services/dns');
 const { uploadMedia, deleteMediaKey, assetToApi } = require('../services/media-storage');
 const { getSeoPages, getSeoPage, setSeoPage } = require('../services/seo-settings');
+const {
+  getAdminPlatformIntegrations,
+  getMemberIntegrations,
+  setMemberIntegration,
+  updateAdminProviderSettings,
+  PROVIDERS,
+} = require('../services/platform-integrations');
 
 function allowDevBilling() {
   return !isStripeEnabled() && !isProduction();
@@ -85,6 +92,10 @@ function createRouter(db, limiters = {}) {
       results: checks.results,
       config: checks.config,
     });
+  });
+
+  router.get('/platform/integrations', adminRequired, (req, res) => {
+    res.json({ ok: true, ...getAdminPlatformIntegrations(db) });
   });
 
   router.get('/billing/stripe-status', (req, res) => {
@@ -729,13 +740,43 @@ function createRouter(db, limiters = {}) {
     res.json(listingToApi(updated));
   });
 
-  /* ─── INTEGRATIONS (stubs wired for frontend) ─── */
+  /* ─── INTEGRATIONS ─── */
   router.get('/integrations', adminRequired, (req, res) => {
+    const platform = getAdminPlatformIntegrations(db);
     res.json({
-      providers: ['mailchimp', 'vbout', 'acumbamail'],
+      ok: true,
+      source: 'env',
+      providers: PROVIDERS,
       config: integrationConfig(),
+      providerConfig: platform.providers,
+      platform: platform.platform,
       subscribers: db.prepare('SELECT COUNT(*) AS c FROM subscribers').get().c,
+      subscriberEmails: db.prepare('SELECT email FROM subscribers ORDER BY created_at DESC LIMIT 100').all().map((r) => r.email),
     });
+  });
+
+  router.get('/member/integrations', authRequired, (req, res) => {
+    if (req.user.role === 'admin') {
+      return res.status(403).json({ ok: false, error: 'Use /api/platform/integrations as admin' });
+    }
+    if (!req.user.clientId) return res.status(400).json({ ok: false, error: 'Client account required' });
+    res.json(getMemberIntegrations(db, req.user.clientId));
+  });
+
+  router.patch('/member/integrations/:provider', authRequired, (req, res) => {
+    if (req.user.role === 'admin') {
+      return res.status(403).json({ ok: false, error: 'Admins use platform .env credentials' });
+    }
+    if (!req.user.clientId) return res.status(400).json({ ok: false, error: 'Client account required' });
+    const body = req.body || {};
+    const result = setMemberIntegration(db, req.user.clientId, req.params.provider, {
+      listId: body.listId,
+      apiKey: body.apiKey,
+      enabled: body.enabled,
+      clearApiKey: body.clearApiKey,
+    });
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
   });
 
   router.get('/integrations/status', adminRequired, async (req, res) => {
@@ -760,8 +801,6 @@ function createRouter(db, limiters = {}) {
     res.json({ ok: true, synced: sync.synced, email, results: sync.results });
   });
 
-  const PROVIDERS = ['mailchimp', 'vbout', 'acumbamail'];
-
   router.get('/integrations/log', adminRequired, (req, res) => {
     const rows = db.prepare('SELECT * FROM integration_log ORDER BY at DESC LIMIT 50').all();
     res.json({ ok: true, entries: rows });
@@ -770,21 +809,22 @@ function createRouter(db, limiters = {}) {
   router.get('/integrations/:provider', adminRequired, (req, res) => {
     const provider = req.params.provider;
     if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
-    const cfg = getIntegrationSettings(db, provider);
+    const platform = getAdminPlatformIntegrations(db);
+    const cfg = platform.providers[provider] || {};
     const synced = db.prepare('SELECT COUNT(*) AS c FROM integration_log WHERE provider = ? AND status = ?').get(provider, 'ok').c;
-    res.json({ ok: true, provider, config: cfg, syncedCount: synced });
+    res.json({ ok: true, provider, config: cfg, syncedCount: synced, source: 'env' });
   });
 
   router.post('/integrations/:provider/config', adminRequired, (req, res) => {
     const provider = req.params.provider;
     if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
     const body = req.body?.config || req.body || {};
-    const cfg = setIntegrationSettings(db, provider, {
+    const result = updateAdminProviderSettings(db, provider, {
       listId: body.listId,
-      apiKey: body.apiKey,
       enabled: body.enabled !== false,
     });
-    res.json({ ok: true, config: cfg });
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
   });
 
   router.post('/integrations/:provider/test', adminRequired, async (req, res) => {

@@ -80,7 +80,7 @@
     if (P.api.auth.isAdmin() && localStorage.getItem('urdfw_api_token')) {
       loginEl.classList.add('hidden');
       if (appEl) appEl.classList.remove('hidden');
-      P.renderAdminShell(rootId);
+      P.syncPlatformFromApi?.().then(() => P.renderAdminShell(rootId));
       if (opts.onLogin) opts.onLogin();
     }
   };
