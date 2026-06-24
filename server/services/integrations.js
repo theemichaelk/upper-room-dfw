@@ -135,13 +135,19 @@ async function verifyAcumbamail() {
     }, body);
     if (res.status === 200 && res.body && typeof res.body === 'object') {
       const smtp = await verifySmtp().catch((err) => ({ ok: false, error: err.message }));
+      const smtpBlocked = !smtp.ok && (smtp.error || '').includes('535');
       return {
         ok: true,
         provider: 'acumbamail',
         lists: Object.keys(res.body).length,
         smtpRelay: smtp.ok,
         smtpError: smtp.ok ? null : (smtp.error || 'SMTP relay not verified'),
-        message: smtp.ok ? 'Acumbamail API + SMTP relay connected' : 'Acumbamail API OK — enable SMTP relay in Acumbamail dashboard if sends fail',
+        smtpActivationRequired: smtpBlocked,
+        message: smtp.ok
+          ? 'Acumbamail API + SMTP relay connected'
+          : smtpBlocked
+            ? 'Acumbamail API OK — SMTP relay not active yet. Contact Acumbamail technical support to activate transactional SMTP.'
+            : 'Acumbamail API OK — SMTP relay not verified',
       };
     }
     return { ok: false, provider: 'acumbamail', error: res.body?.error || `HTTP ${res.status}` };
@@ -172,7 +178,11 @@ async function verifySmtp() {
       message: `${relay} SMTP connection verified`,
     };
   } catch (err) {
-    return { ok: false, provider: 'smtp', error: err.message };
+    const msg = err.message || '';
+    const activationHint = msg.includes('535') && process.env.SMTP_HOST?.includes('acumbamail')
+      ? ' — contact Acumbamail support to activate SMTP relay (transactional email package required)'
+      : '';
+    return { ok: false, provider: 'smtp', error: msg + activationHint };
   }
 }
 

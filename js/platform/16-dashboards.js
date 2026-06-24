@@ -640,10 +640,29 @@
     });
   };
 
-  P.renderAdminEmail = function (el) {
+  P.renderAdminEmail = async function (el) {
     const log = P.get('email_log', []);
     const templates = P.emailTemplates;
+    let smtpBanner = '';
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const r = await fetch('/api/integrations/status', {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') },
+        });
+        const j = await r.json();
+        const smtp = (j.results || []).find((x) => x.provider === 'smtp');
+        const acumba = (j.results || []).find((x) => x.provider === 'acumbamail');
+        if (smtp?.ok) {
+          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> Acumbamail SMTP relay connected (${smtp.host || 'smtp.acumbamail.com'})</div>`;
+        } else if (acumba?.smtpActivationRequired || (smtp?.error || '').includes('535')) {
+          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900"><strong>Acumbamail SMTP not active yet.</strong> API is connected but relay login fails (535). Contact <a class="underline" href="https://acumbamail.com/contact/" target="_blank" rel="noopener">Acumbamail technical support</a> to activate transactional SMTP on your account, then run a test send.</div>`;
+        } else if (smtp?.error) {
+          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800">SMTP: ${smtp.error}</div>`;
+        }
+      } catch { /* ignore */ }
+    }
     el.innerHTML = `
+      ${smtpBanner}
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Email Templates</h3>
@@ -658,7 +677,7 @@
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Send Test Email</h3>
           <form id="admin-test-email" class="space-y-2 text-sm">
-            <select name="template" class="w-full border rounded px-3 py-2">${Object.keys(templates).map((k) => `<option value="${k}">${k}</option>`).join('')}</select>
+            <select name="template" class="w-full border rounded px-3 py-2"><option value="smtp_ping">smtp_ping (connection test)</option>${Object.keys(templates).map((k) => `<option value="${k}">${k}</option>`).join('')}</select>
             <input name="email" placeholder="recipient@email.com" class="w-full border rounded px-3 py-2">
             <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-2xl text-sm">Send Test via SMTP</button>
           </form>
