@@ -20,17 +20,27 @@
     <div id="recaptcha"></div>
     <button type="submit" class="w-full py-2 bg-[#0369a1] text-white rounded">Submit Ticket</button>
   </form>
+  <script src="js/site-forms.js"></script>
   <script src="js/platform/loader.js"></script>
   <script>
     setTimeout(() => {
       URDFWPlatform.initRecaptcha(document.getElementById('recaptcha'));
-      document.getElementById('support-form').onsubmit = (e) => {
+      document.getElementById('support-form').onsubmit = async (e) => {
         e.preventDefault();
         if (!URDFWPlatform.verifyRecaptcha()) return alert('Complete reCAPTCHA');
-        const fd = new FormData(e.target);
-        const t = URDFWPlatform.submitSupportForm(Object.fromEntries(fd));
-        alert('Ticket #' + t.id.slice(0,8) + ' created. We will reply within 24h.');
-        e.target.reset();
+        const payload = Object.fromEntries(new FormData(e.target).entries());
+        const btn = e.target.querySelector('button[type="submit"]');
+        const btnHtml = btn?.innerHTML;
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Submitting…'; }
+        try {
+          const res = await window.URDFW.submitSupport(payload);
+          alert('Ticket #' + (res.ticket?.id || '').slice(0, 8) + ' created. We will reply within 24h.');
+          e.target.reset();
+        } catch (err) {
+          alert(err.message || 'Could not submit ticket. Email michaelk@tsbrenterprises.com');
+        } finally {
+          if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+        }
       };
     }, 800);
   </script>

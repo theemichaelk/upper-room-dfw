@@ -4,8 +4,11 @@
     {
       "Sid": "UrdfwDbBackupReadWrite",
       "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject", "s3:HeadObject"],
-      "Resource": "arn:aws:s3:::upperroomdfw.com/data/*"
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:HeadObject", "s3:DeleteObject"],
+      "Resource": [
+        "arn:aws:s3:::upperroomdfw.com/data/*",
+        "arn:aws:s3:::upperroomdfw.com/media/*"
+      ]
     },
     {
       "Sid": "UrdfwDbBackupList",
@@ -13,7 +16,7 @@
       "Action": ["s3:ListBucket"],
       "Resource": "arn:aws:s3:::upperroomdfw.com",
       "Condition": {
-        "StringLike": { "s3:prefix": ["data/*"] }
+        "StringLike": { "s3:prefix": ["data/*", "media/*"] }
       }
     }
   ]

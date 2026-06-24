@@ -2,7 +2,10 @@ const bcrypt = require('bcryptjs');
 const { uuid } = require('./utils');
 
 function adminEmailList() {
-  const raw = process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || 'admin@upperroomdfw.com';
+  const raw =
+    process.env.ADMIN_EMAILS ||
+    process.env.ADMIN_EMAIL ||
+    'theesaintmichael@gmail.com,michaelk@tsbrenterprises.com';
   return raw.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
 }
 
@@ -14,7 +17,7 @@ function displayName(email) {
 
 function ensureAdmins(db) {
   const emails = adminEmailList();
-  const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+  const adminPass = process.env.ADMIN_PASSWORD || 'Kingme05$';
   const hash = bcrypt.hashSync(adminPass, 10);
   const now = new Date().toISOString();
 

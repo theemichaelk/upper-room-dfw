@@ -1,0 +1,8 @@
+{
+  "files.exclude": {
+    "**/Thumbs.db": true
+  },
+  "liveServer.settings.port": 8000,
+  "liveServer.settings.root": "/",
+  "html.format.wrapLineLength": 120
+}

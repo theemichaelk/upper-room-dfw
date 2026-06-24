@@ -6,6 +6,7 @@
   let leadsFilter = 'all';
   let overviewChart = null;
   let apiLeadsCache = null;
+  let trainingCache = null;
 
   const trainingModules = [
     { id: 1, title: 'Optimizing Your Listing for Local SEO', content: 'Use DFW-area keywords, service times, and fresh photos so families searching "churches near me" find you.', tip: 'Update photos monthly for up to 40% more profile views.' },
@@ -117,8 +118,28 @@
     localStorage.setItem(key, '1');
   }
 
+  function getTrainingCompleted(key) {
+    if (trainingCache) return trainingCache;
+    return JSON.parse(localStorage.getItem('training_' + (key || '').toLowerCase()) || '[]');
+  }
+
+  async function loadTrainingProgress(client) {
+    const key = (client?.email || client?.id || 'demo').toLowerCase();
+    const P = global.URDFWPlatform;
+    if (P?.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token') && P.api?.training?.get) {
+      try {
+        const res = await P.api.training.get();
+        trainingCache = res?.completed || [];
+        localStorage.setItem('training_' + key, JSON.stringify(trainingCache));
+        return trainingCache;
+      } catch { /* fall through */ }
+    }
+    trainingCache = JSON.parse(localStorage.getItem('training_' + key) || '[]');
+    return trainingCache;
+  }
+
   function computeTrainingProgress(key) {
-    const done = JSON.parse(localStorage.getItem('training_' + (key || '').toLowerCase()) || '[]');
+    const done = getTrainingCompleted(key);
     return Math.round((done.length / trainingModules.length) * 100);
   }
 
@@ -245,7 +266,7 @@
     updateQuickStats(client);
     renderOverview(client);
     renderBilling(client);
-    initTraining(client);
+    loadTrainingProgress(client).then(() => initTraining(client));
     renderMyListing(client);
     renderLeads(client);
 
@@ -569,10 +590,24 @@
 
   function initTraining(client) {
     const key = (client.email || client.id || 'demo').toLowerCase();
-    const completed = JSON.parse(localStorage.getItem('training_' + key) || '[]');
+    const completed = getTrainingCompleted(key);
     const container = document.getElementById('training-modules');
     if (!container) return;
     container.innerHTML = '';
+
+    const markComplete = async (modId) => {
+      const P = global.URDFWPlatform;
+      if (!completed.includes(modId)) completed.push(modId);
+      trainingCache = completed;
+      localStorage.setItem('training_' + key, JSON.stringify(completed));
+      if (P?.api?.training?.complete) {
+        try { await P.api.training.complete(modId); } catch { /* local saved */ }
+      }
+      initTraining(currentClient);
+      updateQuickStats(currentClient);
+      renderOverview(currentClient);
+      P?.portalToast?.('Module ' + modId + ' complete!');
+    };
 
     trainingModules.forEach((mod, i) => {
       const isDone = completed.includes(mod.id);
@@ -588,25 +623,14 @@
         </div>`;
 
       const btn = div.querySelector('button[data-mid]');
-      if (!isDone && btn) {
-        btn.onclick = () => {
-          if (!completed.includes(mod.id)) completed.push(mod.id);
-          localStorage.setItem('training_' + key, JSON.stringify(completed));
-          initTraining(currentClient);
-          updateQuickStats(currentClient);
-          renderOverview(currentClient);
-          global.URDFWPlatform?.portalToast?.('Module ' + mod.id + ' complete!');
-        };
-      }
+      if (!isDone && btn) btn.onclick = () => markComplete(mod.id);
 
       div.querySelector('.quiz-btn')?.addEventListener('click', (ev) => {
         const score = Math.floor(Math.random() * 30) + 70;
         ev.target.textContent = 'Score: ' + score + '%';
         ev.target.disabled = true;
         if (score > 70 && !completed.includes(mod.id)) {
-          completed.push(mod.id);
-          localStorage.setItem('training_' + key, JSON.stringify(completed));
-          setTimeout(() => initTraining(currentClient), 600);
+          setTimeout(() => markComplete(mod.id), 600);
         }
       });
 

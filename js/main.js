@@ -98,34 +98,33 @@ function fakeAction(title, detail, opts) {
   document.body.appendChild(modal);
 }
 
-function subscribeNewsletter(e) {
+async function subscribeNewsletter(e) {
   e.preventDefault();
   const input = document.getElementById('newsletter-email');
   if (!input) return;
   const email = input.value.trim();
   if (!email) return;
 
-  const syncIntegrations = () => {
-    if (window.URDFWPlatform?.api?.integrations?.subscribe) {
-      window.URDFWPlatform.api.integrations.subscribe(email);
-    } else {
-      let subs = JSON.parse(localStorage.getItem('urdfw_subscribers') || '[]');
-      if (!subs.includes(email)) subs.push(email);
-      localStorage.setItem('urdfw_subscribers', JSON.stringify(subs));
-    }
-  };
-  syncIntegrations();
-  setTimeout(syncIntegrations, 1200);
-
   const form = e.target;
   const originalText = form.innerHTML;
-  form.innerHTML = `<span class="font-semibold">Thank you! You're subscribed.</span>`;
-  
-  setTimeout(() => {
-    showToast(`Welcome! We'll send the next DFW faith digest to ${email}.`);
-    input.value = '';
+  form.innerHTML = `<span class="font-semibold">Subscribing…</span>`;
+
+  try {
+    if (window.URDFW?.subscribeEmail) {
+      await window.URDFW.subscribeEmail(email);
+    } else if (window.URDFWPlatform?.api?.integrations?.subscribe) {
+      await window.URDFWPlatform.api.integrations.subscribe(email);
+    }
+    form.innerHTML = `<span class="font-semibold">Thank you! You're subscribed.</span>`;
+    setTimeout(() => {
+      showToast(`Welcome! We'll send the next DFW faith digest to ${email}.`);
+      input.value = '';
+      form.innerHTML = originalText;
+    }, 1400);
+  } catch (err) {
     form.innerHTML = originalText;
-  }, 1400);
+    showToast(err.message || 'Subscription failed. Please try again.');
+  }
 }
 
 // Login dropdown: click to choose Member vs Admin (hover-only was broken on click/touch)

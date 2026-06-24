@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const templates = require('./email-templates');
 
 let transporter = null;
 
@@ -28,38 +29,23 @@ async function sendEmail({ to, subject, html, text }) {
 }
 
 async function sendWelcome(email, name) {
-  const appUrl = process.env.APP_URL || 'http://localhost:8000';
-  return sendEmail({
-    to: email,
-    subject: 'Welcome to Upper Room DFW',
-    html: `<p>Hi ${name},</p><p>Your church registration is received. <a href="${appUrl}/member-dashboard.html">Open your dashboard</a> to complete your listing and start your free trial.</p>`,
-  });
+  const tpl = templates.welcomeEmail(name);
+  return sendEmail({ to: email, ...tpl });
 }
 
 async function sendPasswordReset(email, token) {
-  const appUrl = process.env.APP_URL || 'http://localhost:8000';
-  const link = `${appUrl}/member-dashboard.html?reset=${token}`;
-  return sendEmail({
-    to: email,
-    subject: 'Reset your Upper Room DFW password',
-    html: `<p>Click to reset your password (expires in 1 hour):</p><p><a href="${link}">${link}</a></p>`,
-  });
+  const tpl = templates.passwordResetEmail(token);
+  return sendEmail({ to: email, ...tpl });
 }
 
 async function sendLeadNotification(churchEmail, lead) {
-  return sendEmail({
-    to: churchEmail,
-    subject: `New directory lead: ${lead.name}`,
-    html: `<p><strong>${lead.name}</strong> (${lead.email}) contacted you:</p><p>${lead.message}</p>`,
-  });
+  const tpl = templates.leadNotificationEmail(lead);
+  return sendEmail({ to: churchEmail, ...tpl });
 }
 
 async function sendPaymentReceipt(email, amount, plan) {
-  return sendEmail({
-    to: email,
-    subject: `Payment received — ${plan} plan`,
-    html: `<p>Thank you! We received $${amount} for your ${plan} subscription.</p>`,
-  });
+  const tpl = templates.paymentReceiptEmail(amount, plan);
+  return sendEmail({ to: email, ...tpl });
 }
 
 module.exports = {

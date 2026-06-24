@@ -214,17 +214,18 @@
     });
   };
 
-  P.renderMemberMedia = function (el, client) {
+  P.renderMemberMedia = async function (el, client) {
     if (!el) return;
     const listingId = client?.listingId || client?.id;
-    const media = P.getListingMedia(listingId);
+    const media = await (P.loadListingMedia?.(listingId) || Promise.resolve(P.getListingMedia(listingId)));
+    const thumb = (m) => m.url || m.dataUrl || '';
     el.innerHTML = `
       <h3 class="font-semibold mb-3">Photos &amp; Video</h3>
       <div class="grid md:grid-cols-2 gap-6">
         <div>
           <label class="text-sm font-medium">Upload listing photo</label>
           <input type="file" accept="image/*" id="member-media-upload" class="mt-2 text-sm w-full">
-          <div id="member-media-gallery" class="mt-3 flex flex-wrap gap-2">${media.map((m) => `<img src="${m.dataUrl}" class="w-16 h-16 rounded object-cover border" alt="">`).join('') || '<span class="text-xs text-slate-500">No uploads yet.</span>'}</div>
+          <div id="member-media-gallery" class="mt-3 flex flex-wrap gap-2">${media.map((m) => `<div class="relative group"><img src="${thumb(m)}" class="w-16 h-16 rounded object-cover border" alt=""><button type="button" data-del="${m.id}" class="hidden group-hover:block absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] leading-4">×</button></div>`).join('') || '<span class="text-xs text-slate-500">No uploads yet.</span>'}</div>
           <div class="mt-4">
             <label class="text-xs font-medium">YouTube or Vimeo URL</label>
             <input id="member-video-url" placeholder="https://youtube.com/..." class="w-full border rounded-2xl px-3 py-2 text-sm mt-1">
@@ -246,9 +247,21 @@
     el.querySelector('#member-media-upload').onchange = async (ev) => {
       const file = ev.target.files[0];
       if (!file) return;
-      await P.uploadImageAjax(file, listingId);
+      try {
+        await P.uploadImageAjax(file, listingId, client?.id);
+        P.portalToast?.('Photo uploaded to cloud storage.');
+      } catch (err) {
+        P.portalToast?.(err.message || 'Upload failed');
+      }
       P.renderMemberMedia(el, client);
     };
+
+    el.querySelectorAll('[data-del]').forEach((btn) => {
+      btn.onclick = async () => {
+        await P.deleteListingMedia?.(btn.dataset.del, listingId);
+        P.renderMemberMedia(el, client);
+      };
+    });
 
     const videoUrl = client?.customFields?.youtube || client?.youtube || '';
     if (videoUrl) {
@@ -761,13 +774,30 @@
     };
   };
 
-  P.renderAdminSeo = function (el) {
-    const pages = ['index.html', 'directory.html', 'features.html', 'pricing.html', 'contact.html'];
+  P.renderAdminSeo = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading SEO settings…</div>';
+    let pages = ['index.html', 'directory.html', 'features.html', 'pricing.html', 'contact.html', 'about.html', 'register.html', 'member-dashboard.html'];
+    let pageSettings = {};
+    if (P.apiConfig?.mode === 'remote') {
+      try {
+        const token = localStorage.getItem('urdfw_api_token');
+        const res = await fetch('/api/seo/pages', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.ok) {
+          const data = await res.json();
+          pageSettings = data.pages || {};
+          if (data.defaults?.length) pages = data.defaults;
+          P.set('page_settings', pageSettings);
+        }
+      } catch { /* use local */ }
+    }
+    if (!Object.keys(pageSettings).length) {
+      pages.forEach((p) => { pageSettings[p] = P.getPageSettings(p); });
+    }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Page SEO Settings</h3>
+        <h3 class="font-semibold mb-3">Page SEO Settings <span class="text-xs font-normal text-slate-500">(saved to server)</span></h3>
         <div class="space-y-4">${pages.map((p) => {
-          const s = P.getPageSettings(p);
+          const s = pageSettings[p] || { title: '', description: '', noindex: false };
           return `<form data-page="${p}" class="admin-seo-form border rounded-2xl p-4 text-sm">
             <div class="font-medium mb-2">${p}</div>
             <input name="title" value="${(s.title || '').replace(/"/g, '&quot;')}" placeholder="SEO title" class="w-full border rounded px-3 py-1.5 mb-2 text-xs">
@@ -779,15 +809,16 @@
       </div>`;
 
     el.querySelectorAll('.admin-seo-form').forEach((form) => {
-      form.onsubmit = (e) => {
+      form.onsubmit = async (e) => {
         e.preventDefault();
         const fd = new FormData(form);
-        P.setPageSettings(form.dataset.page, {
+        const patch = {
           title: fd.get('title'),
           description: fd.get('description'),
           noindex: fd.get('noindex') === 'on',
-        });
-        alert('SEO settings saved for ' + form.dataset.page);
+        };
+        await P.setPageSettings(form.dataset.page, patch);
+        P.portalToast?.('SEO settings saved for ' + form.dataset.page);
       };
     });
   };

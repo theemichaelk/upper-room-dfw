@@ -208,6 +208,7 @@
     P.injectPoweredByFooter();
     P.useGeolocation();
     P.enhanceChurchPage();
+    P.loadPageSeoFromApi?.();
 
     const params = new URLSearchParams(location.search);
     if (params.get('lang')) P.setLanguage(params.get('lang'));

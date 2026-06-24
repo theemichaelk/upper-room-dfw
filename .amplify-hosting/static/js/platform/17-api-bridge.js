@@ -59,18 +59,31 @@
     else localStorage.removeItem('urdfw_api_token');
   };
 
+  P.resolveApiBase = function () {
+    P.loadApiConfig();
+    const cfg = P.config?.api || {};
+    const fallback =
+      cfg.fallbackBase ||
+      cfg.endpoints?.base ||
+      (typeof window !== 'undefined' && window.URDFW_API_BASE) ||
+      '';
+    return (fallback || '').replace(/\/$/, '');
+  };
+
   P.detectRemoteApi = async function () {
-    try {
-      const res = await fetch('/api/health');
-      if (!res.ok) return false;
-      P.apiConfig.mode = 'remote';
-      P.apiConfig.endpoints.base = '';
-      P.set('api_config', P.apiConfig);
-      P.emit('api:connected', await res.json());
-      return true;
-    } catch {
-      return false;
+    const candidates = ['', P.resolveApiBase()].filter((v, i, a) => a.indexOf(v) === i);
+    for (const base of candidates) {
+      try {
+        const res = await fetch((base || '') + '/api/health', { credentials: 'omit' });
+        if (!res.ok) continue;
+        P.apiConfig.mode = 'remote';
+        P.apiConfig.endpoints.base = base;
+        P.set('api_config', P.apiConfig);
+        P.emit('api:connected', await res.json());
+        return true;
+      } catch { /* try next */ }
     }
+    return false;
   };
 
   async function call(name, localFn, remotePath, remoteBody) {

@@ -19,6 +19,7 @@
   "integrations": ["mailchimp", "vbout", "acumbamail", "contact-form", "support-form"],
   "api": {
     "mode": "remote",
+    "fallbackBase": "https://upperroomdfw.com",
     "endpoints": {
       "base": "",
       "auth": "/api/auth",

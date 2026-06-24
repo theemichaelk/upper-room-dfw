@@ -53,9 +53,37 @@
     return settings[pageId] || { title: '', description: '', noindex: false };
   };
 
-  P.setPageSettings = function (pageId, settings) {
+  P.setPageSettings = async function (pageId, settings) {
     const all = P.get('page_settings', {});
     all[pageId] = { ...all[pageId], ...settings };
     P.set('page_settings', all);
+    if (P.apiConfig?.mode === 'remote' && P.getTokenRole?.() === 'admin') {
+      try {
+        await P.api?.seo?.savePage(pageId, settings);
+      } catch { /* local cache still updated */ }
+    }
+    return all[pageId];
+  };
+
+  P.loadPageSeoFromApi = async function () {
+    const pageId = (location.pathname || '').split('/').pop() || 'index.html';
+    if (!pageId.endsWith('.html')) return;
+    try {
+      const res = await fetch('/api/seo/page/' + encodeURIComponent(pageId));
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.title || data.description) {
+        P.applySEO({ title: data.title, description: data.description });
+      }
+      if (data.noindex) {
+        let el = document.querySelector('meta[name="robots"]');
+        if (!el) {
+          el = document.createElement('meta');
+          el.setAttribute('name', 'robots');
+          document.head.appendChild(el);
+        }
+        el.setAttribute('content', 'noindex,nofollow');
+      }
+    } catch { /* ignore */ }
   };
 })(window);

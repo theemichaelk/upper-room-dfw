@@ -534,6 +534,67 @@
       },
     },
 
+    training: {
+      get() {
+        return call('training.get', async () => {
+          const key = (localStorage.getItem('urdfw_current_client') || '').toLowerCase();
+          let email = '';
+          try { email = JSON.parse(localStorage.getItem('urdfw_current_client') || '{}').email || ''; } catch { /* ignore */ }
+          const done = JSON.parse(localStorage.getItem('training_' + (email || key).toLowerCase()) || '[]');
+          return { ok: true, completed: done };
+        }, '/api/training');
+      },
+      complete(moduleId) {
+        return call('training.complete', async () => {
+          const client = JSON.parse(localStorage.getItem('urdfw_current_client') || '{}');
+          const key = (client.email || client.id || 'demo').toLowerCase();
+          const done = JSON.parse(localStorage.getItem('training_' + key) || '[]');
+          const mid = Number(moduleId);
+          if (!done.includes(mid)) done.push(mid);
+          localStorage.setItem('training_' + key, JSON.stringify(done));
+          return { ok: true, completed: done };
+        }, '/api/training', { method: 'PATCH', body: { moduleId, complete: true } });
+      },
+    },
+
+    media: {
+      list(listingId) {
+        const q = listingId ? '?listingId=' + encodeURIComponent(listingId) : '';
+        return call('media.list', async () => {
+          const uploads = P.get('media_uploads', {});
+          return { ok: true, assets: uploads[listingId] || [] };
+        }, '/api/media' + q);
+      },
+      upload(data) {
+        return call('media.upload', async () => {
+          const uploads = P.get('media_uploads', {});
+          const lid = data.listingId || 'general';
+          uploads[lid] = uploads[lid] || [];
+          const item = { id: P.uuid(), dataUrl: data.dataUrl, url: data.dataUrl, name: data.name, at: Date.now() };
+          uploads[lid].push(item);
+          P.set('media_uploads', uploads);
+          return { ok: true, asset: item };
+        }, '/api/media', data);
+      },
+      remove(id) {
+        return call('media.remove', async () => ({ ok: true }), '/api/media/' + id, { method: 'DELETE' });
+      },
+    },
+
+    seo: {
+      getPages() {
+        return call('seo.pages', async () => ({ ok: true, pages: P.get('page_settings', {}) }), '/api/seo/pages');
+      },
+      savePage(pageId, patch) {
+        return call('seo.save', async () => {
+          const all = P.get('page_settings', {});
+          all[pageId] = { ...all[pageId], ...patch };
+          P.set('page_settings', all);
+          return { ok: true, page: all[pageId] };
+        }, '/api/seo/pages/' + encodeURIComponent(pageId), { method: 'PATCH', body: patch });
+      },
+    },
+
     webhooks: {
       list() {
         return call('webhooks.list', async () => P.get('webhooks', []), '/api/webhooks').then((r) => r?.webhooks || r || []);
@@ -603,29 +664,36 @@
 
       const role = getTokenRole();
       if (role === 'admin') {
-        const [clients, orders, stats, claims, tickets] = await Promise.all([
+        const [clients, orders, stats, claims, tickets, seo] = await Promise.all([
           remoteFetch('/api/clients').catch(() => []),
           remoteFetch('/api/admin/orders').catch(() => []),
           remoteFetch('/api/admin/stats').catch(() => null),
           remoteFetch('/api/claims').catch(() => []),
           remoteFetch('/api/support').catch(() => []),
+          remoteFetch('/api/seo/pages').catch(() => null),
         ]);
         if (Array.isArray(clients)) P.set('clients', clients.map(normalizeClient));
         if (Array.isArray(orders)) P.set('orders', orders);
         if (stats) P.set('admin_stats_cache', stats);
         if (Array.isArray(claims)) P.set('claims', claims);
         if (Array.isArray(tickets)) P.set('support_tickets', tickets);
+        if (seo?.pages) P.set('page_settings', seo.pages);
       } else if (me?.client) {
-        const [leads, invoices, claims, msgs] = await Promise.all([
+        const [leads, invoices, claims, msgs, training] = await Promise.all([
           remoteFetch('/api/leads').catch(() => []),
           remoteFetch('/api/billing/invoices').catch(() => []),
           remoteFetch('/api/claims').catch(() => []),
           remoteFetch('/api/messages').catch(() => []),
+          remoteFetch('/api/training').catch(() => null),
         ]);
         if (Array.isArray(leads)) P.set('leads', leads.map(normalizeLead));
         if (Array.isArray(invoices)) P.set('invoices', invoices);
         if (Array.isArray(claims)) P.set('claims', claims);
         if (Array.isArray(msgs) && me?.user?.sub) P.set('messages_' + me.user.sub, msgs);
+        if (training?.completed) {
+          const key = (me.client.email || me.client.id || '').toLowerCase();
+          localStorage.setItem('training_' + key, JSON.stringify(training.completed));
+        }
       }
       P.emit('api:synced', { role });
     } catch (e) {

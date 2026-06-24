@@ -59,7 +59,6 @@
       }
 
       if (res.token) P.storeApiToken?.(res.token);
-      localStorage.setItem('urdfw_admin_mode', 'true');
       await P.syncPlatformFromApi?.();
 
       loginEl.classList.add('hidden');
@@ -78,7 +77,7 @@
       if (passInput) passInput.value = 'Kingme05$';
     });
 
-    if (P.api.auth.isAdmin()) {
+    if (P.api.auth.isAdmin() && localStorage.getItem('urdfw_api_token')) {
       loginEl.classList.add('hidden');
       if (appEl) appEl.classList.remove('hidden');
       P.renderAdminShell(rootId);

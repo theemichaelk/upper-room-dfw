@@ -19,6 +19,8 @@ const {
 } = require('../services/platform-settings');
 const { sendEmail } = require('../services/email');
 const dnsService = require('../services/dns');
+const { uploadMedia, deleteMediaKey, assetToApi } = require('../services/media-storage');
+const { getSeoPages, getSeoPage, setSeoPage } = require('../services/seo-settings');
 
 function allowDevBilling() {
   return !isStripeEnabled() && !isProduction();
@@ -954,6 +956,127 @@ function createRouter(db, limiters = {}) {
     const row = db.prepare('SELECT * FROM short_links WHERE id = ? OR alias = ?').get(req.params.id, req.params.id);
     if (!row) return res.status(404).json({ ok: false, error: 'Link not found' });
     res.json({ ok: true, id: row.id, url: row.target_url, tinyUrl: row.tiny_url });
+  });
+
+  /* ─── TRAINING PROGRESS ─── */
+  router.get('/training', authRequired, (req, res) => {
+    const row = db.prepare('SELECT * FROM training_progress WHERE user_id = ?').get(req.user.sub);
+    let completed = [];
+    try { completed = JSON.parse(row?.completed_json || '[]'); } catch { /* ignore */ }
+    res.json({ ok: true, completed, updatedAt: row?.updated_at || null });
+  });
+
+  router.patch('/training', authRequired, (req, res) => {
+    const body = req.body || {};
+    const now = new Date().toISOString();
+    let row = db.prepare('SELECT * FROM training_progress WHERE user_id = ?').get(req.user.sub);
+    let completed = [];
+    if (row) {
+      try { completed = JSON.parse(row.completed_json || '[]'); } catch { /* ignore */ }
+    }
+    if (Array.isArray(body.completed)) {
+      completed = body.completed.map((n) => Number(n)).filter((n) => !Number.isNaN(n));
+    } else if (body.moduleId != null) {
+      const mid = Number(body.moduleId);
+      if (!Number.isNaN(mid)) {
+        if (body.complete === false) completed = completed.filter((x) => x !== mid);
+        else if (!completed.includes(mid)) completed.push(mid);
+      }
+    }
+    db.prepare(`
+      INSERT INTO training_progress (user_id, client_id, completed_json, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET completed_json = excluded.completed_json, client_id = excluded.client_id, updated_at = excluded.updated_at
+    `).run(req.user.sub, req.user.clientId || null, JSON.stringify(completed), now);
+    res.json({ ok: true, completed, updatedAt: now });
+  });
+
+  /* ─── MEDIA (S3) ─── */
+  router.get('/media', authRequired, (req, res) => {
+    const listingId = (req.query.listingId || '').trim();
+    const clientId = req.user.role === 'admin' ? (req.query.clientId || null) : req.user.clientId;
+    let rows;
+    if (listingId) {
+      rows = db.prepare('SELECT * FROM media_assets WHERE listing_id = ? ORDER BY created_at DESC').all(listingId);
+    } else if (clientId) {
+      rows = db.prepare('SELECT * FROM media_assets WHERE client_id = ? ORDER BY created_at DESC').all(clientId);
+    } else {
+      rows = req.user.role === 'admin'
+        ? db.prepare('SELECT * FROM media_assets ORDER BY created_at DESC LIMIT 200').all()
+        : [];
+    }
+    if (req.user.role !== 'admin') {
+      rows = rows.filter((r) => r.client_id === req.user.clientId);
+    }
+    res.json({ ok: true, assets: rows.map(assetToApi) });
+  });
+
+  router.post('/media', authRequired, async (req, res) => {
+    const body = req.body || {};
+    const listingId = (body.listingId || body.listing_id || '').trim();
+    const clientId = req.user.role === 'admin' ? (body.clientId || body.client_id) : req.user.clientId;
+    if (!clientId) return res.status(400).json({ ok: false, error: 'Client account required' });
+    if (!body.dataUrl && !body.buffer) return res.status(400).json({ ok: false, error: 'Image data required' });
+    try {
+      const uploaded = await uploadMedia({
+        clientId,
+        listingId: listingId || 'general',
+        name: body.name,
+        dataUrl: body.dataUrl,
+        mimeType: body.mimeType,
+      });
+      const id = uploaded.id;
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO media_assets (id, client_id, listing_id, name, mime_type, s3_key, url, kind, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id, clientId, listingId || 'general', body.name || 'upload', uploaded.mime,
+        uploaded.key, uploaded.url, body.kind || 'image', now
+      );
+      const row = db.prepare('SELECT * FROM media_assets WHERE id = ?').get(id);
+      res.json({ ok: true, asset: assetToApi(row) });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.delete('/media/:id', authRequired, async (req, res) => {
+    const row = db.prepare('SELECT * FROM media_assets WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Asset not found' });
+    if (req.user.role !== 'admin' && row.client_id !== req.user.clientId) {
+      return res.status(403).json({ ok: false, error: 'Forbidden' });
+    }
+    try {
+      await deleteMediaKey(row.s3_key);
+      db.prepare('DELETE FROM media_assets WHERE id = ?').run(req.params.id);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  /* ─── SEO (server storage) ─── */
+  router.get('/seo/pages', adminRequired, (req, res) => {
+    res.json({ ok: true, ...getSeoPages(db) });
+  });
+
+  router.get('/seo/page/:pageId', (req, res) => {
+    const pageId = decodeURIComponent(req.params.pageId || '');
+    if (!pageId) return res.status(400).json({ ok: false, error: 'Page id required' });
+    res.json({ ok: true, ...getSeoPage(db, pageId) });
+  });
+
+  router.patch('/seo/pages/:pageId', adminRequired, (req, res) => {
+    const pageId = decodeURIComponent(req.params.pageId || '');
+    if (!pageId) return res.status(400).json({ ok: false, error: 'Page id required' });
+    const patch = req.body || {};
+    const updated = setSeoPage(db, pageId, {
+      title: patch.title,
+      description: patch.description,
+      noindex: !!patch.noindex,
+    });
+    res.json({ ok: true, page: updated });
   });
 
   /* ─── DNS (Route53 + multi-site) ─── */

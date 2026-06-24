@@ -157,6 +157,25 @@ function initDb() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS training_progress (
+      user_id TEXT PRIMARY KEY,
+      client_id TEXT,
+      completed_json TEXT DEFAULT '[]',
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS media_assets (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      listing_id TEXT,
+      name TEXT,
+      mime_type TEXT,
+      s3_key TEXT,
+      url TEXT,
+      kind TEXT DEFAULT 'image',
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS subscribers (
       email TEXT PRIMARY KEY,
       created_at TEXT NOT NULL

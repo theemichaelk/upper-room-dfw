@@ -28,6 +28,8 @@
 /* Login dropdown — click/touch toggle (supplements hover) */
 .login-dropdown.login-open > .absolute {
   display: block !important;
+  pointer-events: auto;
+  z-index: 60;
 }
 .login-dropdown > a[role="button"],
 .login-dropdown > button.login-dropdown-btn {
@@ -103,13 +105,23 @@
   line-height: 1.05;
 }
 
-/* Hero Slider Styles */
+/* Hero Slider Styles — fixed height/overflow so slides never block page clicks */
 #hero-slider {
   position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  isolation: isolate;
+}
+@media (min-width: 768px) {
+  #hero-slider {
+    min-height: 620px;
+  }
 }
 .hero-slides {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  overflow: hidden;
 }
 .hero-slide {
   position: absolute;
@@ -117,13 +129,17 @@
   background-size: cover;
   background-position: center;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 1s ease-in-out;
+  z-index: 0;
+  transition: opacity 1s ease-in-out, visibility 0s linear 1s;
 }
 .hero-slide.active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
-  z-index: 1;
+  z-index: 2;
+  transition: opacity 1s ease-in-out, visibility 0s;
 }
 .hero-dot {
   transition: all 0.2s;
