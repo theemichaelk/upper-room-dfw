@@ -888,7 +888,7 @@
       ${connCards}
       <div class="portal-panel mb-4 text-xs text-slate-600">
         <strong>Integrations API:</strong> <code class="bg-slate-100 px-2 py-0.5 rounded">${apiBase}</code>
-        <span class="ml-2">Admin keys: <code>server .env</code> · Members: <code>/api/member/integrations</code></span>
+        <span class="ml-2">Admin keys: <code>server .env</code> · Members: <code>/api/client/integrations</code></span>
       </div>
       <div class="grid lg:grid-cols-3 gap-4 mb-6">
         ${stats.map((s) => {

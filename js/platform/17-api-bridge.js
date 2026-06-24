@@ -433,7 +433,7 @@
       memberList() {
         return call('integrations.memberList', async () => ({
           integrations: P.get('member_integration_config', {}),
-        }), '/api/member/integrations');
+        }), '/api/client/integrations');
       },
 
       memberSave(provider, config) {
@@ -443,7 +443,7 @@
           P.set('member_integration_config', stored);
           P._memberIntegrations = stored;
           return { ok: true, config: stored[provider] };
-        }, '/api/member/integrations/' + provider, { method: 'PATCH', body: config });
+        }, '/api/client/integrations/' + provider, { method: 'PATCH', body: config });
       },
 
       get(provider) {
@@ -722,7 +722,7 @@
           remoteFetch('/api/claims').catch(() => []),
           remoteFetch('/api/messages').catch(() => []),
           remoteFetch('/api/training').catch(() => null),
-          remoteFetch('/api/member/integrations').catch(() => null),
+          remoteFetch('/api/client/integrations').catch(() => null),
         ]);
         if (Array.isArray(leads)) P.set('leads', leads.map(normalizeLead));
         if (Array.isArray(invoices)) P.set('invoices', invoices);

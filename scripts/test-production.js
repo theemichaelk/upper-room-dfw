@@ -82,8 +82,8 @@ async function runSuite(label) {
     const seoPages = await request('GET', '/api/seo/pages', null, adminToken);
     check('seo pages API', seoPages.status === 200 && seoPages.body?.ok && seoPages.body?.pages);
 
-    const adminMemberBlock = await request('GET', '/api/member/integrations', null, adminToken);
-    check('admin blocked from member integrations', adminMemberBlock.status === 403);
+    const adminMemberBlock = await request('GET', '/api/client/integrations', null, adminToken);
+    check('admin blocked from client integrations', adminMemberBlock.status === 403 && adminMemberBlock.body?.ok === false);
   } else {
     check('platform integrations', false, 'no admin token');
     check('integrations status', false, 'no admin token');
@@ -134,17 +134,17 @@ async function runSuite(label) {
       check('member media DELETE', mediaDel.status === 200 && mediaDel.body?.ok);
     }
 
-    const memberIntegGet = await request('GET', '/api/member/integrations', null, memberToken);
+    const memberIntegGet = await request('GET', '/api/client/integrations', null, memberToken);
     check('member integrations GET', memberIntegGet.status === 200 && memberIntegGet.body?.ok);
 
-    const memberIntegPatch = await request('PATCH', '/api/member/integrations/mailchimp', {
+    const memberIntegPatch = await request('PATCH', '/api/client/integrations/mailchimp', {
       listId: 'smoke-list',
       apiKey: 'test-key-smoke-' + Date.now(),
       enabled: true,
     }, memberToken);
     check('member integrations PATCH', memberIntegPatch.status === 200 && memberIntegPatch.body?.ok && memberIntegPatch.body?.config?.apiKeySet);
 
-    const memberIntegVerify = await request('GET', '/api/member/integrations', null, memberToken);
+    const memberIntegVerify = await request('GET', '/api/client/integrations', null, memberToken);
     check('member integrations saved', memberIntegVerify.body?.integrations?.mailchimp?.apiKeySet === true);
   } else {
     check('member training GET', false, 'no member token');

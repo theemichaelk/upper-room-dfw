@@ -755,19 +755,25 @@ function createRouter(db, limiters = {}) {
     });
   });
 
-  router.get('/member/integrations', authRequired, (req, res) => {
+  function memberIntegrationsGuard(req, res) {
     if (req.user.role === 'admin') {
-      return res.status(403).json({ ok: false, error: 'Use /api/platform/integrations as admin' });
+      res.status(403).json({ ok: false, error: 'Admins use /api/platform/integrations (server .env credentials)' });
+      return false;
     }
-    if (!req.user.clientId) return res.status(400).json({ ok: false, error: 'Client account required' });
+    if (!req.user.clientId) {
+      res.status(400).json({ ok: false, error: 'Client account required' });
+      return false;
+    }
+    return true;
+  }
+
+  router.get('/client/integrations', authRequired, (req, res) => {
+    if (!memberIntegrationsGuard(req, res)) return;
     res.json(getMemberIntegrations(db, req.user.clientId));
   });
 
-  router.patch('/member/integrations/:provider', authRequired, (req, res) => {
-    if (req.user.role === 'admin') {
-      return res.status(403).json({ ok: false, error: 'Admins use platform .env credentials' });
-    }
-    if (!req.user.clientId) return res.status(400).json({ ok: false, error: 'Client account required' });
+  router.patch('/client/integrations/:provider', authRequired, (req, res) => {
+    if (!memberIntegrationsGuard(req, res)) return;
     const body = req.body || {};
     const result = setMemberIntegration(db, req.user.clientId, req.params.provider, {
       listId: body.listId,
