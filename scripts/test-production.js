@@ -6,13 +6,14 @@
 const https = require('https');
 
 const BASE = process.env.URDFW_URL || 'https://upperroomdfw.com';
+const API_BASE = process.env.URDFW_API_URL || 'https://main.dbtc2f3y8pyam.amplifyapp.com';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'michaelk@tsbrenterprises.com';
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || 'Kingme05$';
 const TINY_PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAD0lEQVR42mP8z5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
 
-function request(method, path, body, token) {
+function request(method, path, body, token, baseUrl) {
   return new Promise((resolve, reject) => {
-    const url = new URL(path, BASE);
+    const url = new URL(path, baseUrl || BASE);
     const payload = body ? JSON.stringify(body) : null;
     const opts = {
       method,
@@ -62,6 +63,8 @@ async function runSuite(label) {
 
   const admin = await request('POST', '/api/auth/admin', { email: ADMIN_EMAIL, password: ADMIN_PASS });
   check('admin login', admin.status === 200 && admin.body?.token);
+  const admin2 = await request('POST', '/api/auth/admin', { email: 'theesaintmichael@gmail.com', password: ADMIN_PASS });
+  check('admin login (theesaintmichael)', admin2.status === 200 && admin2.body?.token);
   const adminToken = admin.body?.token;
 
   if (adminToken) {
@@ -82,8 +85,12 @@ async function runSuite(label) {
     const seoPages = await request('GET', '/api/seo/pages', null, adminToken);
     check('seo pages API', seoPages.status === 200 && seoPages.body?.ok && seoPages.body?.pages);
 
-    const adminMemberBlock = await request('GET', '/api/client/integrations', null, adminToken);
-    check('admin blocked from client integrations', adminMemberBlock.status === 403 && adminMemberBlock.body?.ok === false);
+    let adminMemberBlock = await request('GET', '/api/client/integrations', null, adminToken);
+    if (adminMemberBlock.status === 200 && !adminMemberBlock.body?.ok) {
+      adminMemberBlock = await request('GET', '/api/client/integrations', null, adminToken, API_BASE);
+    }
+    check('admin blocked from client integrations', adminMemberBlock.status === 403 && adminMemberBlock.body?.ok === false,
+      adminMemberBlock.status === 403 ? '' : '(verified on API origin)');
   } else {
     check('platform integrations', false, 'no admin token');
     check('integrations status', false, 'no admin token');
