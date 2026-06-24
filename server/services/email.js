@@ -3,15 +3,27 @@ const templates = require('./email-templates');
 
 let transporter = null;
 
+function smtpTransportOptions() {
+  const port = parseInt(process.env.SMTP_PORT || '587', 10);
+  const secure = process.env.SMTP_SECURE === 'true';
+  const opts = {
+    host: process.env.SMTP_HOST,
+    port,
+    secure,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  };
+  // Acumbamail + most relays on 587: plain auth + STARTTLS
+  if (!secure && port === 587) {
+    opts.requireTLS = true;
+    opts.tls = { minVersion: 'TLSv1.2' };
+  }
+  return opts;
+}
+
 function getTransporter() {
   if (transporter) return transporter;
   if (process.env.SMTP_HOST && process.env.SMTP_USER) {
-    transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587', 10),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
+    transporter = nodemailer.createTransport(smtpTransportOptions());
   } else {
     transporter = {
       sendMail: async (opts) => {

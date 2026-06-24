@@ -9,7 +9,7 @@ const { getEvents } = require('../services/events');
 const { registerWebhook, listWebhooks, deactivateWebhook } = require('../services/webhook-dispatcher');
 const { isProduction } = require('../middleware/security');
 const { isStripeEnabled, stripeMode, resolveStripePublishableKey, createCheckoutSession, createPortalSession } = require('../services/stripe');
-const { integrationConfig, verifyAll, verifyMailchimp, verifyVbout } = require('../services/integrations');
+const { integrationConfig, verifyAll, verifyMailchimp, verifyVbout, verifyAcumbamail } = require('../services/integrations');
 const { verifyRecaptcha, recaptchaSiteKey } = require('../services/recaptcha');
 const { backupNow } = require('../db-persist');
 const { buildAdminAnalytics, buildMemberAnalytics, buildPublicStats } = require('../services/analytics');
@@ -42,6 +42,9 @@ function createRouter(db, limiters = {}) {
       envReady: {
         stripe: !!(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE),
         smtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER),
+        smtpProvider: process.env.SMTP_PROVIDER
+          || (process.env.SMTP_HOST?.includes('acumbamail') ? 'acumbamail' : 'smtp'),
+        acumbamail: !!process.env.ACUMBAMAIL_API_KEY,
         mailchimp: !!process.env.MAILCHIMP_API_KEY,
         vbout: !!process.env.VBOUT_API_KEY,
         appUrl: process.env.APP_URL || '',
@@ -130,11 +133,12 @@ function createRouter(db, limiters = {}) {
     if (!to) return res.status(400).json({ ok: false, error: 'Email required' });
     try {
       if (template === 'smtp_ping') {
+        const relay = process.env.SMTP_PROVIDER || process.env.SMTP_HOST || 'SMTP';
         await sendEmail({
           to,
           subject: 'Upper Room DFW — SMTP Test',
-          html: '<p>Amazon SES SMTP is working. Sent at ' + new Date().toISOString() + '</p>',
-          text: 'Amazon SES SMTP is working.',
+          html: '<p>' + relay + ' is working. Sent at ' + new Date().toISOString() + '</p>',
+          text: relay + ' is working.',
         });
         return res.json({ ok: true, to, template: 'smtp_ping' });
       }
@@ -671,7 +675,7 @@ function createRouter(db, limiters = {}) {
     let result;
     if (provider === 'mailchimp') result = await verifyMailchimp();
     else if (provider === 'vbout') result = await verifyVbout();
-    else if (provider === 'acumbamail') result = { ok: !!process.env.ACUMBAMAIL_API_KEY, provider: 'acumbamail', error: process.env.ACUMBAMAIL_API_KEY ? null : 'ACUMBAMAIL_API_KEY not set' };
+    else if (provider === 'acumbamail') result = await verifyAcumbamail();
     else return res.status(404).json({ ok: false, error: 'Unknown provider' });
     result.latencyMs = Date.now() - t0;
     res.json(result);

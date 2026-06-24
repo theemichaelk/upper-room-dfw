@@ -1,6 +1,6 @@
 /**
  * Production email campaigns — mirrors js/platform/10-admin.js templates.
- * All sends go through Amazon SES SMTP (nodemailer).
+ * All sends go through configured SMTP relay (Acumbamail / SES via nodemailer).
  */
 const templates = require('./email-templates');
 const { sendEmail } = require('./email');

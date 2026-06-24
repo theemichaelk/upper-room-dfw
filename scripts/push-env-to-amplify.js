@@ -31,7 +31,7 @@ const vars = {
   DB_BACKUP_BUCKET: 'upperroomdfw.com',
   DB_BACKUP_KEY: 'data/urdfw.db',
   DB_BACKUP_INTERVAL_MS: '90000',
-  EMAIL_FROM: 'Upper Room DFW <michaelk@tsbrenterprises.com>',
+  EMAIL_FROM: 'Upper Room DFW <theesaintmichael@gmail.com>',
   STRIPE_MODE: 'live',
 };
 
@@ -64,7 +64,7 @@ Object.assign(vars, {
   DB_BACKUP_BUCKET: 'upperroomdfw.com',
   DB_BACKUP_KEY: 'data/urdfw.db',
   DB_BACKUP_INTERVAL_MS: '90000',
-  EMAIL_FROM: 'Upper Room DFW <michaelk@tsbrenterprises.com>',
+  EMAIL_FROM: 'Upper Room DFW <theesaintmichael@gmail.com>',
   STRIPE_MODE: 'live',
   STRIPE_SECRET_KEY: vars.STRIPE_SECRET_KEY_LIVE || vars.STRIPE_SECRET_KEY,
   STRIPE_PUBLISHABLE_KEY: vars.STRIPE_PUBLISHABLE_KEY_LIVE || vars.STRIPE_PUBLISHABLE_KEY,
