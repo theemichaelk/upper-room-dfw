@@ -35,6 +35,50 @@
     return new Promise((r) => setTimeout(r, ms || P.apiConfig.latencyMs));
   }
 
+  function isProductionHost() {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname || '';
+    return host.includes('upperroomdfw.com') || host.includes('amplifyapp.com') || host.includes('cloudfront.net');
+  }
+
+  function getTokenPayload() {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (!token) return null;
+    try {
+      return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    } catch {
+      return null;
+    }
+  }
+
+  function getTokenRole() {
+    return getTokenPayload()?.role || null;
+  }
+
+  function normalizeClient(c) {
+    if (!c) return c;
+    return {
+      ...c,
+      churchEmail: c.churchEmail || c.church_email || c.email,
+      church_email: c.church_email || c.churchEmail || c.email,
+      isPaid: !!(c.isPaid ?? c.is_paid),
+      trialStart: c.trialStart || c.trial_start,
+      listingId: c.listingId || c.listing_id,
+      registeredAt: c.registeredAt || c.registered_at,
+    };
+  }
+
+  function normalizeLead(l) {
+    if (!l) return l;
+    return {
+      ...l,
+      churchEmail: l.churchEmail || l.church_email,
+      church_email: l.church_email || l.churchEmail,
+      listingId: l.listingId || l.listing_id,
+      createdAt: l.createdAt || l.created_at,
+    };
+  }
+
   async function remoteFetch(path, opts) {
     const base = P.apiConfig.endpoints.base ?? '';
     const token = localStorage.getItem('urdfw_api_token');
@@ -94,9 +138,17 @@
 
     if (P.apiConfig.mode === 'remote') {
       try {
-        result = await remoteFetch(remotePath, remoteBody ? { method: 'POST', body: remoteBody } : { method: 'GET' });
+        const method = remoteBody?.method || (remoteBody ? 'POST' : 'GET');
+        const body = remoteBody?.body !== undefined ? remoteBody.body : remoteBody;
+        result = await remoteFetch(remotePath, body !== undefined && method !== 'GET'
+          ? { method, body }
+          : { method: method || 'GET' });
         source = 'remote';
       } catch (e) {
+        if (isProductionHost()) {
+          P.emit('api:error', { name, error: e.message });
+          throw e;
+        }
         P.emit('api:fallback', { name, error: e.message });
         result = await localFn();
         source = 'local-fallback';
@@ -137,12 +189,18 @@
         const payload = { password };
         if (email) payload.email = (email || '').trim().toLowerCase();
         return call('auth.loginAdmin', async () => {
+          if (isProductionHost()) return { ok: false, error: 'Admin login requires API connection' };
           const valid = password === (P.get('admin_password', null) || 'admin123');
           if (!valid) return { ok: false, error: 'Invalid credentials' };
-          localStorage.setItem('urdfw_admin_mode', 'true');
           P.set('admin_session', { at: new Date().toISOString(), role: 'admin' });
           return { ok: true, role: 'admin' };
-        }, P.apiConfig.endpoints.auth + '/admin', payload);
+        }, P.apiConfig.endpoints.auth + '/admin', payload).then((res) => {
+          if (res?.token) {
+            P.storeApiToken(res.token);
+            P.set('admin_session', { at: new Date().toISOString(), role: 'admin', email: res.email });
+          }
+          return res;
+        });
       },
 
       loginMember(email, password) {
@@ -175,14 +233,20 @@
           const user = P.syncClientToUser ? P.syncClientToUser(client) : P.loginUser(em, password);
           if (password && P.changePassword && user) P.changePassword(user.id, password);
 
-          localStorage.setItem('urdfw_current_client', JSON.stringify(client));
+          localStorage.setItem('urdfw_current_client', JSON.stringify(normalizeClient(client)));
           P.set('member_session', { email: em, at: new Date().toISOString() });
-          return { ok: true, client, user };
-        }, P.apiConfig.endpoints.auth + '/member', { email, password });
+          return { ok: true, client: normalizeClient(client), user };
+        }, P.apiConfig.endpoints.auth + '/member', { email, password }).then((res) => {
+          if (res?.token) P.storeApiToken(res.token);
+          if (res?.client) {
+            res.client = normalizeClient(res.client);
+            localStorage.setItem('urdfw_current_client', JSON.stringify(res.client));
+          }
+          return res;
+        });
       },
 
       logoutAdmin() {
-        localStorage.removeItem('urdfw_admin_mode');
         P.storeApiToken?.(null);
         P.set('admin_session', null);
         return { ok: true };
@@ -204,7 +268,9 @@
       },
 
       isAdmin() {
-        return localStorage.getItem('urdfw_admin_mode') === 'true';
+        if (getTokenRole() === 'admin') return true;
+        if (isProductionHost()) return false;
+        return P.get('admin_session', null)?.role === 'admin';
       },
 
       getMember() {
@@ -248,10 +314,10 @@
           const list = P.get('clients', []);
           const idx = list.findIndex((c) => c.id === id);
           if (idx < 0) return { error: 'Not found' };
-          list[idx] = { ...list[idx], ...patch };
+          list[idx] = normalizeClient({ ...list[idx], ...patch });
           P.set('clients', list);
           return list[idx];
-        }, P.apiConfig.endpoints.clients + '/' + id, patch);
+        }, P.apiConfig.endpoints.clients + '/' + id, { method: 'PATCH', body: patch });
       },
       approve(id) {
         return P.api.clients.update(id, { status: 'approved' });
@@ -422,12 +488,75 @@
       },
     },
 
+    claims: {
+      list() {
+        return call('claims.list', async () => P.get('claims', []), '/api/claims');
+      },
+      submit(data) {
+        return call('claims.submit', async () => {
+          const list = P.get('claims', []);
+          const claim = { id: P.uuid(), ...data, status: 'pending', at: new Date().toISOString() };
+          list.push(claim);
+          P.set('claims', list);
+          return { ok: true, claim };
+        }, '/api/claims', data);
+      },
+      approve(id) {
+        return call('claims.approve', async () => {
+          const list = P.get('claims', []);
+          const c = list.find((x) => x.id === id);
+          if (c) c.status = 'approved';
+          P.set('claims', list);
+          return { ok: true };
+        }, '/api/claims/' + id, { method: 'PATCH', body: { status: 'approved' } });
+      },
+    },
+
+    reviews: {
+      list(listingId) {
+        const q = listingId ? '?listingId=' + encodeURIComponent(listingId) : '';
+        return call('reviews.list', async () => {
+          const all = P.get('reviews', {});
+          return all[listingId] || [];
+        }, '/api/reviews' + q);
+      },
+      add(data) {
+        return call('reviews.add', async () => {
+          if (P.addReview) P.addReview(data.listingId, data);
+          return { ok: true };
+        }, '/api/reviews', data);
+      },
+      listAll() {
+        return call('reviews.listAll', async () => {
+          const all = P.get('reviews', {});
+          return Object.entries(all).flatMap(([lid, revs]) => revs.map((r) => ({ ...r, listingId: lid })));
+        }, '/api/admin/reviews');
+      },
+    },
+
     webhooks: {
+      list() {
+        return call('webhooks.list', async () => P.get('webhooks', []), '/api/webhooks').then((r) => r?.webhooks || r || []);
+      },
       register(url, events) {
-        const hooks = P.get('webhooks', []);
-        hooks.push({ id: P.uuid(), url, events: events || ['*'], createdAt: new Date().toISOString() });
-        P.set('webhooks', hooks);
-        return hooks[hooks.length - 1];
+        return call('webhooks.register', async () => {
+          const hooks = P.get('webhooks', []);
+          hooks.push({ id: P.uuid(), url, events: events || ['*'], createdAt: new Date().toISOString() });
+          P.set('webhooks', hooks);
+          return hooks[hooks.length - 1];
+        }, '/api/webhooks', { url, events, label: 'Admin UI' }).then((r) => r?.webhook || r);
+      },
+      remove(id) {
+        return call('webhooks.remove', async () => {
+          P.set('webhooks', P.get('webhooks', []).filter((h) => h.id !== id));
+          return { ok: true };
+        }, '/api/webhooks/' + id, { method: 'DELETE' });
+      },
+      log() {
+        return call('webhooks.log', async () => P.get('webhook_log', []), '/api/webhooks/log').then((r) => r?.entries || r || []);
+      },
+      eventsLog() {
+        return call('events.log', async () => [], '/api/events/log').then((r) => r?.entries || r || []);
       },
       trigger(event, payload) {
         const hooks = P.get('webhooks', []);
@@ -465,10 +594,46 @@
   P.syncPlatformFromApi = async function () {
     if (P.apiConfig.mode !== 'remote' || !localStorage.getItem('urdfw_api_token')) return;
     try {
-      const clients = await P.api.clients.list();
-      if (Array.isArray(clients)) P.set('clients', clients);
-      const orders = await P.api.admin.orders();
-      if (Array.isArray(orders)) P.set('orders', orders);
-    } catch { /* offline */ }
+      const me = await remoteFetch('/api/auth/me');
+      if (me?.client) {
+        const client = normalizeClient(me.client);
+        localStorage.setItem('urdfw_current_client', JSON.stringify(client));
+        P.set('member_session', { email: client.email, at: new Date().toISOString() });
+      }
+
+      const role = getTokenRole();
+      if (role === 'admin') {
+        const [clients, orders, stats, claims, tickets] = await Promise.all([
+          remoteFetch('/api/clients').catch(() => []),
+          remoteFetch('/api/admin/orders').catch(() => []),
+          remoteFetch('/api/admin/stats').catch(() => null),
+          remoteFetch('/api/claims').catch(() => []),
+          remoteFetch('/api/support').catch(() => []),
+        ]);
+        if (Array.isArray(clients)) P.set('clients', clients.map(normalizeClient));
+        if (Array.isArray(orders)) P.set('orders', orders);
+        if (stats) P.set('admin_stats_cache', stats);
+        if (Array.isArray(claims)) P.set('claims', claims);
+        if (Array.isArray(tickets)) P.set('support_tickets', tickets);
+      } else if (me?.client) {
+        const [leads, invoices, claims, msgs] = await Promise.all([
+          remoteFetch('/api/leads').catch(() => []),
+          remoteFetch('/api/billing/invoices').catch(() => []),
+          remoteFetch('/api/claims').catch(() => []),
+          remoteFetch('/api/messages').catch(() => []),
+        ]);
+        if (Array.isArray(leads)) P.set('leads', leads.map(normalizeLead));
+        if (Array.isArray(invoices)) P.set('invoices', invoices);
+        if (Array.isArray(claims)) P.set('claims', claims);
+        if (Array.isArray(msgs) && me?.user?.sub) P.set('messages_' + me.user.sub, msgs);
+      }
+      P.emit('api:synced', { role });
+    } catch (e) {
+      if (isProductionHost()) P.emit('api:sync-failed', { error: e.message });
+    }
   };
+
+  P.normalizeClient = normalizeClient;
+  P.normalizeLead = normalizeLead;
+  P.getTokenRole = getTokenRole;
 })(window);

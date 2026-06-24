@@ -69,10 +69,17 @@
       <div class="member-metric"><div class="member-metric-label">Plan</div><div class="member-metric-value" style="font-size:1rem">${plan}</div></div>`;
   };
 
-  P.renderMemberReviews = function (el, client) {
+  P.renderMemberReviews = async function (el, client) {
     if (!el) return;
-    const listingId = client?.listingId || client?.id;
-    const reviews = P.get('reviews', {})[listingId] || [];
+    const listingId = client?.listingId || client?.listing_id || client?.id;
+    el.innerHTML = '<p class="text-sm text-slate-500 py-4">Loading reviews…</p>';
+    let reviews = P.get('reviews', {})[listingId] || [];
+    if (P.apiConfig?.mode === 'remote' && listingId && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const list = await P.api.reviews.list(listingId);
+        if (Array.isArray(list)) reviews = list;
+      } catch { /* keep local */ }
+    }
     el.innerHTML = `
       <h3 class="font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-star text-amber-500"></i> Reviews on Your Listing</h3>
       <p class="text-xs text-slate-500 mb-4">Multi-criteria reviews, star ratings, and upvotes from directory visitors.</p>
@@ -84,32 +91,40 @@
         </div>`).join('') : '<p class="text-sm text-slate-500">No reviews yet. Encourage visitors to leave feedback from your church page.</p>'}
       </div>
       <form id="member-demo-review" class="border rounded-2xl p-4 text-sm space-y-2 max-w-lg">
-        <div class="font-medium text-xs">Respond / log a testimonial (demo)</div>
+        <div class="font-medium text-xs">Log a testimonial for your listing</div>
         <input name="author" placeholder="Member name" class="w-full border rounded-xl px-3 py-2 text-xs">
         <textarea name="text" rows="2" placeholder="Thank you message or testimonial..." class="w-full border rounded-xl px-3 py-2 text-xs"></textarea>
         <select name="stars" class="border rounded-xl px-3 py-2 text-xs"><option value="5">5 stars</option><option value="4">4 stars</option></select>
         <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl text-xs">Save Response</button>
       </form>`;
 
-    el.querySelector('#member-demo-review')?.addEventListener('submit', (e) => {
+    el.querySelector('#member-demo-review')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      if (P.addReview) {
-        P.addReview(listingId, {
-          author: fd.get('author') || 'Church Member',
-          text: fd.get('text'),
-          stars: +fd.get('stars'),
-          criteria: { welcome: 5, worship: 5, community: 5 },
-        });
-        P.portalToast?.('Review logged on your listing.');
-        P.renderMemberReviews(el, client);
-      }
+      const data = {
+        listingId,
+        author: fd.get('author') || client?.name || 'Church Member',
+        text: fd.get('text'),
+        stars: +fd.get('stars'),
+        criteria: { welcome: 5, worship: 5, community: 5 },
+      };
+      if (P.apiConfig?.mode === 'remote') await P.api.reviews.add(data);
+      else if (P.addReview) P.addReview(listingId, data);
+      P.portalToast?.('Review saved on your listing.');
+      P.renderMemberReviews(el, client);
     });
   };
 
-  P.renderMemberClaims = function (el, client) {
+  P.renderMemberClaims = async function (el, client) {
     if (!el) return;
-    const claims = P.get('claims', []).filter((c) => c.email === client?.email);
+    el.innerHTML = '<p class="text-sm text-slate-500 py-4">Loading claims…</p>';
+    let claims = P.get('claims', []).filter((c) => c.email === client?.email);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const list = await P.api.claims.list();
+        if (Array.isArray(list)) claims = list.filter((c) => c.email === client?.email);
+      } catch { /* keep */ }
+    }
     el.innerHTML = `
       <h3 class="font-semibold mb-3"><i class="fa-solid fa-hand-holding text-sky-600 mr-2"></i>Listing Claims</h3>
       <p class="text-xs text-slate-500 mb-4">Claim an existing directory listing or submit ownership verification.</p>
@@ -130,20 +145,23 @@
         </div>`).join('') : '<p class="text-xs text-slate-500">No claims submitted. <a href="claim-listing.html" class="text-sky-700">Open claim wizard →</a></p>'}</div>
       <a href="claim-listing.html" class="inline-block mt-4 text-xs text-sky-700 font-medium">Full claim listing flow →</a>`;
 
-    el.querySelector('#member-claim-form')?.addEventListener('submit', (e) => {
+    el.querySelector('#member-claim-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
       const paid = fd.get('paid') === 'paid';
-      if (P.claimListing) {
-        P.claimListing(fd.get('listingId'), {
-          email: client.email,
-          name: client.name,
-          proof: fd.get('proof'),
-        }, paid);
-        if (paid && P.chargeForClaim) P.chargeForClaim(19, fd.get('listingId'), 'stripe');
-        P.portalToast?.('Claim submitted — admin will review shortly.');
-        P.renderMemberClaims(el, client);
-      }
+      const payload = {
+        listingId: fd.get('listingId'),
+        email: client.email,
+        name: client.name,
+        proof: fd.get('proof'),
+        paid,
+      };
+      if (P.apiConfig?.mode === 'remote') await P.api.claims.submit(payload);
+      else if (P.claimListing) P.claimListing(fd.get('listingId'), payload, paid);
+      if (paid && P.chargeForClaim) P.chargeForClaim(19, fd.get('listingId'), 'stripe');
+      P.portalToast?.('Claim submitted — admin will review shortly.');
+      e.target.reset();
+      P.renderMemberClaims(el, client);
     });
   };
 

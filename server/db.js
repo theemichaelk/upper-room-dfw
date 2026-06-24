@@ -145,6 +145,18 @@ function initDb() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS reviews (
+      id TEXT PRIMARY KEY,
+      listing_id TEXT,
+      author TEXT,
+      email TEXT,
+      stars INTEGER DEFAULT 5,
+      text TEXT,
+      criteria_json TEXT,
+      status TEXT DEFAULT 'published',
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS subscribers (
       email TEXT PRIMARY KEY,
       created_at TEXT NOT NULL

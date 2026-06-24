@@ -93,22 +93,35 @@
         </div>
       </div>`;
 
-    el.querySelector('#member-profile-form').onsubmit = (e) => {
+    el.querySelector('#member-profile-form').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
+      const patch = { name: fd.get('name'), area: fd.get('area') };
+      if (P.apiConfig?.mode === 'remote' && client?.id && localStorage.getItem('urdfw_api_token')) {
+        try {
+          await P.api.clients.update(client.id, patch);
+          const updated = { ...client, ...patch };
+          localStorage.setItem('urdfw_current_client', JSON.stringify(updated));
+          P.portalToast?.('Profile saved to your account.');
+          return;
+        } catch (err) {
+          P.portalToast?.(err.message || 'Save failed');
+          return;
+        }
+      }
       const users = P.get('users', []);
       const u = users.find((x) => x.id === user.id);
       if (u) {
-        u.name = fd.get('name');
-        u.area = fd.get('area');
+        u.name = patch.name;
+        u.area = patch.area;
         if (fd.get('password')) u.password = fd.get('password');
         P.set('users', users);
         P.set('current_user', u);
       }
       let clients = P.get('clients', []);
       const c = clients.find((x) => x.email === client.email);
-      if (c) { c.name = fd.get('name'); c.area = fd.get('area'); P.set('clients', clients); }
-      alert('Profile saved.');
+      if (c) { c.name = patch.name; c.area = patch.area; P.set('clients', clients); }
+      P.portalToast?.('Profile saved.');
     };
 
     const bindUpload = (inputId, field, previewId) => {
@@ -132,9 +145,16 @@
     bindUpload('#banner-img-upload', 'bannerImage', '#banner-img-preview');
   };
 
-  P.renderMemberMessages = function (el, user) {
+  P.renderMemberMessages = async function (el, user) {
     if (!el || !user) return;
-    const msgs = P.getMessages(user.id);
+    el.innerHTML = '<p class="text-sm text-slate-500 py-4">Loading messages…</p>';
+    let msgs = P.getMessages(user.id);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const list = await P.api.messages.list(user.id);
+        if (Array.isArray(list)) msgs = list;
+      } catch { /* keep local */ }
+    }
     const notifs = P.getNotifications(user.id);
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
@@ -162,11 +182,12 @@
         <div class="text-sm space-y-1">${notifs.length ? notifs.map((n) => `<div class="py-1 border-b text-xs">${n.subject || n.text} — ${new Date(n.at || Date.now()).toLocaleDateString()}</div>`).join('') : '<span class="text-slate-500 text-xs">No new notifications.</span>'}</div>
       </div>`;
 
-    el.querySelector('#member-send-msg').onsubmit = (e) => {
+    el.querySelector('#member-send-msg').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      P.sendMessage('admin', user.email, fd.get('subject'), fd.get('body'));
-      alert('Message sent to the Upper Room DFW team.');
+      await P.api.messages.send('admin', user.email, fd.get('subject'), fd.get('body'));
+      P.portalToast?.('Message sent to the Upper Room DFW team.');
+      e.target.reset();
       P.renderMemberMessages(el, user);
     };
   };
@@ -409,27 +430,10 @@
     const root = document.getElementById(rootId || 'admin-platform-root');
     if (!root) return;
 
-    root.innerHTML = `
-      <div class="border-b mb-4 overflow-x-auto">
-        <div class="flex gap-1 text-sm min-w-max" id="admin-tab-bar">
-          ${P.adminTabs.map((t, i) => `<button type="button" data-admin-tab="${t.id}" class="admin-tab-btn px-4 py-2 border-b-2 ${i === 0 ? 'border-sky-600 text-sky-700 font-semibold' : 'border-transparent text-slate-600'}">${t.label}</button>`).join('')}
-        </div>
-      </div>
-      <div id="admin-tab-panels"></div>`;
+    root.innerHTML = `<div id="admin-tab-panels"></div>`;
 
     const panels = root.querySelector('#admin-tab-panels');
-    const show = (id) => {
-      root.querySelectorAll('.admin-tab-btn').forEach((b) => {
-        b.classList.toggle('border-sky-600', b.dataset.adminTab === id);
-        b.classList.toggle('text-sky-700', b.dataset.adminTab === id);
-        b.classList.toggle('font-semibold', b.dataset.adminTab === id);
-        b.classList.toggle('border-transparent', b.dataset.adminTab !== id);
-        b.classList.toggle('text-slate-600', b.dataset.adminTab !== id);
-      });
-      P.renderAdminTab(panels, id);
-    };
-
-    root.querySelectorAll('.admin-tab-btn').forEach((b) => { b.onclick = () => show(b.dataset.adminTab); });
+    const show = (id) => P.renderAdminTab(panels, id);
     P._adminDashState = { root, panels, show };
     show('overview');
   };
@@ -499,14 +503,25 @@
   };
 
   P.renderAdminListings = async function (el) {
-    let churches = [];
-    try {
-      const res = await fetch('data/churches.json');
-      churches = await res.json();
-    } catch { /* ignore */ }
-    const customs = P.get('custom_listings', []);
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading listings…</p>';
+    let all = [];
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
+      try {
+        const res = await fetch('/api/listings?status=all', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.ok) all = await res.json();
+      } catch { /* fallback */ }
+    }
+    if (!all.length) {
+      let churches = [];
+      try {
+        const res = await fetch('data/churches.json');
+        churches = await res.json();
+      } catch { /* ignore */ }
+      const customs = P.get('custom_listings', []);
+      all = [...customs, ...churches.map((c) => P.enhanceListing(c))];
+    }
     const meta = P.get('listing_meta', {});
-    const all = [...customs, ...churches.map((c) => P.enhanceListing(c))];
 
     el.innerHTML = `
       <div class="flex flex-wrap gap-2 mb-4">
@@ -514,16 +529,17 @@
         <button type="button" id="admin-seed-demo" class="px-3 py-1.5 text-xs border rounded-2xl">Seed Demo Meta</button>
       </div>
       <div class="bg-white border rounded-3xl p-4 max-h-[480px] overflow-auto text-sm space-y-2" id="admin-all-listings">
-        ${all.slice(0, 50).map((l) => {
+        ${all.slice(0, 100).map((l) => {
           const m = meta[l.id] || {};
+          const featured = l.featured || m.featured;
           return `<div class="flex flex-wrap items-center justify-between gap-2 border-b py-2">
             <div><strong>${l.name}</strong> <span class="text-xs text-slate-500">${l.area || ''} • ${l.status || 'live'}</span>
-              ${m.featured ? '<span class="badge-featured">Featured</span>' : ''}${m.vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
+              ${featured ? '<span class="badge-featured">Featured</span>' : ''}${m.vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
             <div class="flex gap-1 text-xs">
               <button type="button" data-feat="${l.id}" class="admin-feat px-2 py-0.5 border rounded">Feature</button>
               <button type="button" data-sticky="${l.id}" class="admin-sticky px-2 py-0.5 border rounded">Sticky</button>
               <button type="button" data-vip="${l.id}" class="admin-vip px-2 py-0.5 border rounded">VIP</button>
-              ${l.status === 'pending' ? `<button type="button" data-approve="${l.id}" class="text-emerald-600">Approve</button>` : ''}
+              ${(l.status === 'pending' || l.status === 'registered') ? `<button type="button" data-approve="${l.id}" class="text-emerald-600">Go Live</button>` : ''}
             </div></div>`;
         }).join('') || '<p class="text-slate-500">No listings.</p>'}
       </div>`;
@@ -534,10 +550,19 @@
     el.querySelectorAll('[data-feat]').forEach((b) => b.onclick = () => { P.markFeatured(b.dataset.feat, true); P.renderAdminListings(el); });
     el.querySelectorAll('[data-sticky]').forEach((b) => b.onclick = () => { P.upgradeListing(b.dataset.sticky, 'premium'); P.renderAdminListings(el); });
     el.querySelectorAll('[data-vip]').forEach((b) => b.onclick = () => { P.upgradeListing(b.dataset.vip, 'vip'); P.renderAdminListings(el); });
-    el.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => {
-      const customs2 = P.get('custom_listings', []);
-      const item = customs2.find((x) => x.id === b.dataset.approve);
-      if (item) { item.status = 'approved'; P.set('custom_listings', customs2); }
+    el.querySelectorAll('[data-approve]').forEach((b) => b.onclick = async () => {
+      const id = b.dataset.approve;
+      if (P.apiConfig?.mode === 'remote' && token) {
+        await fetch('/api/listings/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ status: 'live' }),
+        });
+      } else {
+        const customs2 = P.get('custom_listings', []);
+        const item = customs2.find((x) => x.id === id);
+        if (item) { item.status = 'approved'; P.set('custom_listings', customs2); }
+      }
       P.renderAdminListings(el);
     });
   };
@@ -584,8 +609,15 @@
     });
   };
 
-  P.renderAdminClaims = function (el) {
-    const claims = P.get('claims', []);
+  P.renderAdminClaims = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading claims…</p>';
+    let claims = P.get('claims', []);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const list = await P.api.claims.list();
+        if (Array.isArray(list)) { claims = list; P.set('claims', list); }
+      } catch { /* keep local */ }
+    }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
         <h3 class="font-semibold mb-3">Listing Claims (${claims.length})</h3>
@@ -597,17 +629,28 @@
           </div>`).join('') : '<p class="text-slate-500 text-sm">No claims submitted yet.</p>'}
       </div>`;
 
-    el.querySelectorAll('.admin-approve-claim').forEach((b) => b.onclick = () => {
-      const list = P.get('claims', []);
-      const c = list.find((x) => x.id === b.dataset.claim);
-      if (c) { c.status = 'approved'; P.set('claims', list); }
+    el.querySelectorAll('.admin-approve-claim').forEach((b) => b.onclick = async () => {
+      if (P.apiConfig?.mode === 'remote') await P.api.claims.approve(b.dataset.claim);
+      else {
+        const list = P.get('claims', []);
+        const c = list.find((x) => x.id === b.dataset.claim);
+        if (c) { c.status = 'approved'; P.set('claims', list); }
+      }
+      P.portalToast?.('Claim approved — listing linked to client.');
       P.renderAdminClaims(el);
     });
   };
 
-  P.renderAdminBilling = function (el) {
-    const orders = P.get('orders', []);
-    const invoices = P.get('invoices', []);
+  P.renderAdminBilling = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading billing…</p>';
+    let orders = P.get('orders', []);
+    let invoices = P.get('invoices', []);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const o = await P.api.admin.orders();
+        if (Array.isArray(o)) { orders = o; P.set('orders', o); }
+      } catch { /* keep */ }
+    }
     const coupons = P.get('coupons', []);
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
@@ -666,6 +709,7 @@
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Email Templates</h3>
+          <p id="admin-campaigns-hint" class="text-xs text-slate-500 mb-2"></p>
           <div class="space-y-3 text-sm">${Object.entries(templates).map(([k, t]) => `
             <div class="border rounded-2xl p-3">
               <div class="font-medium text-xs uppercase text-sky-600">${k}</div>
@@ -685,6 +729,16 @@
           <div class="text-xs max-h-48 overflow-auto">${log.slice(0, 20).map((e) => `<div class="py-1 border-b">${e.template}: ${e.subject} → ${e.to}</div>`).join('') || 'Empty.'}</div>
         </div>
       </div>`;
+
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      fetch('/api/admin/campaigns', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } })
+        .then((r) => r.json())
+        .then((j) => {
+          const hint = el.querySelector('#admin-campaigns-hint');
+          if (hint && j.campaigns) hint.textContent = j.campaigns.length + ' live campaigns wired to event bus (welcome, leads, payments, etc.)';
+        })
+        .catch(() => {});
+    }
 
     el.querySelector('#admin-test-email').onsubmit = async (e) => {
       e.preventDefault();
@@ -911,21 +965,43 @@
     });
   };
 
-  P.renderAdminReviews = function (el) {
-    const reviews = P.get('reviews', {});
-    const entries = Object.entries(reviews);
+  P.renderAdminReviews = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading reviews…</p>';
+    let flat = [];
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        flat = await P.api.reviews.listAll();
+      } catch { /* fallback */ }
+    }
+    if (!flat.length) {
+      const reviews = P.get('reviews', {});
+      flat = Object.entries(reviews).flatMap(([lid, revs]) => revs.map((r) => ({ ...r, listingId: lid })));
+    }
+    const byListing = {};
+    flat.forEach((r) => {
+      const lid = r.listingId || r.listing_id || 'unknown';
+      if (!byListing[lid]) byListing[lid] = [];
+      byListing[lid].push(r);
+    });
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Reviews by Listing</h3>
-        <div class="space-y-4 text-sm max-h-[400px] overflow-auto">${entries.length ? entries.map(([lid, revs]) => `
+        <h3 class="font-semibold mb-3">Reviews by Listing (${flat.length})</h3>
+        <div class="space-y-4 text-sm max-h-[400px] overflow-auto">${Object.keys(byListing).length ? Object.entries(byListing).map(([lid, revs]) => `
           <div><div class="font-medium text-xs text-slate-500">Listing #${lid}</div>
-          ${revs.map((r) => `<div class="border rounded p-2 mt-1 text-xs">${P.renderStars(r.stars)} ${r.author}: ${r.text}</div>`).join('')}
-          </div>`).join('') : '<p class="text-slate-500">No reviews in storage.</p>'}
+          ${revs.map((r) => `<div class="border rounded p-2 mt-1 text-xs">${P.renderStars?.(r.stars) || r.stars + '★'} ${r.author}: ${r.text}</div>`).join('')}
+          </div>`).join('') : '<p class="text-slate-500">No reviews yet.</p>'}
       </div>`;
   };
 
-  P.renderAdminSupport = function (el) {
-    const tickets = P.get('support_tickets', []);
+  P.renderAdminSupport = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading support tickets…</p>';
+    let tickets = P.get('support_tickets', []);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const res = await fetch('/api/support', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } });
+        if (res.ok) { tickets = await res.json(); P.set('support_tickets', tickets); }
+      } catch { /* keep */ }
+    }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
         <h3 class="font-semibold mb-3">Support Tickets (${tickets.length})</h3>
@@ -936,10 +1012,19 @@
           </div>`).join('') || '<p class="text-slate-500">No tickets.</p>'}
       </div>`;
 
-    el.querySelectorAll('.admin-close-ticket').forEach((b) => b.onclick = () => {
-      const list = P.get('support_tickets', []);
-      const t = list.find((x) => x.id === b.dataset.ticket);
-      if (t) { t.status = 'closed'; P.set('support_tickets', list); }
+    el.querySelectorAll('.admin-close-ticket').forEach((b) => b.onclick = async () => {
+      const id = b.dataset.ticket;
+      if (P.apiConfig?.mode === 'remote') {
+        await fetch('/api/support/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') },
+          body: JSON.stringify({ status: 'closed' }),
+        });
+      } else {
+        const list = P.get('support_tickets', []);
+        const t = list.find((x) => x.id === id);
+        if (t) { t.status = 'closed'; P.set('support_tickets', list); }
+      }
       P.renderAdminSupport(el);
     });
   };
@@ -971,10 +1056,20 @@
       </div>`;
   };
 
-  P.renderAdminApi = function (el) {
+  P.renderAdminApi = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading API panel…</p>';
     const st = P.api?.getStatus?.() || { mode: 'local', connected: true, endpoints: {}, recentCalls: [] };
-    const hooks = P.get('webhooks', []);
-    const hookLog = P.get('webhook_log', []);
+    let hooks = P.get('webhooks', []);
+    let hookLog = P.get('webhook_log', []);
+    let eventLog = [];
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        hooks = await P.api.webhooks.list();
+        hookLog = await P.api.webhooks.log();
+        eventLog = await P.api.webhooks.eventsLog();
+        P.set('webhooks', hooks);
+      } catch { /* keep local */ }
+    }
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="portal-panel">
@@ -1007,11 +1102,13 @@
             <input name="url" placeholder="https://hooks.example.com/urdfw" class="flex-1 border rounded-xl px-3 py-2" required>
             <button type="submit" class="px-3 py-2 bg-slate-800 text-white rounded-xl">Add</button>
           </form>
-          <div class="text-xs space-y-2 max-h-32 overflow-auto mb-4">${hooks.length ? hooks.map((h) => `<div class="py-1 border-b font-mono">${h.url}</div>`).join('') : '<span class="text-slate-500">No webhooks registered.</span>'}</div>
+          <div class="text-xs space-y-2 max-h-32 overflow-auto mb-4">${hooks.length ? hooks.map((h) => `<div class="py-1 border-b font-mono flex justify-between gap-2"><span>${h.url}</span>${h.active === false ? '<span class="text-red-500">off</span>' : ''}</div>`).join('') : '<span class="text-slate-500">No webhooks registered.</span>'}</div>
           <h4 class="font-semibold text-xs mb-2">Recent API Calls</h4>
-          <div class="text-[11px] space-y-1 max-h-40 overflow-auto font-mono">${(st.recentCalls || []).map((c) => `<div class="py-1 border-b">${c.name} • ${c.source} • ${c.ms}ms</div>`).join('') || 'No calls yet.'}</div>
-          <h4 class="font-semibold text-xs mt-4 mb-2">Webhook Queue</h4>
-          <div class="text-[11px] max-h-24 overflow-auto">${hookLog.slice(0, 10).map((l) => `<div class="py-0.5">${l.event} → ${l.url}</div>`).join('') || 'Empty.'}</div>
+          <div class="text-[11px] space-y-1 max-h-32 overflow-auto font-mono">${(st.recentCalls || []).map((c) => `<div class="py-1 border-b">${c.name} • ${c.source} • ${c.ms}ms</div>`).join('') || 'No calls yet.'}</div>
+          <h4 class="font-semibold text-xs mt-4 mb-2">Webhook Delivery Log</h4>
+          <div class="text-[11px] max-h-24 overflow-auto">${hookLog.slice(0, 10).map((l) => `<div class="py-0.5">${l.event || l.action} → ${l.url || l.target} <span class="text-slate-400">${l.status || ''}</span></div>`).join('') || 'Empty.'}</div>
+          <h4 class="font-semibold text-xs mt-4 mb-2">Platform Events</h4>
+          <div class="text-[11px] max-h-24 overflow-auto">${eventLog.slice(0, 10).map((e) => `<div class="py-0.5">${e.type || e.event} — ${e.at || e.created_at}</div>`).join('') || 'No events yet.'}</div>
         </div>
       </div>`;
 
@@ -1024,11 +1121,12 @@
       P.renderApiStatusPanel?.('admin-api-status');
     });
 
-    el.querySelector('#admin-webhook-form')?.addEventListener('submit', (e) => {
+    el.querySelector('#admin-webhook-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const url = new FormData(e.target).get('url');
-      P.api.webhooks.register(url, ['payment', 'registration', 'claim', 'support']);
+      await P.api.webhooks.register(url, ['payment.completed', 'user.registered', 'lead.created', 'support.created']);
       P.portalToast?.('Webhook registered.');
+      e.target.reset();
       P.renderAdminApi(el);
     });
   };

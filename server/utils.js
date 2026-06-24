@@ -98,4 +98,37 @@ function leadToApi(row) {
   };
 }
 
-module.exports = { uuid, slugify, uniqueSlug, clientToApi, listingToApi, leadToApi };
+function claimToApi(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    listingId: row.listing_id,
+    listing_id: row.listing_id,
+    proof: row.proof,
+    paid: !!row.paid,
+    status: row.status,
+    createdAt: row.created_at,
+    at: row.created_at,
+  };
+}
+
+function reviewToApi(row) {
+  if (!row) return null;
+  let criteria = {};
+  try { criteria = row.criteria_json ? JSON.parse(row.criteria_json) : {}; } catch { /* ignore */ }
+  return {
+    id: row.id,
+    listingId: row.listing_id,
+    author: row.author,
+    email: row.email,
+    stars: row.stars,
+    text: row.text,
+    criteria,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
+module.exports = { uuid, slugify, uniqueSlug, clientToApi, listingToApi, leadToApi, claimToApi, reviewToApi };

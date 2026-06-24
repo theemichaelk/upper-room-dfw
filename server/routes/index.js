@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { signToken, authRequired, adminRequired } = require('../middleware/auth');
-const { uuid, uniqueSlug, clientToApi, listingToApi, leadToApi } = require('../utils');
+const { uuid, uniqueSlug, clientToApi, listingToApi, leadToApi, claimToApi, reviewToApi } = require('../utils');
 const { sendPasswordReset } = require('../services/email');
 const { listCampaigns, sendCampaign } = require('../services/campaigns');
 const { shortenUrl } = require('../services/tinyurl');
@@ -609,6 +609,122 @@ function createRouter(db, limiters = {}) {
 
   router.get('/support', adminRequired, (req, res) => {
     res.json(db.prepare('SELECT * FROM support_tickets ORDER BY created_at DESC').all());
+  });
+
+  router.patch('/support/:id', adminRequired, (req, res) => {
+    const row = db.prepare('SELECT id FROM support_tickets WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Ticket not found' });
+    const status = req.body?.status || 'closed';
+    db.prepare('UPDATE support_tickets SET status = ? WHERE id = ?').run(status, req.params.id);
+    res.json({ ok: true, id: req.params.id, status });
+  });
+
+  /* ─── CLAIMS ─── */
+  router.get('/claims', authRequired, (req, res) => {
+    const rows = req.user.role === 'admin'
+      ? db.prepare('SELECT * FROM claims ORDER BY created_at DESC').all()
+      : db.prepare('SELECT * FROM claims WHERE email = ? ORDER BY created_at DESC').all(req.user.email);
+    res.json(rows.map(claimToApi));
+  });
+
+  router.post('/claims', authRequired, (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    const now = new Date().toISOString();
+    const email = (body.email || req.user.email || '').trim().toLowerCase();
+    db.prepare(`
+      INSERT INTO claims (id, email, name, listing_id, proof, paid, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, email, body.name || req.user.email, body.listingId || body.listing_id || '',
+      body.proof || '', body.paid ? 1 : 0, 'pending', now
+    );
+    res.json({ ok: true, claim: claimToApi(db.prepare('SELECT * FROM claims WHERE id = ?').get(id)) });
+  });
+
+  router.patch('/claims/:id', adminRequired, (req, res) => {
+    const claim = db.prepare('SELECT * FROM claims WHERE id = ?').get(req.params.id);
+    if (!claim) return res.status(404).json({ ok: false, error: 'Claim not found' });
+    const status = req.body?.status || 'approved';
+    db.prepare('UPDATE claims SET status = ? WHERE id = ?').run(status, req.params.id);
+    if (status === 'approved' && claim.listing_id) {
+      const client = db.prepare('SELECT * FROM clients WHERE email = ?').get(claim.email);
+      const listing = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(claim.listing_id, claim.listing_id);
+      if (client && listing) {
+        db.prepare('UPDATE clients SET listing_id = ? WHERE id = ?').run(listing.id, client.id);
+        db.prepare('UPDATE listings SET client_id = ?, status = ? WHERE id = ?').run(client.id, 'live', listing.id);
+      }
+    }
+    res.json({ ok: true, claim: claimToApi(db.prepare('SELECT * FROM claims WHERE id = ?').get(req.params.id)) });
+  });
+
+  /* ─── REVIEWS ─── */
+  router.get('/reviews', (req, res) => {
+    const listingId = req.query.listingId || req.query.listing_id;
+    if (!listingId) return res.status(400).json({ ok: false, error: 'listingId required' });
+    const rows = db.prepare('SELECT * FROM reviews WHERE listing_id = ? AND status = ? ORDER BY created_at DESC').all(listingId, 'published');
+    res.json(rows.map(reviewToApi));
+  });
+
+  router.get('/admin/reviews', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 200').all();
+    res.json(rows.map(reviewToApi));
+  });
+
+  router.post('/reviews', authRequired, (req, res) => {
+    const body = req.body || {};
+    const listingId = body.listingId || body.listing_id;
+    if (!listingId) return res.status(400).json({ ok: false, error: 'listingId required' });
+    const id = uuid();
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO reviews (id, listing_id, author, email, stars, text, criteria_json, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, listingId, body.author || req.user.email, body.email || req.user.email,
+      parseInt(body.stars || '5', 10), body.text || '', JSON.stringify(body.criteria || {}),
+      body.status || 'published', now
+    );
+    res.json({ ok: true, review: reviewToApi(db.prepare('SELECT * FROM reviews WHERE id = ?').get(id)) });
+  });
+
+  router.get('/admin/leads', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM leads ORDER BY created_at DESC LIMIT 200').all();
+    res.json(rows.map(leadToApi));
+  });
+
+  router.patch('/listings/:id', authRequired, (req, res) => {
+    const row = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(req.params.id, req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Listing not found' });
+    if (req.user.role !== 'admin' && row.client_id !== req.user.clientId) {
+      return res.status(403).json({ ok: false, error: 'Forbidden' });
+    }
+    const patch = req.body || {};
+    const fields = [];
+    const vals = [];
+    const allowed = ['name', 'area', 'description', 'phone', 'website', 'times', 'status', 'featured'];
+    for (const k of allowed) {
+      if (patch[k] !== undefined) {
+        const col = k === 'description' ? 'description' : k === 'featured' ? 'featured' : k;
+        if (k === 'description') {
+          fields.push('description = ?', 'full_description = ?');
+          vals.push(patch[k], patch[k]);
+        } else if (k === 'featured') {
+          fields.push('featured = ?');
+          vals.push(patch[k] ? 1 : 0);
+        } else {
+          fields.push(`${col} = ?`);
+          vals.push(patch[k]);
+        }
+      }
+    }
+    if (fields.length) {
+      fields.push('updated_at = ?');
+      vals.push(new Date().toISOString(), row.id);
+      db.prepare(`UPDATE listings SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+    }
+    const updated = db.prepare('SELECT * FROM listings WHERE id = ?').get(row.id);
+    res.json(listingToApi(updated));
   });
 
   /* ─── INTEGRATIONS (stubs wired for frontend) ─── */

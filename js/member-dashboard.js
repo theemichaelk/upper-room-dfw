@@ -430,7 +430,7 @@
     }, 150);
   }
 
-  function renderBilling(client) {
+  async function renderBilling(client) {
     const statusEl = document.getElementById('billing-status');
     const formEl = document.getElementById('payment-form');
     const histEl = document.getElementById('payment-history');
@@ -448,12 +448,28 @@
     const portalBtn = document.getElementById('member-billing-portal');
     if (portalBtn) portalBtn.classList.toggle('hidden', !isActive);
 
-    const payments = client.payments || [];
+    let payments = client.payments || [];
+    const P = global.URDFWPlatform;
+    if (P?.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const invoices = await P.api.billing.getInvoices(client.email);
+        if (Array.isArray(invoices) && invoices.length) {
+          payments = invoices.map((i) => ({
+            date: i.date || i.created_at,
+            amount: i.amount,
+            plan: i.plan || 'Standard',
+            method: i.gateway || 'stripe',
+            status: i.status,
+          }));
+        }
+      } catch { /* keep client.payments */ }
+    }
+
     if (histEl) {
       histEl.innerHTML = payments.length
         ? payments.slice().reverse().map((p) => `
             <div class="py-2.5 flex justify-between text-xs border-b border-slate-100 last:border-0">
-              <span>${new Date(p.date).toLocaleDateString()} — ${p.plan || 'Standard'} · ${p.method || 'card'}</span>
+              <span>${new Date(p.date).toLocaleDateString()} — ${p.plan || 'Standard'} · ${p.method || 'card'}${p.status ? ' · ' + p.status : ''}</span>
               <span class="font-mono text-emerald-600 font-medium">$${p.amount}.00</span>
             </div>`).join('')
         : '<div class="text-xs text-slate-400 py-2">No payments yet. Your first charge appears here after subscribing.</div>';
@@ -776,7 +792,8 @@
   }
 
   function viewLeadDetail(leadId) {
-    const leads = JSON.parse(localStorage.getItem('urdfw_leads') || '[]');
+    const client = currentClient;
+    const leads = client ? getMyLeads(client) : [];
     const l = leads.find((x) => x.id === leadId) || { name: 'Lead', message: 'No details.', status: 'new' };
     const panel = document.createElement('div');
     panel.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4';
@@ -835,6 +852,12 @@
     if (metrics) metrics.style.display = n === 0 ? '' : 'none';
 
     renderMemberTabPanel(n, id);
+    if (id === 'billing' && currentClient) renderBilling(currentClient);
+    if (id === 'leads' && currentClient) {
+      loadApiLeads().then(() => {
+        if (currentClient) renderLeads(currentClient);
+      });
+    }
     pane.scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.querySelector('.member-workspace')?.scrollTo?.({ top: 0, behavior: 'smooth' });
   }
