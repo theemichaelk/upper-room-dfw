@@ -225,6 +225,10 @@ function createRouter(db, limiters = {}) {
 
     events.emit('user.registered', { email, name, area: body.area, clientId }).catch(() => {});
 
+    if (body.website) {
+      dnsService.ensureClientSite(db, { id: clientId, name, website: body.website }).catch(() => {});
+    }
+
     const client = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(clientId));
     const token = signToken({ sub: userId, email, role: 'church-owner', clientId });
     res.json({ ok: true, client, user: { id: userId, email, name, role: 'church-owner' }, token });
@@ -405,6 +409,10 @@ function createRouter(db, limiters = {}) {
     }
 
     const listing = db.prepare('SELECT * FROM listings WHERE id = ?').get(listingId);
+    const website = d.website || client.website;
+    if (website) {
+      dnsService.ensureClientSite(db, { id: cid, name: d.name || client.name, website }).catch(() => {});
+    }
     res.json(listingToApi(listing));
   });
 
@@ -858,6 +866,9 @@ function createRouter(db, limiters = {}) {
 
     if (!isAdmin && type !== 'client') {
       return res.status(403).json({ ok: false, error: 'Members can only add client sites' });
+    }
+    if (!isAdmin && !clientId) {
+      return res.status(400).json({ ok: false, error: 'Account not linked to a client profile. Sign in via the member portal first.' });
     }
 
     try {

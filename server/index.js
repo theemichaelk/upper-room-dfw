@@ -40,11 +40,15 @@ async function bootstrap() {
     process.env.APP_URL,
     'https://upperroomdfw.com',
     'https://www.upperroomdfw.com',
+    'https://quantumpages.ai',
+    'https://www.quantumpages.ai',
     'https://d4lzb9pq4mfuf.cloudfront.net',
     'https://main.dbtc2f3y8pyam.amplifyapp.com',
     'https://dbtc2f3y8pyam.amplifyapp.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
   ].filter(Boolean);
 
   const isProd = process.env.NODE_ENV === 'production'

@@ -142,8 +142,9 @@
         const domain = prompt('Domain name (e.g. mychurch.org):', '');
         if (!domain) return;
         const name = prompt('Site label:', domain) || domain;
+        const createZone = isAdmin && confirm('Create a new Route53 hosted zone for this domain? (Required for external domains not in upperroomdfw.com)');
         try {
-          await dnsFetch('/dns/sites', { method: 'POST', body: { domain, name, autoDefaults: true, createZone: isAdmin } });
+          await dnsFetch('/dns/sites', { method: 'POST', body: { domain, name, autoDefaults: true, createZone } });
           P.portalToast?.('Site added: ' + domain);
           P.renderDnsPanel(el, opts);
         } catch (err) {

@@ -148,6 +148,17 @@ async function main() {
     console.log('  ✓ integrations: API helpers'); pass++;
   } else { console.log('  ✗ integrations: API helpers'); fail++; }
 
+  const dnsModule = fs.readFileSync(path.join(ROOT, 'js/platform/20-dns.js'), 'utf8');
+  if (dnsModule.includes('renderDnsPanel') && dnsModule.includes('/dns/sites')) {
+    console.log('  ✓ dns: management panel'); pass++;
+  } else { console.log('  ✗ dns: management panel'); fail++; }
+  if (admin.body.includes('data-admin-tab="dns"')) {
+    console.log('  ✓ admin: DNS tab'); pass++;
+  } else { console.log('  ✗ admin: DNS tab'); fail++; }
+  if (member.body.includes('data-member-tab="dns"') && member.body.includes('member-platform-dns')) {
+    console.log('  ✓ member: DNS tab'); pass++;
+  } else { console.log('  ✗ member: DNS tab'); fail++; }
+
   const cfg = await fetch('data/platform-config.json');
   try {
     const j = JSON.parse(cfg.body);

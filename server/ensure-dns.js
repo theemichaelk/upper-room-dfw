@@ -1,6 +1,8 @@
 const { createSite, platformRoot } = require('./services/dns');
 
 async function ensureDnsSites(db) {
+  db.prepare("DELETE FROM sites WHERE domain LIKE '%localhost%' OR domain LIKE '%127.0.0.1%'").run();
+
   let root = process.env.PLATFORM_DOMAIN || platformRoot();
   if (root.includes('localhost') || root.includes('127.0.0.1')) root = 'upperroomdfw.com';
   const zoneId = process.env.ROUTE53_HOSTED_ZONE_ID || 'Z03688642MOTFG2SPA0LU';
