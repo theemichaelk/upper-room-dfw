@@ -222,54 +222,97 @@ ${items}
 `;
 }
 
-function heroBlogCard(post, compact) {
+function shortTitle(title, max = 58) {
+  const t = String(title || '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 28 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+}
+
+function shortExcerpt(text, max = 88) {
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim() + '…';
+}
+
+function cityPill(city) {
+  const label = String(city || 'DFW').replace('DFW Metroplex', 'DFW');
+  return `<span class="urdfw-insights-pill">${esc(label)}</span>`;
+}
+
+function heroInsightsFeatured(post) {
   const href = `blog/${post.slug}.html`;
-  if (compact) {
-    return `<a href="${href}" class="urdfw-hero-blog-item group block py-3 border-b border-white/10 last:border-0 hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
-      <p class="text-[10px] uppercase tracking-wider text-sky-200/90 mb-0.5">${esc(post.city)} · ${post.readMinutes} min</p>
-      <h3 class="text-sm font-semibold leading-snug text-white group-hover:text-sky-100 line-clamp-2">${esc(post.title)}</h3>
-    </a>`;
-  }
-  return `<a href="${href}" class="urdfw-hero-blog-mobile-item flex gap-3 p-3 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-colors">
-    <img src="${post.image}" alt="" class="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy">
-    <div class="min-w-0">
-      <p class="text-[10px] uppercase tracking-wider text-slate-400">${esc(post.city)}</p>
-      <h3 class="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">${esc(post.title)}</h3>
-      <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${esc(post.excerpt)}</p>
+  return `<a href="${href}" class="urdfw-insights-featured group block">
+    <div class="urdfw-insights-featured-img-wrap">
+      <img src="${post.image}" alt="${esc(shortTitle(post.title, 48))}" class="urdfw-insights-featured-img" width="320" height="140" loading="eager">
+    </div>
+    <div class="urdfw-insights-featured-body">
+      ${cityPill(post.city)}
+      <h3 class="urdfw-insights-featured-title">${esc(shortTitle(post.title, 64))}</h3>
+      <p class="urdfw-insights-featured-excerpt">${esc(shortExcerpt(post.excerpt))}</p>
+      <span class="urdfw-insights-read">Read guide <i class="fa-solid fa-arrow-right text-[10px] ml-1 group-hover:translate-x-0.5 transition-transform"></i></span>
     </div>
   </a>`;
 }
 
-function buildHeroBlogPanels(posts) {
+function heroInsightsRow(post) {
+  const href = `blog/${post.slug}.html`;
+  return `<li>
+    <a href="${href}" class="urdfw-insights-row group">
+      ${cityPill(post.city)}
+      <span class="urdfw-insights-row-title">${esc(shortTitle(post.title, 52))}</span>
+      <i class="fa-solid fa-chevron-right urdfw-insights-row-chevron" aria-hidden="true"></i>
+    </a>
+  </li>`;
+}
+
+function heroInsightsMobileCard(post) {
+  const href = `blog/${post.slug}.html`;
+  return `<a href="${href}" class="urdfw-insights-mobile-card group shrink-0">
+    <img src="${post.image}" alt="${esc(shortTitle(post.title, 40))}" class="urdfw-insights-mobile-img" width="200" height="112" loading="lazy">
+    <div class="urdfw-insights-mobile-body">
+      ${cityPill(post.city)}
+      <h3 class="urdfw-insights-mobile-title">${esc(shortTitle(post.title, 48))}</h3>
+    </div>
+  </a>`;
+}
+
+function buildHeroBlogPanels(posts, totalCount) {
   const latest = posts.slice(0, 3);
+  const [featured, ...rest] = latest;
+  const countLabel = totalCount || posts.length;
+
   const desktop = `${HERO_BLOG_START}
-    <aside id="hero-blog-panel" class="urdfw-hero-blog-panel hidden lg:flex flex-col absolute right-6 top-1/2 -translate-y-1/2 z-30 w-[min(100%,340px)] max-h-[min(88%,520px)]" aria-label="Latest from the blog">
-      <div class="bg-slate-900/75 backdrop-blur-md border border-white/15 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-full">
-        <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between shrink-0">
-          <h2 class="text-sm font-semibold text-white tracking-wide"><i class="fa-solid fa-newspaper text-sky-300 mr-1.5"></i>Latest from the Blog</h2>
-          <a href="blog.html" class="text-xs text-sky-300 hover:text-white font-medium">All posts →</a>
-        </div>
-        <div class="px-3 py-2 overflow-y-auto flex-1">
-          ${latest.map((p) => heroBlogCard(p, true)).join('\n')}
-        </div>
-        <div class="px-4 py-2.5 border-t border-white/10 shrink-0 flex gap-2 text-xs">
-          <a href="feed.xml" class="text-sky-300/90 hover:text-white"><i class="fa-solid fa-rss mr-1"></i>RSS</a>
-          <span class="text-white/20">·</span>
-          <a href="sitemap.xml" class="text-sky-300/90 hover:text-white">Sitemap</a>
-        </div>
+    <aside id="hero-blog-panel" class="urdfw-hero-insights hidden lg:block" aria-labelledby="urdfw-insights-heading">
+      <div class="urdfw-hero-insights-card">
+        <header class="urdfw-insights-header">
+          <div>
+            <p class="urdfw-insights-eyebrow">Local SEO guides</p>
+            <h2 id="urdfw-insights-heading" class="urdfw-insights-heading">DFW Faith Insights</h2>
+          </div>
+          <a href="blog.html" class="urdfw-insights-all" title="Browse all ${countLabel} articles">All ${countLabel} <i class="fa-solid fa-arrow-right ml-1 text-[10px]"></i></a>
+        </header>
+        ${featured ? heroInsightsFeatured(featured) : ''}
+        ${rest.length ? `<ul class="urdfw-insights-list">${rest.map((p) => heroInsightsRow(p)).join('')}</ul>` : ''}
       </div>
     </aside>
 ${HERO_BLOG_END}`;
 
   const mobile = `${HERO_BLOG_MOBILE_START}
-  <section id="hero-blog-mobile" class="lg:hidden bg-white border-b border-slate-200" aria-label="Latest blog posts">
-    <div class="max-w-screen-2xl mx-auto px-6 py-5">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-base font-semibold text-slate-900"><i class="fa-solid fa-newspaper text-sky-600 mr-1.5"></i>Latest from the Blog</h2>
-        <a href="blog.html" class="text-xs font-semibold text-sky-700">View all →</a>
+  <section id="hero-blog-mobile" class="urdfw-insights-mobile lg:hidden" aria-labelledby="urdfw-insights-mobile-heading">
+    <div class="max-w-screen-2xl mx-auto px-6 py-4">
+      <div class="flex items-end justify-between gap-3 mb-3">
+        <div>
+          <p class="urdfw-insights-eyebrow text-sky-700">Local church guides</p>
+          <h2 id="urdfw-insights-mobile-heading" class="text-base font-semibold text-slate-900">DFW Faith Insights</h2>
+        </div>
+        <a href="blog.html" class="text-xs font-semibold text-sky-700 whitespace-nowrap">All guides →</a>
       </div>
-      <div class="space-y-2">
-        ${latest.map((p) => heroBlogCard(p, false)).join('\n')}
+      <div class="urdfw-insights-mobile-scroll flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+        ${latest.map((p) => heroInsightsMobileCard(p)).join('')}
       </div>
     </div>
   </section>
@@ -282,7 +325,7 @@ function patchHomeHeroBlog(data) {
   if (!fs.existsSync(INDEX_HTML)) return false;
   let html = fs.readFileSync(INDEX_HTML, 'utf8');
   const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  const { desktop, mobile } = buildHeroBlogPanels(posts);
+  const { desktop, mobile } = buildHeroBlogPanels(posts, data.posts.length);
 
   if (!html.includes(HERO_BLOG_START)) {
     html = html.replace(
@@ -308,12 +351,17 @@ function patchHomeHeroBlog(data) {
     );
   }
 
-  if (!html.includes('urdfw-hero-with-blog')) {
-    html = html.replace(
-      /<header id="hero-slider" class="([^"]*)">/,
-      '<header id="hero-slider" class="$1 urdfw-hero-with-blog lg:pr-[min(360px,32vw)]">'
-    );
-  }
+  html = html.replace(
+    /<header id="hero-slider" class="([^"]*)">/,
+    (_, cls) => {
+      const base = cls
+        .replace(/\burdfw-hero-with-blog\b/g, '')
+        .replace(/\blg:pr-\[[^\]]+\]\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return `<header id="hero-slider" class="${base} urdfw-hero-with-blog lg:pr-[min(300px,28vw)]">`;
+    }
+  );
 
   fs.writeFileSync(INDEX_HTML, html);
   return true;

@@ -150,26 +150,236 @@
   image-rendering: auto;
 }
 
-/* Homepage hero — blog panel beside slider */
+/* Homepage hero — DFW Faith Insights panel beside slider */
 .urdfw-hero-with-blog .hero-slide > .absolute.inset-0.flex.items-center > .max-w-screen-2xl {
   max-width: 100%;
 }
 
 .urdfw-hero-with-blog .hero-slide .max-w-2xl {
-  max-width: 36rem;
+  max-width: 34rem;
 }
 
 @media (min-width: 1024px) {
-  .urdfw-hero-blog-panel {
-    pointer-events: auto;
+  .urdfw-hero-with-blog .hero-slides {
+    right: min(300px, 28vw);
   }
 
-  .urdfw-hero-with-blog .hero-slides {
-    right: min(360px, 32vw);
+  .urdfw-hero-with-blog > button.absolute.right-4 {
+    right: calc(min(300px, 28vw) + 1rem);
   }
 }
 
-.urdfw-hero-blog-panel .overflow-y-auto {
+.urdfw-hero-insights {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  width: min(100%, 292px);
+  pointer-events: auto;
+}
+
+.urdfw-hero-insights-card {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 1rem;
+  box-shadow: 0 20px 50px rgba(2, 40, 64, 0.28);
+  overflow: hidden;
+  color: #0f172a;
+}
+
+.urdfw-insights-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem 0.625rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.urdfw-insights-eyebrow {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0369a1;
+  margin: 0 0 0.15rem;
+}
+
+.urdfw-insights-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+  margin: 0;
+}
+
+.urdfw-insights-all {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #0369a1;
+  white-space: nowrap;
+  padding-top: 0.35rem;
+}
+
+.urdfw-insights-all:hover {
+  color: #075985;
+}
+
+.urdfw-insights-pill {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0369a1;
+  background: #e0f2fe;
+  border-radius: 9999px;
+  padding: 0.15rem 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.urdfw-insights-featured {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.urdfw-insights-featured:hover .urdfw-insights-featured-title {
+  color: #0369a1;
+}
+
+.urdfw-insights-featured-img-wrap {
+  height: 7.5rem;
+  overflow: hidden;
+}
+
+.urdfw-insights-featured-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.urdfw-insights-featured:hover .urdfw-insights-featured-img {
+  transform: scale(1.04);
+}
+
+.urdfw-insights-featured-body {
+  padding: 0.75rem 1rem 0.875rem;
+}
+
+.urdfw-insights-featured-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #0f172a;
+  margin: 0 0 0.35rem;
+  transition: color 0.15s;
+}
+
+.urdfw-insights-featured-excerpt {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #64748b;
+  margin: 0 0 0.5rem;
+}
+
+.urdfw-insights-read {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #0369a1;
+}
+
+.urdfw-insights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0.5rem 0.625rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.urdfw-insights-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+
+.urdfw-insights-row:hover {
+  background: #f0f9ff;
+}
+
+.urdfw-insights-row .urdfw-insights-pill {
+  margin: 0;
+  flex-shrink: 0;
+  max-width: 5.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.urdfw-insights-row-title {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #334155;
+  min-width: 0;
+}
+
+.urdfw-insights-row:hover .urdfw-insights-row-title {
+  color: #0369a1;
+}
+
+.urdfw-insights-row-chevron {
+  font-size: 0.625rem;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+/* Mobile insights — horizontal cards */
+.urdfw-insights-mobile-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(125, 211, 252, 0.4) transparent;
+  scrollbar-color: #cbd5e1 transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.urdfw-insights-mobile-card {
+  width: 11.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.urdfw-insights-mobile-card:hover {
+  border-color: #7dd3fc;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.12);
+}
+
+.urdfw-insights-mobile-img {
+  width: 100%;
+  height: 5.5rem;
+  object-fit: cover;
+}
+
+.urdfw-insights-mobile-body {
+  padding: 0.5rem 0.625rem 0.625rem;
+}
+
+.urdfw-insights-mobile-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #0f172a;
+  margin: 0.25rem 0 0;
 }

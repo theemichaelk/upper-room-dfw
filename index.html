@@ -16,6 +16,8 @@
 
 
 
+
+
 <meta name="theme-color" content="#0369a1">
   <meta name="format-detection" content="telephone=no">
 
@@ -42,7 +44,7 @@
   <link rel="stylesheet" href="css/widgets.css">
   <link rel="alternate" type="application/rss+xml" title="Upper Room DFW Blog RSS" href="feed.xml">
   <link rel="stylesheet" href="css/404.css">
-  <link rel="canonical" href="https://upperroomdfw.com">
+    <link rel="canonical" href="https://upperroomdfw.com">
 </head>
 <body class="tail-container bg-slate-50 text-slate-800">
   <!-- NAVBAR with dropdowns and full interlinks -->
@@ -85,7 +87,7 @@
   </nav>
 
   <!-- HERO BANNER SLIDER with local pictures - Full featured with multiple slides -->
-  <header id="hero-slider" class="sky-gradient text-white relative overflow-hidden h-[520px] md:h-[620px] urdfw-hero-with-blog lg:pr-[min(360px,32vw)]">
+  <header id="hero-slider" class="sky-gradient text-white relative overflow-hidden h-[520px] md:h-[620px] lg:pr-[min(360px,32vw)] urdfw-hero-with-blog lg:pr-[min(300px,28vw)]">
     <div class="hero-slides">
       <!-- Slide 1 -->
       <div class="hero-slide active" style="background-image: linear-gradient(rgba(12,74,110,0.6), rgba(3,105,161,0.55)), url('images/10.jpg')">
@@ -178,31 +180,39 @@
       <button onclick="goToSlide(3)" class="hero-dot w-3 h-3 bg-white rounded-full opacity-80 hover:opacity-100 transition-all"></button>
     </div>
     <!-- urdfw-hero-blog:start -->
-    <aside id="hero-blog-panel" class="urdfw-hero-blog-panel hidden lg:flex flex-col absolute right-6 top-1/2 -translate-y-1/2 z-30 w-[min(100%,340px)] max-h-[min(88%,520px)]" aria-label="Latest from the blog">
-      <div class="bg-slate-900/75 backdrop-blur-md border border-white/15 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-full">
-        <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between shrink-0">
-          <h2 class="text-sm font-semibold text-white tracking-wide"><i class="fa-solid fa-newspaper text-sky-300 mr-1.5"></i>Latest from the Blog</h2>
-          <a href="blog.html" class="text-xs text-sky-300 hover:text-white font-medium">All posts →</a>
-        </div>
-        <div class="px-3 py-2 overflow-y-auto flex-1">
-          <a href="blog/community-outreach-churches-dfw.html" class="urdfw-hero-blog-item group block py-3 border-b border-white/10 last:border-0 hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
-      <p class="text-[10px] uppercase tracking-wider text-sky-200/90 mb-0.5">DFW Metroplex · 8 min</p>
-      <h3 class="text-sm font-semibold leading-snug text-white group-hover:text-sky-100 line-clamp-2">Community Outreach Churches in DFW: Food Banks, Mentorship &amp; City Serve</h3>
+    <aside id="hero-blog-panel" class="urdfw-hero-insights hidden lg:block" aria-labelledby="urdfw-insights-heading">
+      <div class="urdfw-hero-insights-card">
+        <header class="urdfw-insights-header">
+          <div>
+            <p class="urdfw-insights-eyebrow">Local SEO guides</p>
+            <h2 id="urdfw-insights-heading" class="urdfw-insights-heading">DFW Faith Insights</h2>
+          </div>
+          <a href="blog.html" class="urdfw-insights-all" title="Browse all 10 articles">All 10 <i class="fa-solid fa-arrow-right ml-1 text-[10px]"></i></a>
+        </header>
+        <a href="blog/community-outreach-churches-dfw.html" class="urdfw-insights-featured group block">
+    <div class="urdfw-insights-featured-img-wrap">
+      <img src="images/22.jpg" alt="Community Outreach Churches in DFW: Food Banks,…" class="urdfw-insights-featured-img" width="320" height="140" loading="eager">
+    </div>
+    <div class="urdfw-insights-featured-body">
+      <span class="urdfw-insights-pill">DFW</span>
+      <h3 class="urdfw-insights-featured-title">Community Outreach Churches in DFW: Food Banks, Mentorship &amp;…</h3>
+      <p class="urdfw-insights-featured-excerpt">18% of local church searches mention outreach. Meet mission-minded congregations…</p>
+      <span class="urdfw-insights-read">Read guide <i class="fa-solid fa-arrow-right text-[10px] ml-1 group-hover:translate-x-0.5 transition-transform"></i></span>
+    </div>
+  </a>
+        <ul class="urdfw-insights-list"><li>
+    <a href="blog/register-your-church-upper-room-dfw.html" class="urdfw-insights-row group">
+      <span class="urdfw-insights-pill">DFW</span>
+      <span class="urdfw-insights-row-title">Register Your Church on Upper Room DFW: SEO…</span>
+      <i class="fa-solid fa-chevron-right urdfw-insights-row-chevron" aria-hidden="true"></i>
     </a>
-<a href="blog/register-your-church-upper-room-dfw.html" class="urdfw-hero-blog-item group block py-3 border-b border-white/10 last:border-0 hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
-      <p class="text-[10px] uppercase tracking-wider text-sky-200/90 mb-0.5">DFW Metroplex · 7 min</p>
-      <h3 class="text-sm font-semibold leading-snug text-white group-hover:text-sky-100 line-clamp-2">Register Your Church on Upper Room DFW: SEO Benefits for Local Listings</h3>
+  </li><li>
+    <a href="blog/small-groups-north-texas.html" class="urdfw-insights-row group">
+      <span class="urdfw-insights-pill">North Texas</span>
+      <span class="urdfw-insights-row-title">Small Groups in North Texas: How to Find Community…</span>
+      <i class="fa-solid fa-chevron-right urdfw-insights-row-chevron" aria-hidden="true"></i>
     </a>
-<a href="blog/small-groups-north-texas.html" class="urdfw-hero-blog-item group block py-3 border-b border-white/10 last:border-0 hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
-      <p class="text-[10px] uppercase tracking-wider text-sky-200/90 mb-0.5">North Texas · 6 min</p>
-      <h3 class="text-sm font-semibold leading-snug text-white group-hover:text-sky-100 line-clamp-2">Small Groups in North Texas: How to Find Community Beyond Sunday</h3>
-    </a>
-        </div>
-        <div class="px-4 py-2.5 border-t border-white/10 shrink-0 flex gap-2 text-xs">
-          <a href="feed.xml" class="text-sky-300/90 hover:text-white"><i class="fa-solid fa-rss mr-1"></i>RSS</a>
-          <span class="text-white/20">·</span>
-          <a href="sitemap.xml" class="text-sky-300/90 hover:text-white">Sitemap</a>
-        </div>
+  </li></ul>
       </div>
     </aside>
 <!-- urdfw-hero-blog:end -->
@@ -218,35 +228,33 @@
   </header>
 
 <!-- urdfw-hero-blog-mobile:start -->
-  <section id="hero-blog-mobile" class="lg:hidden bg-white border-b border-slate-200" aria-label="Latest blog posts">
-    <div class="max-w-screen-2xl mx-auto px-6 py-5">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-base font-semibold text-slate-900"><i class="fa-solid fa-newspaper text-sky-600 mr-1.5"></i>Latest from the Blog</h2>
-        <a href="blog.html" class="text-xs font-semibold text-sky-700">View all →</a>
+  <section id="hero-blog-mobile" class="urdfw-insights-mobile lg:hidden" aria-labelledby="urdfw-insights-mobile-heading">
+    <div class="max-w-screen-2xl mx-auto px-6 py-4">
+      <div class="flex items-end justify-between gap-3 mb-3">
+        <div>
+          <p class="urdfw-insights-eyebrow text-sky-700">Local church guides</p>
+          <h2 id="urdfw-insights-mobile-heading" class="text-base font-semibold text-slate-900">DFW Faith Insights</h2>
+        </div>
+        <a href="blog.html" class="text-xs font-semibold text-sky-700 whitespace-nowrap">All guides →</a>
       </div>
-      <div class="space-y-2">
-        <a href="blog/community-outreach-churches-dfw.html" class="urdfw-hero-blog-mobile-item flex gap-3 p-3 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-colors">
-    <img src="images/22.jpg" alt="" class="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy">
-    <div class="min-w-0">
-      <p class="text-[10px] uppercase tracking-wider text-slate-400">DFW Metroplex</p>
-      <h3 class="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">Community Outreach Churches in DFW: Food Banks, Mentorship &amp; City Serve</h3>
-      <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">18% of local church searches mention outreach. Meet mission-minded congregations serving South Dallas, East Fort Worth, and suburban food deserts.</p>
+      <div class="urdfw-insights-mobile-scroll flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+        <a href="blog/community-outreach-churches-dfw.html" class="urdfw-insights-mobile-card group shrink-0">
+    <img src="images/22.jpg" alt="Community Outreach Churches in DFW:…" class="urdfw-insights-mobile-img" width="200" height="112" loading="lazy">
+    <div class="urdfw-insights-mobile-body">
+      <span class="urdfw-insights-pill">DFW</span>
+      <h3 class="urdfw-insights-mobile-title">Community Outreach Churches in DFW: Food Banks,…</h3>
     </div>
-  </a>
-<a href="blog/register-your-church-upper-room-dfw.html" class="urdfw-hero-blog-mobile-item flex gap-3 p-3 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-colors">
-    <img src="images/6.jpg" alt="" class="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy">
-    <div class="min-w-0">
-      <p class="text-[10px] uppercase tracking-wider text-slate-400">DFW Metroplex</p>
-      <h3 class="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">Register Your Church on Upper Room DFW: SEO Benefits for Local Listings</h3>
-      <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">Why verified church listings rank in Google local search, how GMB alignment helps, and what pastors get with Standard and Premium plans.</p>
+  </a><a href="blog/register-your-church-upper-room-dfw.html" class="urdfw-insights-mobile-card group shrink-0">
+    <img src="images/6.jpg" alt="Register Your Church on Upper Room DFW:…" class="urdfw-insights-mobile-img" width="200" height="112" loading="lazy">
+    <div class="urdfw-insights-mobile-body">
+      <span class="urdfw-insights-pill">DFW</span>
+      <h3 class="urdfw-insights-mobile-title">Register Your Church on Upper Room DFW: SEO…</h3>
     </div>
-  </a>
-<a href="blog/small-groups-north-texas.html" class="urdfw-hero-blog-mobile-item flex gap-3 p-3 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-colors">
-    <img src="images/8.jpg" alt="" class="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy">
-    <div class="min-w-0">
-      <p class="text-[10px] uppercase tracking-wider text-slate-400">North Texas</p>
-      <h3 class="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">Small Groups in North Texas: How to Find Community Beyond Sunday</h3>
-      <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">Sunday service is the front door; small groups are where DFW believers build lasting friendships. Tips for finding home groups in your city.</p>
+  </a><a href="blog/small-groups-north-texas.html" class="urdfw-insights-mobile-card group shrink-0">
+    <img src="images/8.jpg" alt="Small Groups in North Texas: How to…" class="urdfw-insights-mobile-img" width="200" height="112" loading="lazy">
+    <div class="urdfw-insights-mobile-body">
+      <span class="urdfw-insights-pill">North Texas</span>
+      <h3 class="urdfw-insights-mobile-title">Small Groups in North Texas: How to Find…</h3>
     </div>
   </a>
       </div>
