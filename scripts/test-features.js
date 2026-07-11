@@ -3,10 +3,15 @@
  * Automated feature verification against live dev server
  */
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const BASE = process.env.URDFW_URL || 'http://localhost:8000';
+const BASE = (process.env.URDFW_URL || 'http://localhost:8000').replace(/\/$/, '');
+
+function httpClient(url) {
+  return url.protocol === 'https:' ? https : http;
+}
 const ROOT = path.join(__dirname, '..');
 
 const PAGES = [
@@ -35,11 +40,16 @@ const PLATFORM_FILES = [
 
 function fetch(path, redirects = 0) {
   return new Promise((resolve, reject) => {
-    const url = BASE + '/' + path.replace(/^\//, '');
-    http.get(url, (res) => {
+    const url = new URL(path.replace(/^\//, ''), BASE + '/');
+    const opts = {
+      hostname: url.hostname,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: url.pathname + url.search,
+    };
+    httpClient(url).get(opts, (res) => {
       if ([301, 302, 307, 308].includes(res.statusCode) && res.headers.location && redirects < 5) {
         const next = res.headers.location.startsWith('http')
-          ? res.headers.location.replace(BASE, '').replace(/^\//, '')
+          ? new URL(res.headers.location).pathname.replace(/^\//, '')
           : res.headers.location.replace(/^\//, '');
         res.resume();
         return resolve(fetch(next, redirects + 1));

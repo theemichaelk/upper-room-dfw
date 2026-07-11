@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 const http = require('http');
+const https = require('https');
 
 const BASE = process.env.URDFW_URL || 'http://localhost:8000';
+
+function httpClient(url) {
+  return url.protocol === 'https:' ? https : http;
+}
 
 function request(method, path, body, token) {
   return new Promise((resolve, reject) => {
@@ -9,12 +14,12 @@ function request(method, path, body, token) {
     const opts = {
       method,
       hostname: url.hostname,
-      port: url.port,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
       path: url.pathname + url.search,
       headers: { 'Content-Type': 'application/json' },
     };
     if (token) opts.headers.Authorization = 'Bearer ' + token;
-    const req = http.request(opts, (res) => {
+    const req = httpClient(url).request(opts, (res) => {
       let data = '';
       res.on('data', (c) => (data += c));
       res.on('end', () => {
@@ -61,19 +66,28 @@ async function main() {
   check('auth me', me.status === 200 && me.body?.client?.email);
 
   const billing = await request('POST', '/api/billing/charge', { plan: 'standard', amount: 29 }, token);
-  check('billing charge (dev or stripe)', billing.status === 200 && billing.body?.ok);
+  check(
+    'billing charge (dev or stripe)',
+    billing.status === 200 && billing.body?.ok && (billing.body?.checkoutUrl || billing.body?.order)
+  );
 
-  const admin = await request('POST', '/api/auth/admin', {
-    email: 'michaelk@tsbrenterprises.com',
-    password: process.env.ADMIN_PASSWORD || 'admin123',
-  });
-  check('admin login (michaelk)', admin.status === 200 && admin.body?.token);
+  const isRemote = BASE.startsWith('https://');
+  const adminPass = process.env.ADMIN_PASSWORD || (isRemote ? '' : 'admin123');
+  if (!adminPass && isRemote) {
+    console.log('  ⊘ admin login tests skipped (set ADMIN_PASSWORD for remote)');
+  } else {
+    const admin = await request('POST', '/api/auth/admin', {
+      email: 'michaelk@tsbrenterprises.com',
+      password: adminPass,
+    });
+    check('admin login (michaelk)', admin.status === 200 && admin.body?.token);
 
-  const admin2 = await request('POST', '/api/auth/admin', {
-    email: 'theesaintmichael@gmail.com',
-    password: process.env.ADMIN_PASSWORD || 'admin123',
-  });
-  check('admin login (theesaintmichael)', admin2.status === 200 && admin2.body?.token);
+    const admin2 = await request('POST', '/api/auth/admin', {
+      email: 'theesaintmichael@gmail.com',
+      password: adminPass,
+    });
+    check('admin login (theesaintmichael)', admin2.status === 200 && admin2.body?.token);
+  }
 
   console.log('\n--- API RESULT ---');
   console.log(`PASS: ${pass}  FAIL: ${fail}`);
