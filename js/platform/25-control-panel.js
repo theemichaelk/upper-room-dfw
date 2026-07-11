@@ -1,0 +1,493 @@
+/**
+ * Phase 5 — Control Panel expansion: SEO Hub, Site Settings, Header & Footer, Page Lifecycle.
+ */
+(function (global) {
+  const P = global.URDFWPlatform;
+  if (!P) return;
+
+  const HUBS = [
+    { id: 'seo-hub', label: 'SEO Hub', icon: 'fa-chart-line' },
+    { id: 'site-settings', label: 'Site Settings', icon: 'fa-sliders' },
+    { id: 'header-footer', label: 'Header & Footer', icon: 'fa-window-maximize' },
+    { id: 'content-studio', label: 'Content Studio', icon: 'fa-pen-nib' },
+    { id: 'page-lifecycle', label: 'Page Lifecycle', icon: 'fa-sitemap' },
+  ];
+
+  function esc(v) {
+    return String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  /** Strip full meta tags — scrapers need content value only. */
+  function normalizeVerificationToken(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    const m = s.match(/content\s*=\s*["']([^"']+)["']/i);
+    return m ? m[1].trim() : s;
+  }
+
+  function dnsRow(label, values, ok, error) {
+    const vals = (values || []).length
+      ? values.map((v) => `<code class="bg-slate-100 px-1 rounded">${esc(v)}</code>`).join(' ')
+      : '<span class="text-slate-400">—</span>';
+    const status = ok
+      ? '<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i></span>'
+      : '<span class="text-amber-700"><i class="fa-solid fa-circle-exclamation"></i></span>';
+    return `<tr class="border-b border-slate-100"><td class="py-2 pr-3 font-medium">${label}</td><td class="py-2 pr-3">${vals}</td><td class="py-2">${status}${error ? `<div class="text-[10px] text-red-600">${esc(error)}</div>` : ''}</td></tr>`;
+  }
+
+  function hubNav(active) {
+    return `<div class="flex flex-wrap gap-2 mb-5" role="tablist">${HUBS.map((h) => `
+      <button type="button" data-control-hub="${h.id}" role="tab" aria-selected="${active === h.id ? 'true' : 'false'}"
+        class="px-4 py-2 rounded-2xl text-xs font-semibold border ${active === h.id ? 'bg-[#0369a1] text-white border-[#0369a1]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}">
+        <i class="fa-solid ${h.icon} mr-1"></i>${h.label}
+      </button>`).join('')}</div>`;
+  }
+
+  function statusBadge(status) {
+    const colors = {
+      live: 'bg-emerald-100 text-emerald-800',
+      draft: 'bg-amber-100 text-amber-800',
+      scheduled: 'bg-sky-100 text-sky-800',
+      archived: 'bg-slate-200 text-slate-600',
+      redirect: 'bg-violet-100 text-violet-800',
+    };
+    return `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors[status] || 'bg-slate-100'}">${status || 'live'}</span>`;
+  }
+
+  P.renderControlPanelShell = function (el, activeHub) {
+    el.innerHTML = `${hubNav(activeHub)}<div id="control-panel-hub-panel"></div>`;
+    el.querySelectorAll('[data-control-hub]').forEach((btn) => {
+      btn.addEventListener('click', () => P.renderControlPanelHub(el, btn.dataset.controlHub));
+    });
+    return el.querySelector('#control-panel-hub-panel');
+  };
+
+  P.renderControlPanelHub = async function (rootEl, hubId) {
+    const panel = rootEl.querySelector('#control-panel-hub-panel') || P.renderControlPanelShell(rootEl, hubId);
+    rootEl.querySelectorAll('[data-control-hub]').forEach((btn) => {
+      const on = btn.dataset.controlHub === hubId;
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.className = `px-4 py-2 rounded-2xl text-xs font-semibold border ${on ? 'bg-[#0369a1] text-white border-[#0369a1]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`;
+    });
+
+    if (hubId === 'seo-hub') return P.renderSeoHubPanel(panel);
+    if (hubId === 'site-settings') return P.renderSiteSettingsPanel(panel);
+    if (hubId === 'header-footer') return P.renderHeaderFooterPanel(panel);
+    if (hubId === 'content-studio') return P.renderContentStudioPanel?.(panel);
+    if (hubId === 'page-lifecycle') return P.renderPageLifecyclePanel(panel);
+  };
+
+  P.renderSeoHubPanel = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading SEO Hub…</div>';
+    let stats404 = { total: 0, topPaths: [] };
+    let edgeDns = null;
+    const token = localStorage.getItem('urdfw_api_token');
+    try {
+      const [statsRes, dnsRes] = await Promise.all([
+        fetch('/api/platform/404-stats', { headers: { Authorization: 'Bearer ' + token } }),
+        fetch('/api/platform/edge-dns', { headers: { Authorization: 'Bearer ' + token } }),
+      ]);
+      if (statsRes.ok) stats404 = await statsRes.json();
+      if (dnsRes.ok) edgeDns = await dnsRes.json();
+    } catch { /* ignore */ }
+
+    const prop = edgeDns?.propagation || {};
+    const propColor = prop.status === 'healthy' ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+      : prop.status === 'partial' ? 'text-amber-800 bg-amber-50 border-amber-200'
+        : 'text-red-800 bg-red-50 border-red-200';
+
+    el.innerHTML = `
+      <div class="grid lg:grid-cols-2 gap-4">
+        <div class="bg-white border rounded-3xl p-5 text-sm">
+          <h3 class="font-semibold mb-2"><i class="fa-solid fa-life-ring text-sky-600 mr-1"></i> 404 Rescue Analytics</h3>
+          <p class="text-xs text-slate-500 mb-3">Recent rescue hits logged from production 404 page.</p>
+          <div class="text-2xl font-bold text-slate-800">${stats404.total || 0}</div>
+          <div class="text-xs text-slate-500">logged events (last 100)</div>
+          ${(stats404.topPaths || []).length ? `<ul class="mt-3 text-xs space-y-1">${stats404.topPaths.slice(0, 8).map(([p, n]) => `<li class="font-mono truncate"><span class="text-slate-400">${n}×</span> ${esc(p)}</li>`).join('')}</ul>` : '<p class="text-xs text-slate-400 mt-3">No hits yet.</p>'}
+        </div>
+        <div class="bg-white border rounded-3xl p-5 text-sm">
+          <h3 class="font-semibold mb-2"><i class="fa-solid fa-code-branch text-amber-600 mr-1"></i> Duplicates &amp; Redirects</h3>
+          <p class="text-xs text-slate-500 mb-3">Scan duplicate HTML, merge canonical redirects, rebuild to propagate.</p>
+          <button type="button" id="cp-duplicates-btn" class="px-3 py-1.5 border rounded-xl text-xs">Run Duplicate Audit</button>
+          <div id="cp-duplicates-status" class="text-xs text-slate-500 mt-2"></div>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-white border rounded-3xl p-5 text-sm" id="edge-dns-monitor">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <div>
+            <h3 class="font-semibold"><i class="fa-solid fa-shield-halved text-sky-600 mr-1"></i> Edge DNS Integrity Monitor</h3>
+            <p class="text-xs text-slate-500 mt-1">Public resolver view — nameservers, A-records, and CNAME propagation for <code>${esc(edgeDns?.domain || 'upperroomdfw.com')}</code></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs px-3 py-1 rounded-full border ${propColor}">${prop.status || 'unknown'} · ${prop.score || '—'}</span>
+            <button type="button" id="cp-edge-dns-refresh" class="text-xs px-3 py-1 border rounded-xl">Refresh</button>
+          </div>
+        </div>
+        <table class="w-full text-xs">
+          <thead><tr class="text-slate-500 border-b text-left"><th class="py-2">Record</th><th>Resolved at edge</th><th>Status</th></tr></thead>
+          <tbody>
+            ${dnsRow('Nameservers (NS)', edgeDns?.nameservers?.resolved, edgeDns?.nameservers?.propagated, edgeDns?.nameservers?.error)}
+            ${dnsRow('A @ apex', edgeDns?.aRecords?.apex?.resolved, edgeDns?.aRecords?.apex?.ok, edgeDns?.aRecords?.apex?.error)}
+            ${dnsRow('A/CNAME www', edgeDns?.cnames?.www?.resolved?.length ? edgeDns.cnames.www.resolved : edgeDns?.aRecords?.www?.resolved, edgeDns?.cnames?.www?.pointsToCdn, edgeDns?.cnames?.www?.error || edgeDns?.aRecords?.www?.error)}
+            ${dnsRow('CNAME api', edgeDns?.cnames?.api?.resolved, edgeDns?.cnames?.api?.pointsToAmplify, edgeDns?.cnames?.api?.error)}
+          </tbody>
+        </table>
+        <div class="mt-3 text-[11px] text-slate-500 font-mono">
+          Expected CDN: ${esc(edgeDns?.expected?.cloudfront || '—')} · Amplify: ${esc(edgeDns?.expected?.amplify || '—')}
+          ${edgeDns?.expected?.route53Nameservers?.length ? ` · Route53 NS: ${edgeDns.expected.route53Nameservers.join(', ')}` : ''}
+        </div>
+      </div>`;
+
+    el.querySelector('#cp-edge-dns-refresh')?.addEventListener('click', () => P.renderSeoHubPanel(el));
+
+    el.querySelector('#cp-duplicates-btn')?.addEventListener('click', async () => {
+      const status = el.querySelector('#cp-duplicates-status');
+      status.textContent = 'Scanning…';
+      try {
+        const auditRes = await fetch('/api/platform/duplicates', { headers: { Authorization: 'Bearer ' + token } });
+        const auditData = await auditRes.json();
+        const applyRes = await fetch('/api/platform/duplicates/apply', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+        const applyData = await applyRes.json();
+        status.innerHTML = `${auditData.audit?.duplicateSetCount || 0} duplicate sets — ${applyData.redirectCount || 0} redirects saved`;
+      } catch (err) {
+        status.textContent = err.message;
+      }
+    });
+  };
+
+  P.renderSiteSettingsPanel = function (el) {
+    const siteSettings = P.get('site_settings', {});
+    const sc = siteSettings.searchConsole || {};
+    const nl = siteSettings.newsletterPopup || {};
+    el.innerHTML = `
+      <form id="cp-site-settings-form" class="space-y-4 text-sm">
+        <section class="bg-violet-50 border border-violet-200 rounded-3xl p-5" aria-labelledby="omnichannel-console-heading">
+          <h3 id="omnichannel-console-heading" class="font-semibold text-violet-900 mb-1"><i class="fa-solid fa-tower-broadcast mr-1"></i> Omnichannel Console Center</h3>
+          <p class="text-xs text-violet-800 mb-4">Paste verification strings from Google, Bing, or Yahoo — full <code>&lt;meta&gt;</code> tags or content values are accepted. Saved tokens are baked into static HTML at rebuild so scrapers detect them without JavaScript.</p>
+          <div class="grid md:grid-cols-1 gap-4 text-xs">
+            <label class="block">
+              <span class="font-semibold text-slate-800">Google Search Console</span>
+              <span class="block text-[10px] text-slate-500 mb-1">meta name="google-site-verification"</span>
+              <textarea name="scGoogle" rows="2" placeholder="Paste verification content or full meta tag…" class="w-full border rounded-xl px-3 py-2 mt-0.5 font-mono text-[11px] leading-relaxed">${esc(sc.google)}</textarea>
+            </label>
+            <label class="block">
+              <span class="font-semibold text-slate-800">Bing Webmaster Tools</span>
+              <span class="block text-[10px] text-slate-500 mb-1">meta name="msvalidate.01"</span>
+              <textarea name="scBing" rows="2" placeholder="Paste Bing msvalidate token…" class="w-full border rounded-xl px-3 py-2 mt-0.5 font-mono text-[11px] leading-relaxed">${esc(sc.bing)}</textarea>
+            </label>
+            <label class="block">
+              <span class="font-semibold text-slate-800">Yahoo Site Explorer</span>
+              <span class="block text-[10px] text-slate-500 mb-1">meta name="y_key"</span>
+              <textarea name="scYahoo" rows="2" placeholder="Paste Yahoo y_key token…" class="w-full border rounded-xl px-3 py-2 mt-0.5 font-mono text-[11px] leading-relaxed">${esc(sc.yahoo)}</textarea>
+            </label>
+          </div>
+        </section>
+
+        <section class="bg-sky-50 border border-sky-200 rounded-3xl p-5">
+          <h3 class="font-semibold text-sky-900 mb-2"><i class="fa-solid fa-satellite-dish mr-1"></i> Telemetry &amp; Head Injection</h3>
+          <div class="grid md:grid-cols-2 gap-4 text-xs">
+            <label class="block">GTM Container ID<input name="gtmId" value="${esc(siteSettings.gtmId)}" placeholder="GTM-XXXX" class="w-full border rounded px-2 py-1.5 mt-1 font-mono"></label>
+            <label class="block">GA4 Measurement ID<input name="ga4Id" value="${esc(siteSettings.ga4Id)}" placeholder="G-XXXX" class="w-full border rounded px-2 py-1.5 mt-1 font-mono"></label>
+            <label class="block md:col-span-2">Custom Head HTML<textarea name="customHeadHtml" rows="3" class="w-full border rounded px-2 py-1.5 mt-1 font-mono text-[11px]">${esc(siteSettings.customHeadHtml)}</textarea></label>
+            <label class="flex items-center gap-2"><input type="checkbox" name="nlEnabled" ${nl.enabled !== false ? 'checked' : ''}> Newsletter popup enabled</label>
+          </div>
+        </section>
+
+        <div class="flex flex-wrap gap-2">
+          <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl">Save Settings</button>
+          <button type="button" id="cp-rebuild-btn" class="px-4 py-2 bg-emerald-700 text-white rounded-xl">Save &amp; Rebuild</button>
+          <button type="button" id="cp-verify-btn" class="px-4 py-2 border rounded-xl">Verify Live HTML</button>
+        </div>
+        <div id="cp-settings-status" class="text-xs text-slate-500"></div>
+        <div id="cp-verify-detail" class="hidden text-[10px] font-mono bg-slate-50 border rounded-2xl p-3 overflow-auto max-h-48"></div>
+      </form>`;
+
+    el.querySelector('#cp-site-settings-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const patch = {
+        gtmId: fd.get('gtmId'),
+        ga4Id: fd.get('ga4Id'),
+        customHeadHtml: fd.get('customHeadHtml'),
+        searchConsole: {
+          google: normalizeVerificationToken(fd.get('scGoogle')),
+          bing: normalizeVerificationToken(fd.get('scBing')),
+          yahoo: normalizeVerificationToken(fd.get('scYahoo')),
+        },
+        newsletterPopup: { enabled: fd.get('nlEnabled') === 'on' },
+      };
+      if (P.api?.siteSettings?.save) {
+        const res = await P.api.siteSettings.save(patch);
+        P.set('site_settings', res.settings || patch);
+        P.applySiteTelemetry?.(res.settings || patch);
+        P.portalToast?.('Site settings saved');
+      } else {
+        P.set('site_settings', { ...siteSettings, ...patch });
+        P.portalToast?.('Saved locally');
+      }
+    });
+
+    el.querySelector('#cp-rebuild-btn')?.addEventListener('click', async () => {
+      const status = el.querySelector('#cp-settings-status');
+      status.textContent = 'Rebuilding…';
+      const token = localStorage.getItem('urdfw_api_token');
+      try {
+        const res = await fetch('/api/platform/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invalidateCache: true }),
+        });
+        const data = await res.json();
+        status.textContent = data.ok ? (data.message || 'Rebuild complete') : (data.error || 'Failed');
+      } catch (err) {
+        status.textContent = err.message;
+      }
+    });
+
+    el.querySelector('#cp-verify-btn')?.addEventListener('click', async () => {
+      const status = el.querySelector('#cp-settings-status');
+      const detail = el.querySelector('#cp-verify-detail');
+      status.textContent = 'Probing live HTML (apex + /index.html)…';
+      const token = localStorage.getItem('urdfw_api_token');
+      try {
+        const res = await fetch('/api/platform/telemetry/verify', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        const data = await res.json();
+        status.innerHTML = data.ok
+          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${data.reason || 'Verified'}</span>`
+          : `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${data.reason || data.error || 'Failed'}</span>`;
+        if (detail && (data.checks || data.probes)) {
+          detail.classList.remove('hidden');
+          detail.textContent = JSON.stringify({ checks: data.checks, configured: data.configured, probes: data.probes }, null, 2);
+        }
+      } catch (err) {
+        status.textContent = err.message;
+      }
+    });
+  };
+
+  P.renderHeaderFooterPanel = function (el) {
+    const siteSettings = P.get('site_settings', {});
+    el.innerHTML = `
+      <div class="bg-white border rounded-3xl p-5 text-sm space-y-4">
+        <h3 class="font-semibold"><i class="fa-solid fa-window-maximize text-sky-600 mr-1"></i> Header &amp; Footer Shell</h3>
+        <p class="text-xs text-slate-500">Runtime widgets and global shell inheritance via <code>data-urdfw-shell="global"</code>.</p>
+        <form id="cp-header-footer-form" class="grid gap-4 text-xs">
+          <label class="block">Header Banner HTML<textarea name="headerBannerHtml" rows="2" class="w-full border rounded px-2 py-1.5 mt-1 font-mono text-[11px]">${esc(siteSettings.headerBannerHtml)}</textarea></label>
+          <label class="block">Sidebar Widget HTML<textarea name="sidebarWidgetHtml" rows="2" class="w-full border rounded px-2 py-1.5 mt-1 font-mono text-[11px]">${esc(siteSettings.sidebarWidgetHtml)}</textarea></label>
+          <label class="block">Footer Script URL<input name="footerScriptSrc" value="${esc((siteSettings.footerScripts || [])[0]?.src)}" placeholder="https://..." class="w-full border rounded px-2 py-1.5 mt-1 font-mono"></label>
+          <div class="p-3 bg-slate-50 rounded-2xl text-[11px] text-slate-600">
+            <div class="font-semibold text-slate-800 mb-1">Shell inheritance map</div>
+            <div><code>global</code> — full nav, footer, saved button (index, directory, 404)</div>
+            <div><code>minimal</code> — embed, go redirect stubs</div>
+            <div><code>embed</code> — iframe-safe chrome</div>
+            <div><code>none</code> — bare page</div>
+          </div>
+          <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl w-fit">Save Header &amp; Footer</button>
+        </form>
+      </div>`;
+
+    el.querySelector('#cp-header-footer-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const footerSrc = (fd.get('footerScriptSrc') || '').trim();
+      const patch = {
+        headerBannerHtml: fd.get('headerBannerHtml'),
+        sidebarWidgetHtml: fd.get('sidebarWidgetHtml'),
+        footerScripts: footerSrc ? [{ id: 'custom-footer', src: footerSrc }] : [],
+      };
+      if (P.api?.siteSettings?.save) {
+        const res = await P.api.siteSettings.save(patch);
+        P.set('site_settings', res.settings || patch);
+        P.initSiteWidgets?.(res.settings || patch);
+        P.portalToast?.('Header & Footer saved');
+      } else {
+        P.set('site_settings', { ...siteSettings, ...patch });
+        P.portalToast?.('Saved locally');
+      }
+    });
+  };
+
+  P.renderPageLifecyclePanel = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading page inventory…</div>';
+    const token = localStorage.getItem('urdfw_api_token');
+    let data = { pages: [], count: 0, totalInventory: 0 };
+
+    const load = async (params) => {
+      const qs = new URLSearchParams(params || {}).toString();
+      const res = await fetch('/api/platform/pages' + (qs ? '?' + qs : ''), {
+        headers: { Authorization: 'Bearer ' + token },
+      });
+      if (res.ok) return res.json();
+      return data;
+    };
+
+    try {
+      data = await load();
+    } catch { /* local fallback */ }
+
+    const renderTable = (payload, filters) => {
+      el.innerHTML = `
+        <div class="bg-white border rounded-3xl p-5 text-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 class="font-semibold"><i class="fa-solid fa-sitemap text-sky-600 mr-1"></i> Page Lifecycle Manager</h3>
+              <p class="text-xs text-slate-500">${payload.count || 0} shown · ${payload.totalInventory || 0} total URLs</p>
+            </div>
+            <button type="button" id="cp-page-add-btn" class="px-3 py-1.5 bg-[#0369a1] text-white rounded-xl text-xs font-semibold"><i class="fa-solid fa-plus mr-1"></i> Add URL</button>
+          </div>
+          <form id="cp-page-filter-form" class="flex flex-wrap gap-2 mb-4 text-xs">
+            <input name="q" value="${esc(filters?.q)}" placeholder="Filter URLs, titles…" class="border rounded-xl px-3 py-1.5 flex-1 min-w-[12rem]">
+            <select name="status" class="border rounded-xl px-2 py-1.5">
+              <option value="">All statuses</option>
+              ${['live', 'draft', 'scheduled', 'archived', 'redirect'].map((s) => `<option value="${s}" ${filters?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            <select name="type" class="border rounded-xl px-2 py-1.5">
+              <option value="">All types</option>
+              ${['static', 'church', 'portal', 'system', 'template'].map((t) => `<option value="${t}" ${filters?.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+            <button type="submit" class="px-3 py-1.5 border rounded-xl">Filter</button>
+          </form>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-500 border-b">
+                <tr><th class="py-2 pr-2">URL</th><th class="py-2 pr-2">Title</th><th class="py-2 pr-2">Status</th><th class="py-2 pr-2">Type</th><th class="py-2">Actions</th></tr>
+              </thead>
+              <tbody>
+                ${(payload.pages || []).slice(0, 80).map((p) => `<tr class="border-b border-slate-100 hover:bg-slate-50" data-page-row="${esc(p.id)}">
+                  <td class="py-2 pr-2 font-mono max-w-[14rem] truncate" title="${esc(p.urlPath)}">${esc(p.id)}</td>
+                  <td class="py-2 pr-2 max-w-[12rem] truncate">${esc((p.title || '').replace(/<[^>]+>/g, ''))}</td>
+                  <td class="py-2 pr-2">${statusBadge(p.status)}</td>
+                  <td class="py-2 pr-2">${esc(p.type)}</td>
+                  <td class="py-2 whitespace-nowrap">
+                    <a href="${esc(p.productionUrl)}" target="_blank" rel="noopener" class="text-sky-700 mr-2">View</a>
+                    <button type="button" data-page-edit="${esc(p.id)}" class="text-slate-700 mr-2">Edit</button>
+                    <button type="button" data-page-delete="${esc(p.id)}" class="text-red-700">Delete</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          ${(payload.pages || []).length > 80 ? '<p class="text-xs text-slate-400 mt-2">Showing first 80 — refine filters to narrow results.</p>' : ''}
+        </div>
+        <div id="cp-page-editor" class="hidden mt-4 bg-slate-50 border rounded-3xl p-5 text-xs"></div>`;
+
+      el.querySelector('#cp-page-filter-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const filters = { q: fd.get('q'), status: fd.get('status'), type: fd.get('type') };
+        const next = await load(filters);
+        renderTable(next, filters);
+      });
+
+      el.querySelector('#cp-page-add-btn')?.addEventListener('click', () => {
+        P.openPageEditor(el, null, async () => {
+          const next = await load();
+          renderTable(next, {});
+        });
+      });
+
+      el.querySelectorAll('[data-page-edit]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.dataset.pageEdit;
+          const res = await fetch('/api/platform/pages/' + encodeURIComponent(id), {
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          const pageData = res.ok ? await res.json() : { page: (payload.pages || []).find((p) => p.id === id) };
+          P.openPageEditor(el, pageData.page, async () => {
+            const next = await load();
+            renderTable(next, {});
+          });
+        });
+      });
+
+      el.querySelectorAll('[data-page-delete]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Archive this URL? (soft delete — sets status to archived)')) return;
+          await fetch('/api/platform/pages/' + encodeURIComponent(btn.dataset.pageDelete), {
+            method: 'DELETE',
+            headers: { Authorization: 'Bearer ' + token },
+          });
+          const next = await load();
+          renderTable(next, {});
+          P.portalToast?.('Page archived');
+        });
+      });
+    };
+
+    renderTable(data, {});
+  };
+
+  P.openPageEditor = function (rootEl, page, onSave) {
+    const editor = rootEl.querySelector('#cp-page-editor');
+    if (!editor) return;
+    const isNew = !page;
+    editor.classList.remove('hidden');
+    editor.innerHTML = `
+      <h4 class="font-semibold text-sm mb-3">${isNew ? 'Add URL' : 'Edit URL'}</h4>
+      <form id="cp-page-form" class="grid md:grid-cols-2 gap-3">
+        <label class="block md:col-span-2">File path (e.g. landing/summer.html)<input name="id" value="${esc(page?.id)}" ${isNew ? '' : 'readonly'} class="w-full border rounded px-2 py-1.5 mt-1 font-mono" required></label>
+        <label class="block md:col-span-2">Title<input name="title" value="${esc(page?.title)}" class="w-full border rounded px-2 py-1.5 mt-1"></label>
+        <label class="block md:col-span-2">Description<textarea name="description" rows="2" class="w-full border rounded px-2 py-1.5 mt-1">${esc(page?.description)}</textarea></label>
+        <label class="block">Status<select name="status" class="w-full border rounded px-2 py-1.5 mt-1">
+          ${['live', 'draft', 'scheduled', 'archived', 'redirect'].map((s) => `<option value="${s}" ${page?.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select></label>
+        <label class="block">Type<select name="type" class="w-full border rounded px-2 py-1.5 mt-1">
+          ${['static', 'church', 'portal', 'system', 'template'].map((t) => `<option value="${t}" ${page?.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+        </select></label>
+        <label class="block">Shell<select name="shell" class="w-full border rounded px-2 py-1.5 mt-1">
+          ${['global', 'minimal', 'embed', 'none'].map((s) => `<option value="${s}" ${page?.shell === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select></label>
+        <label class="flex items-center gap-2 mt-5"><input type="checkbox" name="noindex" ${page?.noindex ? 'checked' : ''}> noindex</label>
+        <label class="block md:col-span-2">Redirect to (if status=redirect)<input name="redirectTo" value="${esc(page?.redirectTo)}" placeholder="/directory.html" class="w-full border rounded px-2 py-1.5 mt-1 font-mono"></label>
+        <div class="md:col-span-2 flex gap-2">
+          <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl">Save</button>
+          <button type="button" id="cp-page-cancel" class="px-4 py-2 border rounded-xl">Cancel</button>
+        </div>
+      </form>`;
+
+    editor.querySelector('#cp-page-cancel')?.addEventListener('click', () => editor.classList.add('hidden'));
+
+    editor.querySelector('#cp-page-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = {
+        id: fd.get('id'),
+        title: fd.get('title'),
+        description: fd.get('description'),
+        status: fd.get('status'),
+        type: fd.get('type'),
+        shell: fd.get('shell'),
+        noindex: fd.get('noindex') === 'on',
+        redirectTo: fd.get('redirectTo') || null,
+        seo: { title: fd.get('title'), description: fd.get('description'), noindex: fd.get('noindex') === 'on' },
+      };
+      const token = localStorage.getItem('urdfw_api_token');
+      const url = isNew
+        ? '/api/platform/pages'
+        : '/api/platform/pages/' + encodeURIComponent(page.id);
+      const res = await fetch(url, {
+        method: isNew ? 'POST' : 'PATCH',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if (result.ok) {
+        editor.classList.add('hidden');
+        P.portalToast?.('Page saved');
+        if (onSave) onSave();
+      } else {
+        alert(result.error || 'Save failed');
+      }
+    });
+  };
+
+  P.renderAdminSeoControlPanel = async function (el) {
+    P.renderControlPanelShell(el, 'seo-hub');
+    await P.renderControlPanelHub(el, 'seo-hub');
+  };
+})(window);

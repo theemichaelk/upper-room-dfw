@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-07-11T05:00:00.000Z",
+  "updates": [
+    {
+      "id": "phase5-control-panel",
+      "date": "2026-07-11",
+      "title": "SEO Hub Control Panel",
+      "summary": "Omnichannel Console, Edge DNS Monitor, Page Lifecycle Manager, Save & Rebuild pipeline.",
+      "files": ["js/platform/25-control-panel.js", "data/platform-control-schema.json", "server/services/page-lifecycle.js"],
+      "adminPath": "SEO Hub tab"
+    },
+    {
+      "id": "404-rescue",
+      "date": "2026-07-11",
+      "title": "Intent-Driven 404 Rescue",
+      "summary": "Global shell, live filter search, 6-category matrix, slim 404-loader.js.",
+      "files": ["404.html", "css/404.css", "js/404-loader.js", "js/platform/23-404-rescue.js"],
+      "adminPath": "SEO Hub → 404 Analytics"
+    },
+    {
+      "id": "telemetry-hardening",
+      "date": "2026-07-11",
+      "title": "Telemetry & Verification Bake",
+      "summary": "Marker-delimited head injection, Google/Bing/Yahoo token normalization, dual URL verify.",
+      "files": ["server/services/telemetry.js", "scripts/inject-platform.js"],
+      "adminPath": "Site Settings → Omnichannel Console"
+    },
+    {
+      "id": "blog-rss-sitemap",
+      "date": "2026-07-11",
+      "title": "Blog + RSS + Sitemap Expansion",
+      "summary": "10 local SEO blog posts, feed.xml RSS 2.0, sitemap includes blog/ and lastmod.",
+      "files": ["blog.html", "feed.xml", "sitemap.xml", "data/blog-posts.json", "scripts/generate-blog.js"],
+      "adminPath": "Content Studio"
+    },
+    {
+      "id": "admin-login-perf",
+      "date": "2026-07-11",
+      "title": "Admin Login Performance",
+      "summary": "Deferred API sync after login, admin slim loader (10 modules vs 27+).",
+      "files": ["js/admin-loader.js", "js/platform/18-portal.js"],
+      "adminPath": "admin.html"
+    }
+  ]
+}

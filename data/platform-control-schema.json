@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "description": "Phase 5 — Advanced Capability Matrix. Exposes backend configuration domains for SEO Hub, Site Settings, Header & Footer, and Page Lifecycle.",
+  "hubs": {
+    "seoHub": {
+      "label": "SEO Hub",
+      "storageKey": "seo_pages",
+      "service": "server/services/seo-settings.js",
+      "api": {
+        "list": "GET /api/seo/pages",
+        "read": "GET /api/seo/page/:pageId",
+        "update": "PATCH /api/seo/pages/:pageId"
+      },
+      "fields": {
+        "title": { "type": "string", "maxLength": 120, "inject": "head <title>" },
+        "description": { "type": "string", "maxLength": 320, "inject": "meta name=description" },
+        "noindex": { "type": "boolean", "inject": "meta name=robots" },
+        "canonical": { "type": "url", "inject": "link rel=canonical" },
+        "ogTitle": { "type": "string", "inject": "meta property=og:title" },
+        "ogDescription": { "type": "string", "inject": "meta property=og:description" },
+        "ogImage": { "type": "url", "inject": "meta property=og:image" }
+      },
+      "buildPipeline": ["scripts/add-seo-meta.js", "scripts/export-page-metadata.js", "scripts/inject-platform.js"],
+      "related": ["pageLifecycle", "duplicates", "redirects", "telemetry", "404Stats"]
+    },
+    "omnichannelConsole": {
+      "label": "Omnichannel Console Center",
+      "parentHub": "siteSettings",
+      "fields": {
+        "searchConsole.google": { "meta": "google-site-verification", "input": "textarea", "normalize": "content-attribute" },
+        "searchConsole.bing": { "meta": "msvalidate.01", "input": "textarea", "normalize": "content-attribute" },
+        "searchConsole.yahoo": { "meta": "y_key", "input": "textarea", "normalize": "content-attribute" }
+      },
+      "buildTime": true,
+      "runtime": true
+    },
+    "edgeDnsMonitor": {
+      "label": "Edge DNS Integrity Monitor",
+      "parentHub": "seoHub",
+      "api": "GET /api/platform/edge-dns",
+      "service": "server/services/edge-dns.js",
+      "probes": ["NS", "A@apex", "A/CNAME@www", "CNAME@api"],
+      "propagationStates": ["healthy", "partial", "degraded"]
+    },
+    "siteSettings": {
+      "label": "Site Settings",
+      "storageKey": "site_settings",
+      "staticExport": "data/site-settings.json",
+      "service": "server/services/site-settings.js",
+      "api": {
+        "public": "GET /api/platform/site-settings/public",
+        "read": "GET /api/platform/site-settings",
+        "update": "PUT /api/platform/site-settings",
+        "webhook": "POST /api/platform/telemetry/webhook",
+        "verify": "POST /api/platform/telemetry/verify",
+        "rebuild": "POST /api/platform/rebuild"
+      },
+      "fields": {
+        "ga4Id": { "type": "string", "pattern": "^G-[A-Z0-9]+$", "runtime": true, "buildTime": true },
+        "gtmId": { "type": "string", "pattern": "^GTM-[A-Z0-9]+$", "runtime": true, "buildTime": true },
+        "searchConsole": {
+          "type": "object",
+          "properties": {
+            "google": { "type": "string" },
+            "bing": { "type": "string" },
+            "yahoo": { "type": "string" }
+          },
+          "buildTime": true
+        },
+        "customHeadHtml": { "type": "html", "sanitize": true, "buildTime": true, "runtime": true },
+        "headInjectionScripts": {
+          "type": "array",
+          "items": { "id": "string", "src": "url", "inline": "string", "async": "boolean", "defer": "boolean" }
+        },
+        "footerScripts": {
+          "type": "array",
+          "items": { "id": "string", "src": "url", "inline": "string" }
+        },
+        "newsletterPopup": {
+          "type": "object",
+          "properties": {
+            "enabled": "boolean",
+            "delayMs": "number",
+            "autoCloseMs": "number",
+            "scrollPercent": "number",
+            "frequencyDays": "number",
+            "dismissDays": "number",
+            "title": "string",
+            "subtitle": "string"
+          },
+          "runtime": true
+        }
+      }
+    },
+    "headerFooter": {
+      "label": "Header & Footer",
+      "parentHub": "siteSettings",
+      "service": "server/services/site-settings.js",
+      "runtimeModules": ["js/platform/22-widgets-ui.js", "js/platform/24-site-shell.js"],
+      "fields": {
+        "headerBannerHtml": { "type": "html", "slot": "#urdfw-header-banner", "runtime": true },
+        "sidebarWidgetHtml": { "type": "html", "slot": "#urdfw-sidebar-widget", "runtime": true },
+        "shell": {
+          "type": "object",
+          "properties": {
+            "navLinks": {
+              "type": "array",
+              "items": { "label": "string", "href": "string", "visible": "boolean", "roles": "array" }
+            },
+            "footerLinks": {
+              "type": "array",
+              "items": { "label": "string", "href": "string" }
+            },
+            "stickyHeader": { "type": "boolean", "default": true },
+            "showSavedButton": { "type": "boolean", "default": true },
+            "poweredBy": { "type": "boolean", "default": true }
+          }
+        }
+      },
+      "inheritance": {
+        "attribute": "data-urdfw-shell",
+        "values": ["global", "minimal", "embed", "none"]
+      }
+    },
+    "pageLifecycle": {
+      "label": "Page Lifecycle Manager",
+      "storageKey": "page_lifecycle",
+      "inventorySource": "data/page-metadata.json",
+      "service": "server/services/page-lifecycle.js",
+      "api": {
+        "schema": "GET /api/platform/control-schema",
+        "list": "GET /api/platform/pages",
+        "read": "GET /api/platform/pages/:pageId",
+        "create": "POST /api/platform/pages",
+        "update": "PATCH /api/platform/pages/:pageId",
+        "delete": "DELETE /api/platform/pages/:pageId"
+      },
+      "pageRecord": {
+        "id": { "type": "string", "description": "URL path key e.g. about.html or churches/slug.html" },
+        "file": { "type": "string", "description": "Relative filesystem path" },
+        "urlPath": { "type": "string", "description": "Normalized URL path with leading slash" },
+        "productionUrl": { "type": "url" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "type": "enum",
+          "values": ["live", "draft", "scheduled", "archived", "redirect"],
+          "default": "live"
+        },
+        "type": {
+          "type": "enum",
+          "values": ["static", "church", "portal", "system", "template"],
+          "default": "static"
+        },
+        "shell": {
+          "type": "enum",
+          "values": ["global", "minimal", "embed", "none"],
+          "default": "global"
+        },
+        "noindex": { "type": "boolean", "default": false },
+        "redirectTo": { "type": "string", "nullable": true },
+        "redirectStatus": { "type": "enum", "values": [301, 302], "default": 301 },
+        "seo": {
+          "type": "object",
+          "properties": {
+            "title": "string",
+            "description": "string",
+            "canonical": "url",
+            "noindex": "boolean"
+          }
+        },
+        "source": {
+          "type": "enum",
+          "values": ["filesystem", "registry"],
+          "description": "filesystem = scanned HTML; registry = admin-created override"
+        },
+        "createdAt": { "type": "isoDate" },
+        "updatedAt": { "type": "isoDate" },
+        "publishedAt": { "type": "isoDate", "nullable": true }
+      },
+      "filters": ["q", "status", "type", "shell", "noindex"],
+      "actions": ["view", "filter", "add", "edit", "delete", "redirect", "rebuild"]
+    }
+  },
+  "crossCutting": {
+    "rebuild": {
+      "service": "server/services/rebuild.js",
+      "steps": ["exportSiteSettings", "injectPlatform", "applyRedirects", "cacheInvalidation"]
+    },
+    "redirects": {
+      "storageKey": "page_redirects",
+      "file": "data/redirects.json",
+      "service": "server/services/duplicate-pages.js"
+    },
+    "telemetry": {
+      "service": "server/services/telemetry.js",
+      "marker": "<!-- urdfw-telemetry:v1 -->"
+    }
+  }
+}

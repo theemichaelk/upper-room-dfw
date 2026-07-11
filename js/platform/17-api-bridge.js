@@ -626,6 +626,28 @@
       },
     },
 
+    siteSettings: {
+      get() {
+        return call('siteSettings.get', async () => ({ ok: true, settings: P.get('site_settings', {}) }), '/api/platform/site-settings');
+      },
+      save(patch) {
+        return call('siteSettings.save', async () => {
+          const next = { ...P.get('site_settings', {}), ...patch };
+          P.set('site_settings', next);
+          return { ok: true, settings: next };
+        }, '/api/platform/site-settings', { method: 'PUT', body: patch });
+      },
+      verify(url) {
+        return call('telemetry.verify', async () => ({ ok: true }), '/api/platform/telemetry/verify', { method: 'POST', body: url ? { url } : {} });
+      },
+      rebuild(settings) {
+        return call('platform.rebuild', async () => ({ ok: true }), '/api/platform/rebuild', {
+          method: 'POST',
+          body: { settings, invalidateCache: true },
+        });
+      },
+    },
+
     webhooks: {
       list() {
         return call('webhooks.list', async () => P.get('webhooks', []), '/api/webhooks').then((r) => r?.webhooks || r || []);
@@ -683,8 +705,10 @@
   P.loadApiConfig();
   P.detectRemoteApi?.();
 
-  P.syncPlatformFromApi = async function () {
+  P.syncPlatformFromApi = async function (opts) {
     if (P.apiConfig.mode !== 'remote' || !localStorage.getItem('urdfw_api_token')) return;
+    const background = opts?.background === true;
+    const run = async () => {
     try {
       const me = await remoteFetch('/api/auth/me');
       if (me?.client) {
@@ -735,9 +759,16 @@
         if (memberInteg?.ok) P.applyMemberIntegrations?.(memberInteg);
       }
       P.emit('api:synced', { role });
+      P.renderAdminQuickStats?.();
     } catch (e) {
       if (isProductionHost()) P.emit('api:sync-failed', { error: e.message });
     }
+    };
+    if (background) {
+      run();
+      return;
+    }
+    return run();
   };
 
   P.normalizeClient = normalizeClient;

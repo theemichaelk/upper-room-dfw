@@ -22,6 +22,21 @@ const dnsService = require('../services/dns');
 const { uploadMedia, deleteMediaKey, assetToApi } = require('../services/media-storage');
 const { getSeoPages, getSeoPage, setSeoPage } = require('../services/seo-settings');
 const {
+  getSiteSettings, setSiteSettings, getPublicSiteSettings, exportSiteSettingsJson,
+} = require('../services/site-settings');
+const { verifyLiveSite, buildDashboardStatus } = require('../services/telemetry');
+const { runRebuild } = require('../services/rebuild');
+const {
+  scanDuplicates, getRedirects, setRedirects, mergeRedirectsFromAudit, loadRedirectsFile,
+} = require('../services/duplicate-pages');
+const { invalidateAll } = require('../services/cache-invalidation');
+const {
+  listPages, getPage, createPage, updatePage, deletePage, loadControlSchema,
+} = require('../services/page-lifecycle');
+const { probeEdgeDns } = require('../services/edge-dns');
+const { getBlogPosts, setBlogPosts, getBlogPost } = require('../services/blog');
+const { buildAuditReport } = require('../services/site-audit');
+const {
   getAdminPlatformIntegrations,
   getMemberIntegrations,
   setMemberIntegration,
@@ -84,6 +99,9 @@ function createRouter(db, limiters = {}) {
 
   router.get('/platform/connections', adminRequired, async (req, res) => {
     const checks = await verifyAll();
+    const dnsStatus = await dnsService.verifyDns();
+    const telemetryStatus = buildDashboardStatus(db, dnsService);
+    const liveVerify = await verifyLiveSite(getSiteSettings(db));
     res.json({
       ok: true,
       appUrl: process.env.APP_URL || '',
@@ -91,6 +109,214 @@ function createRouter(db, limiters = {}) {
       recaptcha: !!process.env.RECAPTCHA_SITE_KEY,
       results: checks.results,
       config: checks.config,
+      dns: { ready: dnsService.route53Ready(), route53: dnsStatus },
+      telemetry: {
+        ...telemetryStatus,
+        live: { ok: liveVerify.ok, reason: liveVerify.reason, detected: liveVerify.detected },
+      },
+    });
+  });
+
+  router.get('/platform/site-settings/public', (req, res) => {
+    res.json(getPublicSiteSettings(db));
+  });
+
+  router.get('/platform/site-settings', adminRequired, (req, res) => {
+    res.json({ ok: true, settings: getSiteSettings(db) });
+  });
+
+  router.put('/platform/site-settings', adminRequired, (req, res) => {
+    const settings = setSiteSettings(db, req.body || {});
+    let exported = null;
+    try {
+      exported = exportSiteSettingsJson(db);
+    } catch (err) {
+      exported = { ok: false, error: err.message };
+    }
+    res.json({ ok: true, settings, exported });
+  });
+
+  router.post('/platform/telemetry/verify', adminRequired, async (req, res) => {
+    const settings = getSiteSettings(db);
+    const url = req.body?.url || process.env.APP_URL || 'https://upperroomdfw.com';
+    const result = await verifyLiveSite(settings, url);
+    res.json({ ok: result.ok, ...result });
+  });
+
+  router.get('/platform/duplicates', adminRequired, (req, res) => {
+    const audit = scanDuplicates();
+    const redirects = getRedirects(db);
+    res.json({ ok: true, audit, redirects });
+  });
+
+  router.post('/platform/duplicates/apply', adminRequired, (req, res) => {
+    const audit = scanDuplicates();
+    const merged = mergeRedirectsFromAudit(audit, loadRedirectsFile());
+    const saved = setRedirects(db, merged);
+    res.json({
+      ok: true,
+      duplicateSetCount: audit.duplicateSetCount,
+      redirectCount: saved.redirects?.length || 0,
+      redirects: saved,
+    });
+  });
+
+  router.get('/platform/redirects', (req, res) => {
+    res.json({ ok: true, ...getRedirects(db) });
+  });
+
+  router.post('/platform/rebuild', adminRequired, async (req, res) => {
+    try {
+      const patch = req.body?.settings;
+      const report = await runRebuild(db, {
+        saveSettings: !!patch,
+        settingsPatch: patch,
+        invalidateCache: req.body?.invalidateCache !== false,
+        deployS3: !!req.body?.deployS3,
+      });
+      res.json({ ok: report.ok, ...report });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.post('/platform/404-log', (req, res) => {
+    const body = req.body || {};
+    const pathHit = String(body.path || '').slice(0, 500);
+    if (!pathHit) return res.status(400).json({ ok: false, error: 'path required' });
+    try {
+      db.prepare('INSERT INTO event_log (event, payload_json, at) VALUES (?, ?, ?)').run(
+        '404.rescue',
+        JSON.stringify({
+          path: pathHit,
+          referrer: body.referrer || null,
+          topIntent: body.topIntent || null,
+          area: body.area || null,
+          ua: (req.headers['user-agent'] || '').slice(0, 200),
+        }),
+        new Date().toISOString()
+      );
+    } catch { /* best effort */ }
+    res.json({ ok: true });
+  });
+
+  router.get('/platform/blog', (req, res) => {
+    res.json({ ok: true, ...getBlogPosts(db) });
+  });
+
+  router.get('/platform/blog/:slug', (req, res) => {
+    const post = getBlogPost(db, decodeURIComponent(req.params.slug || ''));
+    if (!post) return res.status(404).json({ ok: false, error: 'Post not found' });
+    res.json({ ok: true, post });
+  });
+
+  router.put('/platform/blog', adminRequired, (req, res) => {
+    try {
+      const data = setBlogPosts(db, req.body || {});
+      res.json({ ok: true, ...data });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/platform/site-audit', adminRequired, (req, res) => {
+    res.json(buildAuditReport(db));
+  });
+
+  router.get('/platform/edge-dns', adminRequired, async (req, res) => {
+    try {
+      const domain = req.query.domain || process.env.APP_URL || 'https://upperroomdfw.com';
+      const report = await probeEdgeDns(domain);
+      res.json({ ok: true, ...report });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/platform/control-schema', adminRequired, (req, res) => {
+    res.json({ ok: true, schema: loadControlSchema() });
+  });
+
+  router.get('/platform/pages', adminRequired, (req, res) => {
+    const filters = {
+      q: req.query.q,
+      status: req.query.status,
+      type: req.query.type,
+      shell: req.query.shell,
+      noindex: req.query.noindex,
+    };
+    res.json(listPages(db, filters));
+  });
+
+  router.get('/platform/pages/:pageId', adminRequired, (req, res) => {
+    const pageId = decodeURIComponent(req.params.pageId || '');
+    const page = getPage(db, pageId);
+    if (!page) return res.status(404).json({ ok: false, error: 'Page not found' });
+    res.json({ ok: true, page });
+  });
+
+  router.post('/platform/pages', adminRequired, (req, res) => {
+    try {
+      const page = createPage(db, req.body || {});
+      res.status(201).json({ ok: true, page });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.patch('/platform/pages/:pageId', adminRequired, (req, res) => {
+    try {
+      const pageId = decodeURIComponent(req.params.pageId || '');
+      const page = updatePage(db, pageId, req.body || {});
+      res.json({ ok: true, page });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.delete('/platform/pages/:pageId', adminRequired, (req, res) => {
+    try {
+      const pageId = decodeURIComponent(req.params.pageId || '');
+      const result = deletePage(db, pageId, { hard: req.query.hard === 'true' });
+      res.json({ ok: true, ...result });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/platform/404-stats', adminRequired, (req, res) => {
+    const rows = db.prepare(
+      "SELECT payload_json, at FROM event_log WHERE event = '404.rescue' ORDER BY at DESC LIMIT 100"
+    ).all();
+    const hits = rows.map((r) => {
+      try { return { ...JSON.parse(r.payload_json), at: r.at }; } catch { return { at: r.at }; }
+    });
+    const byPath = {};
+    hits.forEach((h) => { byPath[h.path] = (byPath[h.path] || 0) + 1; });
+    const topPaths = Object.entries(byPath).sort((a, b) => b[1] - a[1]).slice(0, 20);
+    res.json({ ok: true, total: hits.length, recent: hits.slice(0, 25), topPaths });
+  });
+
+  router.post('/platform/cache/invalidate', adminRequired, async (req, res) => {
+    const result = await invalidateAll({ paths: req.body?.paths || ['/*'] });
+    res.json({ ok: result.ok, ...result });
+  });
+
+  router.post('/platform/telemetry/webhook', async (req, res) => {
+    const secret = process.env.TELEMETRY_WEBHOOK_SECRET || process.env.ADMIN_PASSWORD;
+    const provided = req.headers['x-urdfw-webhook-secret'] || req.body?.secret;
+    if (!secret || provided !== secret) {
+      return res.status(401).json({ ok: false, error: 'Invalid webhook secret' });
+    }
+    const patch = req.body?.settings || req.body || {};
+    delete patch.secret;
+    const settings = setSiteSettings(db, patch);
+    const exported = exportSiteSettingsJson(db);
+    res.json({
+      ok: true,
+      settings,
+      exported,
+      message: 'Site settings synced — run npm run build:static && deploy:s3 to bake tags into HTML for scrapers',
     });
   });
 

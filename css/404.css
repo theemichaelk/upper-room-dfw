@@ -1,0 +1,339 @@
+/**
+ * 404 Rescue — atomic, isolated layer.
+ * All rules scoped under .urdfw-404-page to prevent global bleed.
+ */
+@layer urdfw-404 {
+  .urdfw-404-page {
+    isolation: isolate;
+    contain: layout style;
+  }
+
+  .urdfw-404-page .urdfw-404 {
+    --urdfw-404-accent: #0369a1;
+    --urdfw-404-sky: #0ea5e9;
+    --urdfw-404-deep: #0c4a6e;
+    --urdfw-404-gutter: 1.5rem;
+    min-height: calc(100dvh - 4rem);
+  }
+
+  .urdfw-404-page .urdfw-404-hero {
+    background: linear-gradient(145deg, var(--urdfw-404-deep) 0%, var(--urdfw-404-accent) 55%, var(--urdfw-404-sky) 100%);
+    color: #f8fafc;
+    padding: clamp(2.5rem, 8vw, 4.5rem) var(--urdfw-404-gutter);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .urdfw-404-page .urdfw-404-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
+    pointer-events: none;
+  }
+
+  .urdfw-404-page .urdfw-404-hero__inner {
+    max-width: 42rem;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .urdfw-404-page .urdfw-404-code {
+    font-size: clamp(4rem, 18vw, 7rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    opacity: 0.35;
+    margin-bottom: -0.15em;
+  }
+
+  .urdfw-404-page .urdfw-404-title {
+    font-size: clamp(1.5rem, 5vw, 2.25rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 0 0 0.75rem;
+  }
+
+  .urdfw-404-page .urdfw-404-subtitle {
+    font-size: clamp(0.95rem, 2.8vw, 1.125rem);
+    color: rgba(248, 250, 252, 0.88);
+    line-height: 1.5;
+    margin: 0 0 1.5rem;
+    max-width: 36rem;
+  }
+
+  .urdfw-404-page .urdfw-404-path {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: clamp(0.7rem, 2.2vw, 0.8rem);
+    font-family: ui-monospace, monospace;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.65rem;
+    margin-bottom: 1.25rem;
+    word-break: break-all;
+  }
+
+  .urdfw-404-page .urdfw-404-search-hint {
+    font-size: clamp(0.8rem, 2.4vw, 0.9rem);
+    color: rgba(248, 250, 252, 0.75);
+    margin: 0 0 0.65rem;
+    line-height: 1.4;
+  }
+
+  .urdfw-404-page .urdfw-404-search {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    max-width: 32rem;
+  }
+
+  .urdfw-404-page .urdfw-404-search input {
+    flex: 1 1 12rem;
+    min-width: 0;
+    min-height: 2.75rem;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0 1rem;
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+    color: #0f172a;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .urdfw-404-page .urdfw-404-search button {
+    min-height: 2.75rem;
+    padding: 0 1.25rem;
+    border: none;
+    border-radius: 0.75rem;
+    background: #fff;
+    color: var(--urdfw-404-deep);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .urdfw-404-page .urdfw-404-search-results {
+    margin-top: 0.75rem;
+    font-size: clamp(0.8rem, 2.4vw, 0.875rem);
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 0.65rem;
+    max-width: 32rem;
+  }
+
+  .urdfw-404-page .urdfw-404-search-results.hidden {
+    display: none;
+  }
+
+  .urdfw-404-page .urdfw-404-body {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 2.5rem) var(--urdfw-404-gutter);
+  }
+
+  .urdfw-404-page .urdfw-404-section-title {
+    font-size: clamp(1rem, 3vw, 1.125rem);
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .urdfw-404-page .urdfw-404-category-matrix {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+    gap: clamp(0.75rem, 2.5vw, 1.1rem);
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .urdfw-404-page .urdfw-404-category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: clamp(1rem, 3vw, 1.25rem);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: #0f172a;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    min-height: 6.5rem;
+    box-sizing: border-box;
+  }
+
+  .urdfw-404-page .urdfw-404-category-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -10px rgba(3, 105, 161, 0.22);
+    border-color: #7dd3fc;
+  }
+
+  .urdfw-404-page .urdfw-404-category-card.is-primary {
+    border-color: #0369a1;
+    background: linear-gradient(180deg, #f0f9ff 0%, #fff 100%);
+  }
+
+  .urdfw-404-page .urdfw-404-category-card i {
+    color: var(--urdfw-404-accent);
+    font-size: 1.35rem;
+  }
+
+  .urdfw-404-page .urdfw-404-category-label {
+    font-size: clamp(0.95rem, 2.8vw, 1.05rem);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .urdfw-404-page .urdfw-404-category-card small {
+    font-size: 0.75rem;
+    color: #64748b;
+    line-height: 1.35;
+  }
+
+  .urdfw-404-page .urdfw-404-intent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+    gap: clamp(0.65rem, 2vw, 1rem);
+    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .urdfw-404-page .urdfw-404-intent-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding: clamp(0.85rem, 2.5vw, 1.1rem);
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: #0f172a;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    min-height: 5.5rem;
+    box-sizing: border-box;
+  }
+
+  .urdfw-404-page .urdfw-404-intent-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(3, 105, 161, 0.2);
+    border-color: #7dd3fc;
+  }
+
+  .urdfw-404-page .urdfw-404-intent-card.is-primary {
+    border-color: #0369a1;
+    background: linear-gradient(180deg, #f0f9ff 0%, #fff 100%);
+  }
+
+  .urdfw-404-page .urdfw-404-intent-card i {
+    color: var(--urdfw-404-accent);
+    font-size: 1.15rem;
+  }
+
+  .urdfw-404-page .urdfw-404-intent-card span {
+    font-size: clamp(0.8rem, 2.4vw, 0.9rem);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .urdfw-404-page .urdfw-404-intent-card small {
+    font-size: 0.7rem;
+    color: #64748b;
+  }
+
+  .urdfw-404-page .urdfw-404-churches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .urdfw-404-page .urdfw-404-church-card {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.85rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+
+  .urdfw-404-page .urdfw-404-church-card:hover {
+    border-color: #7dd3fc;
+  }
+
+  .urdfw-404-page .urdfw-404-church-card img {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 0.65rem;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .urdfw-404-page .urdfw-404-church-card strong {
+    display: block;
+    font-size: 0.875rem;
+    color: #0f172a;
+  }
+
+  .urdfw-404-page .urdfw-404-church-card em {
+    font-style: normal;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  .urdfw-404-page .urdfw-404-cta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.25rem;
+    text-align: center;
+  }
+
+  .urdfw-404-page .urdfw-404-cta-bar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.15rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .urdfw-404-page .urdfw-404-cta-primary {
+    background: var(--urdfw-404-accent);
+    color: #fff;
+  }
+
+  .urdfw-404-page .urdfw-404-cta-secondary {
+    background: #fff;
+    color: var(--urdfw-404-deep);
+    border: 1px solid #cbd5e1;
+  }
+
+  .urdfw-404-page [data-filter-item].is-filtered-out {
+    display: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .urdfw-404-page .urdfw-404-intent-card,
+    .urdfw-404-page .urdfw-404-category-card {
+      transition: none;
+    }
+  }
+}

@@ -59,12 +59,13 @@
       }
 
       if (res.token) P.storeApiToken?.(res.token);
-      await P.syncPlatformFromApi?.();
 
+      /* Show dashboard immediately — sync API data in background (was blocking login 5–15s) */
       loginEl.classList.add('hidden');
       if (appEl) appEl.classList.remove('hidden');
       P.renderAdminShell(rootId);
       if (opts.onLogin) opts.onLogin();
+      P.syncPlatformFromApi?.({ background: true });
     };
 
     if (form) {
@@ -80,8 +81,9 @@
     if (P.api.auth.isAdmin() && localStorage.getItem('urdfw_api_token')) {
       loginEl.classList.add('hidden');
       if (appEl) appEl.classList.remove('hidden');
-      P.syncPlatformFromApi?.().then(() => P.renderAdminShell(rootId));
+      P.renderAdminShell(rootId);
       if (opts.onLogin) opts.onLogin();
+      P.syncPlatformFromApi?.({ background: true });
     }
   };
 
@@ -106,7 +108,6 @@
     P.initAdminDashboard(rootId);
     P.renderAdminQuickStats();
     P.renderApiStatusPanel('admin-api-status');
-    P.syncPlatformFromApi?.();
   };
 
   P.renderAdminQuickStats = async function () {
