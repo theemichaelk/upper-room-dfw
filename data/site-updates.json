@@ -40,6 +40,14 @@
       "summary": "Deferred API sync after login, admin slim loader (10 modules vs 27+).",
       "files": ["js/admin-loader.js", "js/platform/18-portal.js"],
       "adminPath": "admin.html"
+    },
+    {
+      "id": "brand-logo-hero-blog",
+      "date": "2026-07-11",
+      "title": "Brand Logo + Homepage Hero Blog Panel",
+      "summary": "Official Upper Room DFW logo on all nav/favicon/og:image; Latest from the Blog panel beside hero slider.",
+      "files": ["images/logo-upper-room-dfw.png", "scripts/brand-assets.js", "index.html", "css/main.css"],
+      "adminPath": "Content Studio → Site Updates Audit"
     }
   ]
 }

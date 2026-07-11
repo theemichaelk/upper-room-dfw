@@ -8,6 +8,13 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const DATA = path.join(ROOT, 'data', 'blog-posts.json');
 const BLOG_DIR = path.join(ROOT, 'blog');
+const INDEX_HTML = path.join(ROOT, 'index.html');
+const { logoImgTag } = require('./brand-assets');
+
+const HERO_BLOG_START = '<!-- urdfw-hero-blog:start -->';
+const HERO_BLOG_END = '<!-- urdfw-hero-blog:end -->';
+const HERO_BLOG_MOBILE_START = '<!-- urdfw-hero-blog-mobile:start -->';
+const HERO_BLOG_MOBILE_END = '<!-- urdfw-hero-blog-mobile:end -->';
 
 function esc(s) {
   return String(s || '')
@@ -32,7 +39,7 @@ function navBlock(prefix) {
     <div class="max-w-screen-2xl mx-auto px-6">
       <div class="flex items-center justify-between h-16">
         <a href="${p}index.html" class="flex items-center gap-x-2.5">
-          <div class="w-10 h-10 bg-[#0369a1] rounded-2xl flex items-center justify-center"><i class="fa-solid fa-church text-white"></i></div>
+          ${logoImgTag(p.startsWith('../') ? 1 : 0)}
           <span class="font-semibold text-xl">Upper Room DFW</span>
         </a>
         <div class="hidden md:flex gap-6 text-sm font-medium items-center">
@@ -74,6 +81,8 @@ function headBlock(opts) {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <link rel="icon" href="${p}images/logo-upper-room-dfw.png" type="image/png" sizes="any">
+  <link rel="apple-touch-icon" href="${p}images/logo-upper-room-dfw.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- urdfw-telemetry:v1 -->
 <!-- /urdfw-telemetry:v1 -->
@@ -213,6 +222,103 @@ ${items}
 `;
 }
 
+function heroBlogCard(post, compact) {
+  const href = `blog/${post.slug}.html`;
+  if (compact) {
+    return `<a href="${href}" class="urdfw-hero-blog-item group block py-3 border-b border-white/10 last:border-0 hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
+      <p class="text-[10px] uppercase tracking-wider text-sky-200/90 mb-0.5">${esc(post.city)} · ${post.readMinutes} min</p>
+      <h3 class="text-sm font-semibold leading-snug text-white group-hover:text-sky-100 line-clamp-2">${esc(post.title)}</h3>
+    </a>`;
+  }
+  return `<a href="${href}" class="urdfw-hero-blog-mobile-item flex gap-3 p-3 rounded-xl border border-slate-100 hover:border-sky-200 hover:bg-sky-50/50 transition-colors">
+    <img src="${post.image}" alt="" class="w-16 h-16 rounded-lg object-cover shrink-0" loading="lazy">
+    <div class="min-w-0">
+      <p class="text-[10px] uppercase tracking-wider text-slate-400">${esc(post.city)}</p>
+      <h3 class="text-sm font-semibold text-slate-900 leading-snug line-clamp-2">${esc(post.title)}</h3>
+      <p class="text-xs text-slate-500 mt-0.5 line-clamp-1">${esc(post.excerpt)}</p>
+    </div>
+  </a>`;
+}
+
+function buildHeroBlogPanels(posts) {
+  const latest = posts.slice(0, 3);
+  const desktop = `${HERO_BLOG_START}
+    <aside id="hero-blog-panel" class="urdfw-hero-blog-panel hidden lg:flex flex-col absolute right-6 top-1/2 -translate-y-1/2 z-30 w-[min(100%,340px)] max-h-[min(88%,520px)]" aria-label="Latest from the blog">
+      <div class="bg-slate-900/75 backdrop-blur-md border border-white/15 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-full">
+        <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between shrink-0">
+          <h2 class="text-sm font-semibold text-white tracking-wide"><i class="fa-solid fa-newspaper text-sky-300 mr-1.5"></i>Latest from the Blog</h2>
+          <a href="blog.html" class="text-xs text-sky-300 hover:text-white font-medium">All posts →</a>
+        </div>
+        <div class="px-3 py-2 overflow-y-auto flex-1">
+          ${latest.map((p) => heroBlogCard(p, true)).join('\n')}
+        </div>
+        <div class="px-4 py-2.5 border-t border-white/10 shrink-0 flex gap-2 text-xs">
+          <a href="feed.xml" class="text-sky-300/90 hover:text-white"><i class="fa-solid fa-rss mr-1"></i>RSS</a>
+          <span class="text-white/20">·</span>
+          <a href="sitemap.xml" class="text-sky-300/90 hover:text-white">Sitemap</a>
+        </div>
+      </div>
+    </aside>
+${HERO_BLOG_END}`;
+
+  const mobile = `${HERO_BLOG_MOBILE_START}
+  <section id="hero-blog-mobile" class="lg:hidden bg-white border-b border-slate-200" aria-label="Latest blog posts">
+    <div class="max-w-screen-2xl mx-auto px-6 py-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-semibold text-slate-900"><i class="fa-solid fa-newspaper text-sky-600 mr-1.5"></i>Latest from the Blog</h2>
+        <a href="blog.html" class="text-xs font-semibold text-sky-700">View all →</a>
+      </div>
+      <div class="space-y-2">
+        ${latest.map((p) => heroBlogCard(p, false)).join('\n')}
+      </div>
+    </div>
+  </section>
+${HERO_BLOG_MOBILE_END}`;
+
+  return { desktop, mobile };
+}
+
+function patchHomeHeroBlog(data) {
+  if (!fs.existsSync(INDEX_HTML)) return false;
+  let html = fs.readFileSync(INDEX_HTML, 'utf8');
+  const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const { desktop, mobile } = buildHeroBlogPanels(posts);
+
+  if (!html.includes(HERO_BLOG_START)) {
+    html = html.replace(
+      /(\s*<!-- Slider Arrows -->)/,
+      `\n    ${desktop}\n$1`
+    );
+  } else {
+    html = html.replace(
+      new RegExp(`${HERO_BLOG_START}[\\s\\S]*?${HERO_BLOG_END}`),
+      desktop
+    );
+  }
+
+  if (!html.includes(HERO_BLOG_MOBILE_START)) {
+    html = html.replace(
+      /(<\/header>\s*\n\s*<!-- STATS -->)/,
+      `</header>\n\n${mobile}\n\n  <!-- STATS -->`
+    );
+  } else {
+    html = html.replace(
+      new RegExp(`${HERO_BLOG_MOBILE_START}[\\s\\S]*?${HERO_BLOG_MOBILE_END}`),
+      mobile
+    );
+  }
+
+  if (!html.includes('urdfw-hero-with-blog')) {
+    html = html.replace(
+      /<header id="hero-slider" class="([^"]*)">/,
+      '<header id="hero-slider" class="$1 urdfw-hero-with-blog lg:pr-[min(360px,32vw)]">'
+    );
+  }
+
+  fs.writeFileSync(INDEX_HTML, html);
+  return true;
+}
+
 function main() {
   const data = JSON.parse(fs.readFileSync(DATA, 'utf8'));
   fs.mkdirSync(BLOG_DIR, { recursive: true });
@@ -226,6 +332,7 @@ function main() {
 
   fs.writeFileSync(path.join(ROOT, 'blog.html'), blogIndexPage(data));
   fs.writeFileSync(path.join(ROOT, 'feed.xml'), rssFeed(data));
+  if (patchHomeHeroBlog(data)) console.log('Patched index.html hero blog panel');
 
   console.log(`Generated ${count} blog posts, blog.html, and feed.xml`);
 }

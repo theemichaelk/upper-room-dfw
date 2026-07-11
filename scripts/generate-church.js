@@ -51,7 +51,7 @@ const TEMPLATE = `<!DOCTYPE html>
   <nav class="bg-white border-b sticky top-0 z-50">
     <div class="max-w-screen-2xl mx-auto px-6 flex h-16 items-center justify-between">
       <a href="../index.html" class="flex items-center gap-x-2.5">
-        <div class="w-9 h-9 bg-indigo-900 rounded-2xl flex items-center justify-center"><i class="fa-solid fa-church text-white"></i></div>
+        <img src="../images/logo-upper-room-dfw.png" alt="Upper Room DFW — King Jesus" class="urdfw-brand-logo h-11 w-11 object-contain shrink-0" width="44" height="44" loading="eager">
         <span class="font-semibold text-xl">Upper Room DFW</span>
       </a>
       <div class="hidden md:flex gap-6 text-sm">

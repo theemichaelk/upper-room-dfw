@@ -8,7 +8,13 @@ const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const CONFIG_PATH = path.join(ROOT, 'data', 'injection-config.json');
+const SITE_SETTINGS_PATH = path.join(ROOT, 'data', 'site-settings.json');
 const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+const { buildTelemetryHeadBlock, buildTelemetryBodyBlock, MARKER, MARKER_CLOSE } = require('../server/services/telemetry');
+const { loadStaticSiteSettings } = require('../server/services/site-settings');
+const { injectFaviconMeta, applyNavLogo } = require('./brand-assets');
+
+const siteSettings = loadStaticSiteSettings(ROOT);
 const SKIP = new Set(config.skipPages || []);
 const EMBED_PAGES = new Set((config.embedTier || {}).pages || ['embed.html']);
 
@@ -86,13 +92,41 @@ function ensureViewport(html) {
   return html.replace(/<head[^>]*>/i, (m) => m + '\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">');
 }
 
+/** Remove prior baked telemetry block (marker-delimited) before re-injecting. */
+function stripOldTelemetry(html) {
+  if (!html.includes(MARKER)) return html;
+  const closed = new RegExp(`${MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${MARKER_CLOSE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
+  if (closed.test(html)) return html.replace(closed, '');
+  return html.replace(/<!-- urdfw-telemetry:v1 -->[\s\S]*?(?=<meta|<link|<script|<\/head>)/i, '');
+}
+
+function injectTelemetry(html) {
+  html = stripOldTelemetry(html);
+  const headBlock = buildTelemetryHeadBlock(siteSettings) || (MARKER + '\n');
+
+  if (/<meta[^>]+name=["']viewport["']/i.test(html)) {
+    html = html.replace(/<meta[^>]+name=["']viewport["'][^>]*>/i, (match) => match + '\n' + headBlock);
+  } else {
+    html = html.replace(/<head[^>]*>/i, (m) => m + '\n' + headBlock);
+  }
+
+  const bodyBlock = buildTelemetryBodyBlock(siteSettings);
+  if (bodyBlock && !html.includes('googletagmanager.com/ns.html')) {
+    html = html.replace(/<body([^>]*)>/i, (m) => m + '\n' + bodyBlock);
+  }
+  return html;
+}
+
 function injectFile(filePath, depth) {
   let html = fs.readFileSync(filePath, 'utf8');
   const before = html;
   html = ensureViewport(html);
+  html = injectFaviconMeta(html, depth);
+  html = injectTelemetry(html);
   html = injectPreconnect(html);
   html = injectMeta(html);
   html = injectStyles(html, depth);
+  html = applyNavLogo(html, depth).html;
   html = upgradeLoader(html, depth);
   if (html !== before) {
     fs.writeFileSync(filePath, html);

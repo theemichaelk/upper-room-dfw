@@ -144,3 +144,32 @@
   background: #38bdf8;
   transform: scale(1.2);
 }
+
+/* Brand logo — nav, favicon source, admin */
+.urdfw-brand-logo {
+  image-rendering: auto;
+}
+
+/* Homepage hero — blog panel beside slider */
+.urdfw-hero-with-blog .hero-slide > .absolute.inset-0.flex.items-center > .max-w-screen-2xl {
+  max-width: 100%;
+}
+
+.urdfw-hero-with-blog .hero-slide .max-w-2xl {
+  max-width: 36rem;
+}
+
+@media (min-width: 1024px) {
+  .urdfw-hero-blog-panel {
+    pointer-events: auto;
+  }
+
+  .urdfw-hero-with-blog .hero-slides {
+    right: min(360px, 32vw);
+  }
+}
+
+.urdfw-hero-blog-panel .overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(125, 211, 252, 0.4) transparent;
+}
