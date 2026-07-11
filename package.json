@@ -20,6 +20,7 @@
     "test:production": "node scripts/test-production.js",
     "expand:all": "node scripts/expand-churches-bulk.js && node scripts/generate-sitemap.js",
     "inject:platform": "node scripts/inject-platform.js",
+    "audit:injection": "node scripts/audit-injection.js",
     "test:features": "node scripts/test-features.js",
     "test:api": "node scripts/test-api.js",
     "test:dns": "node scripts/test-dns.js",

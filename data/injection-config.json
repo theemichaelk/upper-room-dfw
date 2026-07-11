@@ -1,7 +1,11 @@
 {
   "version": "1.0.0",
   "productionOrigin": "https://upperroomdfw.com",
-  "skipPages": ["embed.html", "upper-room-dfw-complete.html"],
+  "skipPages": ["upper-room-dfw-complete.html"],
+  "embedTier": {
+    "pages": ["embed.html"],
+    "note": "Minimal widget surface — receives viewport, responsive CSS, defer loader"
+  },
   "stylesheets": [
     { "id": "platform", "href": "css/platform.css", "required": true },
     { "id": "responsive", "href": "css/responsive.css", "required": true }

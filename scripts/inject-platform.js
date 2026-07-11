@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Unified head/body injection — platform CSS, responsive layer, performance hints, loader.
- * Reads data/injection-config.json
+ * Reads data/injection-config.json. Upgrades existing loaders (defer + path normalize).
  */
 const fs = require('fs');
 const path = require('path');
@@ -10,6 +10,7 @@ const ROOT = path.join(__dirname, '..');
 const CONFIG_PATH = path.join(ROOT, 'data', 'injection-config.json');
 const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
 const SKIP = new Set(config.skipPages || []);
+const EMBED_PAGES = new Set((config.embedTier || {}).pages || ['embed.html']);
 
 function relPrefix(depth) {
   return depth > 0 ? '../'.repeat(depth) : '';
@@ -23,7 +24,7 @@ function hasTag(html, needle) {
   return html.includes(needle);
 }
 
-function injectPreconnect(html, depth) {
+function injectPreconnect(html) {
   let block = '';
   for (const origin of config.preconnect || []) {
     if (!html.includes(origin)) {
@@ -31,12 +32,11 @@ function injectPreconnect(html, depth) {
     }
   }
   for (const origin of config.dnsPrefetch || []) {
-    if (!html.includes(`dns-prefetch" href="${origin}"`)) {
+    if (!html.includes(origin)) {
       block += `  <link rel="dns-prefetch" href="${origin}">\n`;
     }
   }
   if (!block) return html;
-  if (html.includes('rel="preconnect"')) return html;
   return html.replace(/<head[^>]*>/i, (m) => m + '\n' + block);
 }
 
@@ -50,23 +50,34 @@ function injectMeta(html) {
     block += `  <meta name="format-detection" content="${m.formatDetection}">\n`;
   }
   if (!block) return html;
-  return html.replace(/<meta name="viewport"[^>]*>/i, (match) => match + '\n' + block);
+  if (/<meta[^>]+name=["']viewport["']/i.test(html)) {
+    return html.replace(/<meta[^>]+name=["']viewport["'][^>]*>/i, (match) => match + '\n' + block);
+  }
+  return html.replace(/<head[^>]*>/i, (m) => m + '\n' + block);
 }
 
 function injectStyles(html, depth) {
   for (const sheet of config.stylesheets || []) {
     const href = hrefFor(sheet.href, depth);
-    if (hasTag(html, sheet.href) || hasTag(html, href)) continue;
+    if (hasTag(html, `href="${href}"`) || hasTag(html, `href='${href}'`)) continue;
+    if (depth === 0 && (hasTag(html, `href="${sheet.href}"`) || hasTag(html, `href='${sheet.href}'`))) continue;
     const tag = `  <link rel="stylesheet" href="${href}">\n`;
     html = html.replace('</head>', tag + '</head>');
   }
   return html;
 }
 
-function injectLoader(html, depth) {
-  const src = hrefFor(config.scripts?.loader || 'js/platform/loader.js', depth);
-  if (hasTag(html, 'platform/loader.js')) return html;
-  const tag = `  <script src="${src}" defer></script>\n`;
+function upgradeLoader(html, depth) {
+  const expected = hrefFor(config.scripts?.loader || 'js/platform/loader.js', depth);
+  const re = /<script([^>]*src=["'][^"']*platform\/loader\.js[^"']*["'][^>]*)>\s*<\/script>/gi;
+  if (re.test(html)) {
+    return html.replace(re, (match, attrs) => {
+      let a = attrs.replace(/src=["'][^"']*["']/, `src="${expected}"`);
+      if (!/\bdefer\b/i.test(a)) a += ' defer';
+      return `<script${a}></script>`;
+    });
+  }
+  const tag = `  <script src="${expected}" defer></script>\n`;
   return html.replace('</body>', tag + '</body>');
 }
 
@@ -79,10 +90,10 @@ function injectFile(filePath, depth) {
   let html = fs.readFileSync(filePath, 'utf8');
   const before = html;
   html = ensureViewport(html);
-  html = injectPreconnect(html, depth);
+  html = injectPreconnect(html);
   html = injectMeta(html);
   html = injectStyles(html, depth);
-  html = injectLoader(html, depth);
+  html = upgradeLoader(html, depth);
   if (html !== before) {
     fs.writeFileSync(filePath, html);
     return true;
@@ -112,8 +123,11 @@ function walkHtml(dir, depth, count) {
 
 let count = 0;
 for (const name of fs.readdirSync(ROOT)) {
-  if (!name.endsWith('.html') || SKIP.has(name)) continue;
-  if (injectFile(path.join(ROOT, name), 0)) {
+  if (!name.endsWith('.html')) continue;
+  const rel = name;
+  if (SKIP.has(name) && !EMBED_PAGES.has(name)) continue;
+  const depth = 0;
+  if (injectFile(path.join(ROOT, name), depth)) {
     console.log('Injected:', name);
     count++;
   }
@@ -121,4 +135,4 @@ for (const name of fs.readdirSync(ROOT)) {
 count = walkHtml(path.join(ROOT, 'churches'), 1, count);
 count = walkHtml(path.join(ROOT, 'templates'), 1, count);
 
-console.log('Done. Injected', count, 'files.');
+console.log('Done. Injected/upgraded', count, 'files.');

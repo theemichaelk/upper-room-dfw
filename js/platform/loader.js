@@ -1,7 +1,23 @@
 /**
- * Platform loader — conditional modules, portal-only analytics, sequential deps
+ * Platform loader — asset-base aware, portal-only analytics, sequential deps
  */
 (function () {
+  function detectAssetBase() {
+    const el = document.querySelector('script[src*="platform/loader.js"]');
+    if (!el) {
+      const parts = (location.pathname || '').split('/').filter(Boolean);
+      const depth = Math.max(0, parts.length - 1);
+      return depth ? '../'.repeat(depth) : '';
+    }
+    return (el.getAttribute('src') || '').replace(/js\/platform\/loader\.js(?:\?.*)?$/, '');
+  }
+
+  window.__URDFW_ASSET_BASE__ = detectAssetBase();
+
+  function scriptUrl(rel) {
+    return window.__URDFW_ASSET_BASE__ + rel;
+  }
+
   const path = (location.pathname || '').toLowerCase();
   const isPortal =
     path.includes('admin') ||
@@ -41,17 +57,23 @@
     scripts.splice(scripts.indexOf('js/platform/15-global-init.js') + 1, 0, 'js/analytics-live.js');
   }
 
+  const failed = [];
+
   function loadSequential(i) {
     if (i >= scripts.length) {
+      if (failed.length) {
+        console.warn('[URDFW] Loader completed with failures:', failed);
+      }
       if (window.URDFWPlatform) {
         window.URDFWPlatform.initCore();
         if (window.URDFWPlatform.applyBreakpoint) window.URDFWPlatform.applyBreakpoint();
         if (window.URDFWPlatform.initPerformanceHints) window.URDFWPlatform.initPerformanceHints();
+        window.dispatchEvent(new CustomEvent('urdfw:ready', { detail: { failed } }));
       }
       return;
     }
     const s = document.createElement('script');
-    s.src = scripts[i];
+    s.src = scriptUrl(scripts[i]);
     s.async = false;
     s.onload = () => loadSequential(i + 1);
     s.onerror = () => {
@@ -59,7 +81,8 @@
         loadSequential(i + 1);
         return;
       }
-      console.warn('[URDFW] Failed to load', scripts[i]);
+      failed.push(scripts[i]);
+      console.warn('[URDFW] Failed to load', scriptUrl(scripts[i]));
       loadSequential(i + 1);
     };
     document.head.appendChild(s);

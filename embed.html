@@ -1,27 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="format-detection" content="telephone=no">
+
+  <meta name="theme-color" content="#0369a1">
   <title>Embed Directory</title>
   <meta name="description" content="Embed the Upper Room DFW church directory on your website with a customizable widget.">
   <link rel="canonical" href="https://upperroomdfw.com/embed.html">
   <meta property="og:url" content="https://upperroomdfw.com/embed.html">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body class="p-4">
   <div data-urdfw-embed data-mode="grid" data-count="6"></div>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
   <script>
-    (async () => {
+    (function () {
       const params = new URLSearchParams(location.search);
       const el = document.querySelector('[data-urdfw-embed]');
-      el.dataset.mode = params.get('mode') || 'grid';
-      el.dataset.count = params.get('count') || '6';
-      await new Promise(r => setTimeout(r, 800));
-      const res = await fetch('data/churches.json');
-      const listings = await res.json();
-      window.URDFWPlatform.initWidgetsOnPage(listings);
+      if (el) {
+        el.dataset.mode = params.get('mode') || 'grid';
+        el.dataset.count = params.get('count') || '6';
+      }
+      function boot() {
+        const P = window.URDFWPlatform;
+        if (!P || !P.initWidgetsOnPage) return setTimeout(boot, 80);
+        fetch(P.resolveAsset('data/churches.json'))
+          .then((r) => r.json())
+          .then((listings) => P.initWidgetsOnPage(listings))
+          .catch((e) => console.warn('[URDFW embed]', e.message));
+      }
+      window.addEventListener('urdfw:ready', boot);
+      if (document.readyState !== 'loading') setTimeout(boot, 1200);
     })();
   </script>
 

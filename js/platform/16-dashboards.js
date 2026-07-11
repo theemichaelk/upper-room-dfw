@@ -535,7 +535,7 @@
     if (!all.length) {
       let churches = [];
       try {
-        const res = await fetch('data/churches.json');
+        const res = await fetch(P.resolveAsset('data/churches.json'));
         churches = await res.json();
       } catch { /* ignore */ }
       const customs = P.get('custom_listings', []);

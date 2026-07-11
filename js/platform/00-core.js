@@ -6,6 +6,16 @@
   'use strict';
 
   const STORAGE_PREFIX = 'urdfw_';
+
+  function assetBase() {
+    if (typeof window !== 'undefined' && window.__URDFW_ASSET_BASE__ != null) {
+      return window.__URDFW_ASSET_BASE__;
+    }
+    const parts = (typeof location !== 'undefined' ? location.pathname : '').split('/').filter(Boolean);
+    const depth = Math.max(0, parts.length - 1);
+    return depth ? '../'.repeat(depth) : '';
+  }
+
   const Platform = {
     version: '2.0.0',
     config: null,
@@ -43,9 +53,14 @@
     return Platform.i18n[key] || fallback || key;
   };
 
+  Platform.assetBase = assetBase;
+  Platform.resolveAsset = function (rel) {
+    return assetBase() + String(rel).replace(/^\//, '');
+  };
+
   Platform.loadConfig = async function () {
     try {
-      const res = await fetch('data/platform-config.json');
+      const res = await fetch(Platform.resolveAsset('data/platform-config.json'));
       Platform.config = await res.json();
     } catch {
       Platform.config = { displayModes: ['grid', 'list', 'map', 'compact'], packages: [] };
@@ -56,7 +71,7 @@
   Platform.loadI18n = async function (lang) {
     Platform.lang = lang || Platform.lang;
     try {
-      const res = await fetch('data/i18n/' + Platform.lang + '.json');
+      const res = await fetch(Platform.resolveAsset('data/i18n/' + Platform.lang + '.json'));
       Platform.i18n = await res.json();
     } catch {
       Platform.i18n = {};
