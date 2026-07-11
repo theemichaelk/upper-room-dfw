@@ -11,10 +11,9 @@ const BLOG_DIR = path.join(ROOT, 'blog');
 const INDEX_HTML = path.join(ROOT, 'index.html');
 const { logoImgTag } = require('./brand-assets');
 
-const HERO_BLOG_START = '<!-- urdfw-hero-blog:start -->';
-const HERO_BLOG_END = '<!-- urdfw-hero-blog:end -->';
-const HERO_BLOG_MOBILE_START = '<!-- urdfw-hero-blog-mobile:start -->';
-const HERO_BLOG_MOBILE_END = '<!-- urdfw-hero-blog-mobile:end -->';
+const HOME_INSIGHTS_START = '<!-- urdfw-home-insights:start -->';
+const HOME_INSIGHTS_END = '<!-- urdfw-home-insights:end -->';
+const INSIGHTS_ANCHOR = '<!-- urdfw-home-insights-anchor -->';
 
 function esc(s) {
   return String(s || '')
@@ -243,125 +242,105 @@ function cityPill(city) {
   return `<span class="urdfw-insights-pill">${esc(label)}</span>`;
 }
 
-function heroInsightsFeatured(post) {
+function insightsFeaturedCard(post) {
   const href = `blog/${post.slug}.html`;
-  return `<a href="${href}" class="urdfw-insights-featured group block">
-    <div class="urdfw-insights-featured-img-wrap">
-      <img src="${post.image}" alt="${esc(shortTitle(post.title, 48))}" class="urdfw-insights-featured-img" width="320" height="140" loading="eager">
-    </div>
-    <div class="urdfw-insights-featured-body">
-      ${cityPill(post.city)}
-      <h3 class="urdfw-insights-featured-title">${esc(shortTitle(post.title, 64))}</h3>
-      <p class="urdfw-insights-featured-excerpt">${esc(shortExcerpt(post.excerpt))}</p>
-      <span class="urdfw-insights-read">Read guide <i class="fa-solid fa-arrow-right text-[10px] ml-1 group-hover:translate-x-0.5 transition-transform"></i></span>
-    </div>
-  </a>`;
-}
-
-function heroInsightsRow(post) {
-  const href = `blog/${post.slug}.html`;
-  return `<li>
-    <a href="${href}" class="urdfw-insights-row group">
-      ${cityPill(post.city)}
-      <span class="urdfw-insights-row-title">${esc(shortTitle(post.title, 52))}</span>
-      <i class="fa-solid fa-chevron-right urdfw-insights-row-chevron" aria-hidden="true"></i>
+  return `<article class="urdfw-insights-featured-wrap lg:col-span-2">
+    <a href="${href}" class="urdfw-insights-featured-card group">
+      <div class="urdfw-insights-featured-media">
+        <img src="${post.image}" alt="${esc(shortTitle(post.title, 56))}" width="640" height="320" loading="eager">
+      </div>
+      <div class="urdfw-insights-featured-content">
+        <div class="urdfw-insights-meta">
+          ${cityPill(post.city)}
+          <time datetime="${post.publishedAt}" class="urdfw-insights-date">${formatDate(post.publishedAt)}</time>
+        </div>
+        <h3 class="urdfw-insights-featured-title">${esc(shortTitle(post.title, 72))}</h3>
+        <p class="urdfw-insights-featured-excerpt">${esc(shortExcerpt(post.excerpt, 120))}</p>
+        <span class="urdfw-insights-cta">Read the guide <i class="fa-solid fa-arrow-right ml-1 text-xs"></i></span>
+      </div>
     </a>
-  </li>`;
+  </article>`;
 }
 
-function heroInsightsMobileCard(post) {
+function insightsCompactCard(post) {
   const href = `blog/${post.slug}.html`;
-  return `<a href="${href}" class="urdfw-insights-mobile-card group shrink-0">
-    <img src="${post.image}" alt="${esc(shortTitle(post.title, 40))}" class="urdfw-insights-mobile-img" width="200" height="112" loading="lazy">
-    <div class="urdfw-insights-mobile-body">
-      ${cityPill(post.city)}
-      <h3 class="urdfw-insights-mobile-title">${esc(shortTitle(post.title, 48))}</h3>
-    </div>
-  </a>`;
+  return `<article>
+    <a href="${href}" class="urdfw-insights-compact-card group">
+      <img src="${post.image}" alt="${esc(shortTitle(post.title, 40))}" class="urdfw-insights-compact-img" width="400" height="160" loading="lazy">
+      <div class="urdfw-insights-compact-body">
+        <div class="urdfw-insights-meta">
+          ${cityPill(post.city)}
+          <time datetime="${post.publishedAt}" class="urdfw-insights-date">${formatDate(post.publishedAt)}</time>
+        </div>
+        <h3 class="urdfw-insights-compact-title">${esc(shortTitle(post.title, 56))}</h3>
+      </div>
+    </a>
+  </article>`;
 }
 
-function buildHeroBlogPanels(posts, totalCount) {
+function buildHomeInsightsSection(posts, totalCount) {
   const latest = posts.slice(0, 3);
   const [featured, ...rest] = latest;
   const countLabel = totalCount || posts.length;
 
-  const desktop = `${HERO_BLOG_START}
-    <aside id="hero-blog-panel" class="urdfw-hero-insights hidden lg:block" aria-labelledby="urdfw-insights-heading">
-      <div class="urdfw-hero-insights-card">
-        <header class="urdfw-insights-header">
-          <div>
-            <p class="urdfw-insights-eyebrow">Local SEO guides</p>
-            <h2 id="urdfw-insights-heading" class="urdfw-insights-heading">DFW Faith Insights</h2>
-          </div>
-          <a href="blog.html" class="urdfw-insights-all" title="Browse all ${countLabel} articles">All ${countLabel} <i class="fa-solid fa-arrow-right ml-1 text-[10px]"></i></a>
-        </header>
-        ${featured ? heroInsightsFeatured(featured) : ''}
-        ${rest.length ? `<ul class="urdfw-insights-list">${rest.map((p) => heroInsightsRow(p)).join('')}</ul>` : ''}
-      </div>
-    </aside>
-${HERO_BLOG_END}`;
-
-  const mobile = `${HERO_BLOG_MOBILE_START}
-  <section id="hero-blog-mobile" class="urdfw-insights-mobile lg:hidden" aria-labelledby="urdfw-insights-mobile-heading">
-    <div class="max-w-screen-2xl mx-auto px-6 py-4">
-      <div class="flex items-end justify-between gap-3 mb-3">
+  return `${HOME_INSIGHTS_START}
+  <section id="dfw-faith-insights" class="urdfw-home-insights" aria-labelledby="urdfw-insights-heading">
+    <div class="max-w-screen-2xl mx-auto px-6 py-10 md:py-12">
+      <header class="urdfw-home-insights-header">
         <div>
-          <p class="urdfw-insights-eyebrow text-sky-700">Local church guides</p>
-          <h2 id="urdfw-insights-mobile-heading" class="text-base font-semibold text-slate-900">DFW Faith Insights</h2>
+          <p class="urdfw-insights-eyebrow">Guides for North Texas families &amp; pastors</p>
+          <h2 id="urdfw-insights-heading" class="urdfw-home-insights-title">DFW Faith Insights</h2>
+          <p class="urdfw-home-insights-sub">Local church guides written for Dallas–Fort Worth search — choosing a congregation, youth programs, outreach, and listing your church.</p>
         </div>
-        <a href="blog.html" class="text-xs font-semibold text-sky-700 whitespace-nowrap">All guides →</a>
-      </div>
-      <div class="urdfw-insights-mobile-scroll flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
-        ${latest.map((p) => heroInsightsMobileCard(p)).join('')}
+        <a href="blog.html" class="urdfw-home-insights-cta" title="Browse all ${countLabel} articles">View all ${countLabel} guides <i class="fa-solid fa-arrow-right ml-1.5 text-xs"></i></a>
+      </header>
+      <div class="urdfw-home-insights-grid">
+        ${featured ? insightsFeaturedCard(featured) : ''}
+        ${rest.length ? `<div class="urdfw-insights-compact-stack">${rest.map((p) => insightsCompactCard(p)).join('')}</div>` : ''}
       </div>
     </div>
   </section>
-${HERO_BLOG_MOBILE_END}`;
-
-  return { desktop, mobile };
+${HOME_INSIGHTS_END}`;
 }
 
-function patchHomeHeroBlog(data) {
-  if (!fs.existsSync(INDEX_HTML)) return false;
-  let html = fs.readFileSync(INDEX_HTML, 'utf8');
-  const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  const { desktop, mobile } = buildHeroBlogPanels(posts, data.posts.length);
-
-  if (!html.includes(HERO_BLOG_START)) {
-    html = html.replace(
-      /(\s*<!-- Slider Arrows -->)/,
-      `\n    ${desktop}\n$1`
-    );
-  } else {
-    html = html.replace(
-      new RegExp(`${HERO_BLOG_START}[\\s\\S]*?${HERO_BLOG_END}`),
-      desktop
-    );
-  }
-
-  if (!html.includes(HERO_BLOG_MOBILE_START)) {
-    html = html.replace(
-      /(<\/header>\s*\n\s*<!-- STATS -->)/,
-      `</header>\n\n${mobile}\n\n  <!-- STATS -->`
-    );
-  } else {
-    html = html.replace(
-      new RegExp(`${HERO_BLOG_MOBILE_START}[\\s\\S]*?${HERO_BLOG_MOBILE_END}`),
-      mobile
-    );
-  }
-
+function stripLegacyHeroBlog(html) {
+  html = html.replace(/<!-- urdfw-hero-blog:start -->[\s\S]*?<!-- urdfw-hero-blog:end -->/g, '');
+  html = html.replace(/<!-- urdfw-hero-blog-mobile:start -->[\s\S]*?<!-- urdfw-hero-blog-mobile:end -->/g, '');
   html = html.replace(
     /<header id="hero-slider" class="([^"]*)">/,
     (_, cls) => {
       const base = cls
         .replace(/\burdfw-hero-with-blog\b/g, '')
-        .replace(/\blg:pr-\[[^\]]+\]\b/g, '')
+        .replace(/\blg:pr-\[[^\]]+\]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
-      return `<header id="hero-slider" class="${base} urdfw-hero-with-blog lg:pr-[min(300px,28vw)]">`;
+      return `<header id="hero-slider" class="${base}">`;
     }
   );
+  return html;
+}
+
+function patchHomeInsights(data) {
+  if (!fs.existsSync(INDEX_HTML)) return false;
+  let html = fs.readFileSync(INDEX_HTML, 'utf8');
+  html = stripLegacyHeroBlog(html);
+
+  const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const section = buildHomeInsightsSection(posts, data.posts.length);
+
+  if (html.includes(HOME_INSIGHTS_START)) {
+    html = html.replace(
+      new RegExp(`${HOME_INSIGHTS_START}[\\s\\S]*?${HOME_INSIGHTS_END}`),
+      section
+    );
+  } else if (html.includes(INSIGHTS_ANCHOR)) {
+    html = html.replace(INSIGHTS_ANCHOR, section);
+  } else {
+    html = html.replace(
+      /(  <\/div>\s*\n)(\s*<!-- TESTIMONIES with 5-star reviews[^>]*-->)/,
+      `$1\n${section}\n\n$2`
+    );
+  }
 
   fs.writeFileSync(INDEX_HTML, html);
   return true;
@@ -380,7 +359,7 @@ function main() {
 
   fs.writeFileSync(path.join(ROOT, 'blog.html'), blogIndexPage(data));
   fs.writeFileSync(path.join(ROOT, 'feed.xml'), rssFeed(data));
-  if (patchHomeHeroBlog(data)) console.log('Patched index.html hero blog panel');
+  if (patchHomeInsights(data)) console.log('Patched index.html home insights section');
 
   console.log(`Generated ${count} blog posts, blog.html, and feed.xml`);
 }
