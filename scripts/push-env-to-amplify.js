@@ -52,6 +52,8 @@ for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) {
 if (vars.STRIPE_MODE === 'live' && vars.STRIPE_SECRET_KEY_LIVE) {
   vars.STRIPE_SECRET_KEY = vars.STRIPE_SECRET_KEY_LIVE;
   vars.STRIPE_PUBLISHABLE_KEY = vars.STRIPE_PUBLISHABLE_KEY_LIVE || vars.STRIPE_PUBLISHABLE_KEY;
+  vars.STRIPE_PRICE_STANDARD = vars.STRIPE_PRICE_STANDARD_LIVE || vars.STRIPE_PRICE_STANDARD;
+  vars.STRIPE_PRICE_PREMIUM = vars.STRIPE_PRICE_PREMIUM_LIVE || vars.STRIPE_PRICE_PREMIUM;
 }
 
 // Production overrides — always win over local .env
@@ -68,6 +70,8 @@ Object.assign(vars, {
   STRIPE_MODE: 'live',
   STRIPE_SECRET_KEY: vars.STRIPE_SECRET_KEY_LIVE || vars.STRIPE_SECRET_KEY,
   STRIPE_PUBLISHABLE_KEY: vars.STRIPE_PUBLISHABLE_KEY_LIVE || vars.STRIPE_PUBLISHABLE_KEY,
+  STRIPE_PRICE_STANDARD: vars.STRIPE_PRICE_STANDARD_LIVE || vars.STRIPE_PRICE_STANDARD,
+  STRIPE_PRICE_PREMIUM: vars.STRIPE_PRICE_PREMIUM_LIVE || vars.STRIPE_PRICE_PREMIUM,
 });
 delete vars.PORT;
 delete vars.ADMIN_EMAIL;
@@ -76,7 +80,9 @@ const outPath = path.join(__dirname, '..', 'deploy', 'amplify-env.production.jso
 fs.writeFileSync(outPath, JSON.stringify(vars, null, 2));
 console.log('Wrote', outPath, '(' + Object.keys(vars).length + ' vars from', envFile + ')');
 
-const fileArg = outPath.replace(/\\/g, '/');
+const tmpEnvPath = path.join(require('os').tmpdir(), 'amplify-env.production.json');
+fs.copyFileSync(outPath, tmpEnvPath);
+const fileArg = tmpEnvPath.replace(/\\/g, '/');
 execSync(`aws amplify update-app --app-id ${APP_ID} --region ${REGION} --environment-variables file://${fileArg}`, { stdio: 'inherit' });
 execSync(`aws amplify update-branch --app-id ${APP_ID} --branch-name main --region ${REGION} --environment-variables file://${fileArg}`, { stdio: 'inherit' });
 console.log('Amplify app + branch environment updated.');
