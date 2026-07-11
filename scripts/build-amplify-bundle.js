@@ -13,7 +13,14 @@ const STATIC_EXCLUDE = new Set([
   'node_modules', '.git', '.amplify-hosting', 'server', 'scripts', 'deploy',
   '.env', '.env.example', '.vscode', 'package-lock.json',
 ]);
-const STATIC_SKIP_FILES = new Set(['deploy-manifest.json']);
+const STATIC_SKIP_FILES = new Set([
+  'deploy-manifest.json',
+  '18-portal.js',
+  'build-amplify-bundle.js',
+  'ensure-admins.js',
+  'main.css',
+  'main.js',
+]);
 
 function rimraf(dir) {
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
@@ -106,7 +113,6 @@ if (!process.env.ADMIN_EMAILS) {
 }
 if (!process.env.DB_BACKUP_BUCKET) process.env.DB_BACKUP_BUCKET = 'upperroomdfw.com';
 if (!process.env.DB_BACKUP_KEY) process.env.DB_BACKUP_KEY = 'data/urdfw.db';
-
 const path = require('path');
 process.chdir(__dirname);
 require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });

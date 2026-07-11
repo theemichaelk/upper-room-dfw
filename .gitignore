@@ -5,3 +5,11 @@ server/data/*.db
 server/data/*.db-*
 *.log
 .DS_Store
+.vscode/
+
+# Accidental root-level duplicates (canonical paths: css/, js/, server/, scripts/)
+/18-portal.js
+/build-amplify-bundle.js
+/ensure-admins.js
+/main.css
+/main.js
