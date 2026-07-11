@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "updatedAt": null,
+  "redirects": [
+    {
+      "from": "/upper-room-dfw-complete.html",
+      "to": "/",
+      "status": 301,
+      "reason": "orphan-duplicate-of-index",
+      "canonical": "https://upperroomdfw.com/"
+    },
+    {
+      "from": "/index.html",
+      "to": "/",
+      "status": 301,
+      "reason": "normalize-apex"
+    }
+  ]
+}

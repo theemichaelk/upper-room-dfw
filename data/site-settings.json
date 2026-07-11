@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "version": "1.0.0",
+  "ga4Id": "",
+  "gtmId": "",
+  "searchConsole": {
+    "google": "",
+    "bing": "",
+    "yahoo": ""
+  },
+  "customHeadHtml": "",
+  "headInjectionScripts": [],
+  "footerScripts": [],
+  "headerBannerHtml": "",
+  "sidebarWidgetHtml": "",
+  "newsletterPopup": {
+    "enabled": true,
+    "delayMs": 5000,
+    "autoCloseMs": 5000,
+    "scrollPercent": 40,
+    "frequencyDays": 14,
+    "dismissDays": 7,
+    "title": "Stay connected with DFW faith",
+    "subtitle": "Get the weekly church digest in your inbox."
+  },
+  "updatedAt": null
+}
