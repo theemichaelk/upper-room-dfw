@@ -29,7 +29,7 @@
     if (document.getElementById('google-translate-element')) return;
     const div = document.createElement('div');
     div.id = 'google-translate-element';
-    div.className = 'fixed top-20 right-4 z-[9998] text-xs';
+    div.className = 'urdfw-translate-widget z-[9998] text-xs';
     document.body.appendChild(div);
     window.googleTranslateElementInit = function () {
       new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: 'en,es,ar,fr,ko' }, 'google-translate-element');

@@ -55,8 +55,8 @@
 
 .directory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: clamp(0.75rem, 2vw, 1.25rem);
 }
 
 .sky-gradient {
@@ -108,14 +108,9 @@
 /* Hero Slider Styles — fixed height/overflow so slides never block page clicks */
 #hero-slider {
   position: relative;
-  min-height: 520px;
+  min-height: clamp(380px, 72vh, 620px);
   overflow: hidden;
   isolation: isolate;
-}
-@media (min-width: 768px) {
-  #hero-slider {
-    min-height: 620px;
-  }
 }
 .hero-slides {
   position: absolute;

@@ -120,12 +120,16 @@ function stripSeoTags(html) {
     .replace(/<meta\s+property=["']og:url["'][^>]*>\s*/gi, '');
 }
 
+const DEFAULT_OG_IMAGE = `${PROD}/images/10.jpg`;
+
 function insertSeoTags(html, { description, canonical, ogUrl }) {
   const desc = escapeAttr(description);
   const block = [
     `  <meta name="description" content="${desc}">`,
     `  <link rel="canonical" href="${escapeAttr(canonical)}">`,
     `  <meta property="og:url" content="${escapeAttr(ogUrl)}">`,
+    `  <meta property="og:image" content="${DEFAULT_OG_IMAGE}">`,
+    `  <meta name="twitter:image" content="${DEFAULT_OG_IMAGE}">`,
   ].join('\n');
 
   if (/<title>[\s\S]*?<\/title>/i.test(html)) {

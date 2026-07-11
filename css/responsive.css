@@ -1,0 +1,239 @@
+/* Upper Room DFW — Responsive rendering pipeline
+   Mobile 320–479 | Mobile-lg 480–767 | Tablet 768–1023 | Laptop 1024–1439 | Desktop 1440+ */
+
+:root {
+  --urdfw-gutter: clamp(1rem, 3.5vw, 1.5rem);
+  --urdfw-touch-min: 44px;
+  --urdfw-nav-h: 4rem;
+}
+
+/* Fluid containers — works with Tailwind max-w-screen-2xl + px-6 */
+.max-w-screen-2xl.mx-auto,
+.urdfw-container {
+  padding-left: var(--urdfw-gutter) !important;
+  padding-right: var(--urdfw-gutter) !important;
+}
+
+/* Prevent horizontal overflow (CLS / layout shift) */
+html {
+  overflow-x: hidden;
+}
+body {
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Directory grid — mobile-first */
+.directory-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)) !important;
+  gap: clamp(0.75rem, 2vw, 1.25rem) !important;
+}
+
+.urdfw-mode-grid .directory-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)) !important;
+}
+
+/* Hero — scale down on narrow viewports */
+#hero-slider,
+header#hero-slider {
+  min-height: clamp(380px, 72vh, 620px) !important;
+}
+
+#hero-slider h1,
+header#hero-slider h1 {
+  font-size: clamp(1.75rem, 6vw, 3.5rem) !important;
+  line-height: 1.1 !important;
+}
+
+#hero-slider p,
+header#hero-slider p {
+  font-size: clamp(0.95rem, 2.5vw, 1.25rem) !important;
+}
+
+#hero-slider .flex.flex-wrap.gap-4 a,
+header#hero-slider .flex.flex-wrap.gap-4 a {
+  min-height: var(--urdfw-touch-min);
+  width: 100%;
+  justify-content: center;
+}
+
+/* Nav touch targets */
+#mobile-hamburger,
+button.lg\\:hidden {
+  min-width: var(--urdfw-touch-min);
+  min-height: var(--urdfw-touch-min);
+}
+
+/* Map column stacks on small screens */
+.urdfw-map-column,
+#directory-map {
+  min-height: 240px;
+  max-height: 50vh;
+}
+
+/* Google Translate widget — avoid overlap on mobile */
+#google-translate-element {
+  position: fixed;
+  top: auto !important;
+  bottom: 1rem;
+  right: 1rem;
+  left: auto;
+  z-index: 9990;
+  max-width: calc(100vw - 2rem);
+}
+
+/* Customize panel — safe area on phones */
+#urdfw-customize-panel {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(1rem, env(safe-area-inset-right));
+}
+#urdfw-customize-drawer {
+  width: min(280px, calc(100vw - 2rem));
+}
+
+/* Portal / member — mobile drawer */
+.member-drawer,
+.portal-topbar {
+  gap: 0.5rem;
+}
+
+.portal-main {
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+.portal-stat-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr));
+}
+
+/* Facets wrap cleanly */
+.urdfw-facets {
+  gap: 0.35rem;
+}
+.urdfw-facet {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Performance: defer paint for below-fold sections */
+.urdfw-below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: 400px;
+}
+
+/* ─── Mobile 320–479px ─── */
+@media (max-width: 479px) {
+  .directory-grid,
+  .urdfw-mode-grid .directory-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .urdfw-mode-list .church-card {
+    flex-direction: column !important;
+    max-height: none !important;
+  }
+  .urdfw-mode-list .church-card .relative {
+    width: 100% !important;
+    min-height: 160px;
+  }
+
+  .church-detail h1 {
+    font-size: 1.5rem !important;
+  }
+
+  .portal-login-card {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .portal-login-form-panel {
+    padding: 1rem;
+  }
+
+  nav .flex.items-center.gap-x-3 button span:not(#saved-count) {
+    display: none;
+  }
+
+  .shortcode-output {
+    font-size: 10px;
+    padding: 0.75rem;
+  }
+}
+
+/* ─── Mobile-lg 480–767px ─── */
+@media (min-width: 480px) and (max-width: 767px) {
+  .directory-grid,
+  .urdfw-mode-grid .directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  #hero-slider .flex.flex-wrap.gap-4 a,
+  header#hero-slider .flex.flex-wrap.gap-4 a {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+}
+
+/* ─── Tablet 768–1023px ─── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .directory-grid,
+  .urdfw-mode-grid .directory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  }
+
+  #directory-map,
+  .urdfw-mode-map #directory-map {
+    height: min(400px, 45vh) !important;
+  }
+
+  .portal-app {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Laptop 1024–1439px ─── */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .directory-grid,
+  .urdfw-mode-grid .directory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  }
+
+  #google-translate-element {
+    top: 5rem !important;
+    bottom: auto;
+    right: 1rem;
+  }
+}
+
+/* ─── Desktop 1440px+ ─── */
+@media (min-width: 1440px) {
+  .max-w-screen-2xl.mx-auto {
+    max-width: 1536px;
+  }
+
+  .directory-grid,
+  .urdfw-mode-grid .directory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+  }
+
+  .urdfw-mode-map #directory-map {
+    height: min(520px, 55vh) !important;
+  }
+}
+
+/* Reduced motion — accessibility + CWV */
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide,
+  .church-card,
+  .portal-btn,
+  .filter-chip,
+  .nav-link {
+    transition: none !important;
+    animation: none !important;
+  }
+  .hero-slide {
+    transition: opacity 0.01ms !important;
+  }
+}

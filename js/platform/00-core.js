@@ -123,11 +123,51 @@
     return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
   };
 
+  Platform.getBreakpoint = function () {
+    const w = window.innerWidth;
+    const bp = Platform.config?.breakpoints || {};
+    if (w >= (bp.desktop?.min || 1440)) return 'desktop';
+    if (w >= (bp.laptop?.min || 1024)) return 'laptop';
+    if (w >= (bp.tablet?.min || 768)) return 'tablet';
+    if (w >= (bp.mobileLg?.min || 480)) return 'mobile-lg';
+    return 'mobile';
+  };
+
+  Platform.applyBreakpoint = function () {
+    const bp = Platform.getBreakpoint();
+    const classes = ['urdfw-bp-mobile', 'urdfw-bp-mobile-lg', 'urdfw-bp-tablet', 'urdfw-bp-laptop', 'urdfw-bp-desktop'];
+    document.body.classList.remove(...classes);
+    document.body.classList.add('urdfw-bp-' + bp);
+    document.body.dataset.urdfwBp = bp;
+    Platform.emit('breakpoint', bp);
+  };
+
+  Platform.initPerformanceHints = function () {
+    const perf = Platform.config?.performance || {};
+    if (perf.lazyBelowFoldImages !== false) {
+      document.querySelectorAll('main img, section img, .church-card img').forEach((img, i) => {
+        if (i > 2 && !img.loading) img.loading = 'lazy';
+        if (!img.decoding) img.decoding = 'async';
+      });
+    }
+    if (perf.contentVisibilityLists !== false) {
+      document.querySelectorAll('section:not(:first-of-type), footer').forEach((el) => {
+        el.classList.add('urdfw-below-fold');
+      });
+    }
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => Platform.applyBreakpoint(), 150);
+    });
+  };
+
   Platform.initCore = async function () {
     await Platform.loadConfig();
     await Platform.loadI18n(Platform.lang);
     Platform.applyTheme();
     Platform.applyDisplayMode(Platform.displayMode);
+    Platform.applyBreakpoint();
     Platform.emit('core:ready', Platform);
   };
 

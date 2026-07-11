@@ -34,7 +34,8 @@ const PLATFORM_FILES = [
   'js/platform/12-embed.js', 'js/platform/13-seo.js', 'js/platform/14-bookmarks.js',
   'js/platform/15-global-init.js', 'js/platform/16-dashboards.js',
   'js/platform/17-api-bridge.js', 'js/platform/18-portal.js', 'js/platform/19-member-portal.js', 'js/platform/loader.js',
-  'css/platform.css', 'css/portal.css', 'data/platform-config.json',
+  'css/platform.css', 'css/responsive.css', 'css/portal.css',
+  'data/platform-config.json', 'data/injection-config.json',
   'data/i18n/en.json', 'data/i18n/es.json', 'data/i18n/ar.json',
 ];
 

@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "productionOrigin": "https://upperroomdfw.com",
+  "skipPages": ["embed.html", "upper-room-dfw-complete.html"],
+  "stylesheets": [
+    { "id": "platform", "href": "css/platform.css", "required": true },
+    { "id": "responsive", "href": "css/responsive.css", "required": true }
+  ],
+  "preconnect": [
+    "https://cdnjs.cloudflare.com",
+    "https://cdn.jsdelivr.net"
+  ],
+  "dnsPrefetch": [
+    "https://upperroomdfw.com",
+    "https://d4lzb9pq4mfuf.cloudfront.net"
+  ],
+  "meta": {
+    "themeColor": "#0369a1",
+    "formatDetection": "telephone=no"
+  },
+  "scripts": {
+    "loader": "js/platform/loader.js"
+  },
+  "performance": {
+    "contentVisibilityLists": true,
+    "lazyBelowFoldImages": true,
+    "analyticsPages": ["admin.html", "member-dashboard.html", "feature-checklist.html", "billing-hub.html"]
+  },
+  "breakpoints": {
+    "mobile": { "min": 0, "max": 479 },
+    "mobileLg": { "min": 480, "max": 767 },
+    "tablet": { "min": 768, "max": 1023 },
+    "laptop": { "min": 1024, "max": 1439 },
+    "desktop": { "min": 1440, "max": null }
+  }
+}
