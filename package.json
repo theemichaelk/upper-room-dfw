@@ -37,7 +37,7 @@
     "generate:blog": "node scripts/generate-blog.js",
     "build:static": "node scripts/generate-blog.js && node scripts/apply-brand-logo.js && node scripts/inject-platform.js && node scripts/add-powered-by-footer.js && node scripts/apply-redirects.js --canonicals && node scripts/generate-sitemap.js",
     "brand:logo": "node scripts/apply-brand-logo.js",
-    "deploy:s3": "npm run build:static && aws s3 sync . s3://upperroomdfw.com --region us-east-2 --delete --exclude node_modules/* --exclude .amplify-hosting/* --exclude .env --exclude .env.example --exclude server/* --exclude scripts/* --exclude deploy/* --exclude .git/* --exclude .vscode/* --exclude 18-portal.js --exclude build-amplify-bundle.js --exclude ensure-admins.js --exclude main.css --exclude main.js --exclude *.db --exclude *.db-shm --exclude *.db-wal"
+    "deploy:s3": "npm run build:static && aws s3 sync . s3://upperroomdfw.com --region us-east-2 --delete --exclude node_modules/* --exclude .amplify-hosting/* --exclude .env --exclude .env.example --exclude server/* --exclude scripts/* --exclude deploy/* --exclude .git/* --exclude .vscode/* --exclude build-amplify-bundle.js --exclude ensure-admins.js --exclude *.db --exclude *.db-shm --exclude *.db-wal"
   },
   "keywords": [
     "dfw",

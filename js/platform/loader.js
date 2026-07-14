@@ -19,11 +19,26 @@
   }
 
   const path = (location.pathname || '').toLowerCase();
+  const is404 = path.includes('404') || document.body?.classList.contains('urdfw-404-page');
+  const isAdminPage = path.includes('admin') || !!document.getElementById('admin-platform-root');
   const isPortal =
-    path.includes('admin') ||
+    isAdminPage ||
     path.includes('member-dashboard') ||
     path.includes('feature-checklist') ||
     path.includes('billing-hub');
+
+  /* Admin uses admin-loader.js exclusively — avoid double-loading the full stack */
+  if (isAdminPage && (window.__URDFW_ADMIN_LOADER__ || document.querySelector('script[src*="admin-loader.js"]'))) {
+    return;
+  }
+
+  if (is404) {
+    const slim = document.createElement('script');
+    slim.src = scriptUrl('js/404-loader.js');
+    slim.defer = true;
+    document.head.appendChild(slim);
+    return;
+  }
 
   const core = [
     'js/platform/00-core.js',
@@ -42,10 +57,15 @@
     'js/platform/13-seo.js',
     'js/platform/14-bookmarks.js',
     'js/platform/15-global-init.js',
+    'js/platform/21-telemetry.js',
+    'js/platform/22-widgets-ui.js',
+    'js/platform/23-404-rescue.js',
+    'js/platform/24-site-shell.js',
   ];
 
   const portal = [
     'js/platform/16-dashboards.js',
+    'js/platform/25-control-panel.js',
     'js/platform/17-api-bridge.js',
     'js/platform/18-portal.js',
     'js/platform/19-member-portal.js',

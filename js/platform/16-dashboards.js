@@ -428,6 +428,32 @@
   };
 
   /* ─── ADMIN DASHBOARD ─── */
+  P.esc = P.esc || function (s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  P.adminPatchListing = async function (id, patch) {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
+      const res = await fetch('/api/listings/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Update failed');
+      }
+      return res.json();
+    }
+    return null;
+  };
+
   P.adminTabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'listings', label: 'Listings' },
@@ -435,7 +461,7 @@
     { id: 'claims', label: 'Claims' },
     { id: 'billing', label: 'Billing' },
     { id: 'email', label: 'Email' },
-    { id: 'seo', label: 'SEO' },
+    { id: 'seo', label: 'SEO Hub' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'reviews', label: 'Reviews' },
     { id: 'support', label: 'Support' },
@@ -539,93 +565,140 @@
         churches = await res.json();
       } catch { /* ignore */ }
       const customs = P.get('custom_listings', []);
-      all = [...customs, ...churches.map((c) => P.enhanceListing(c))];
+      const enhance = P.enhanceListing || ((c) => c);
+      all = [...customs, ...churches.map((c) => enhance(c))];
     }
     const meta = P.get('listing_meta', {});
+    const esc = P.esc;
 
     el.innerHTML = `
       <div class="flex flex-wrap gap-2 mb-4">
         <button type="button" id="admin-export-all-csv" class="px-3 py-1.5 text-xs border rounded-2xl">Export All CSV</button>
         <button type="button" id="admin-seed-demo" class="px-3 py-1.5 text-xs border rounded-2xl">Seed Demo Meta</button>
+        <span class="text-xs text-slate-500 self-center">${all.length} listings</span>
       </div>
       <div class="bg-white border rounded-3xl p-4 max-h-[480px] overflow-auto text-sm space-y-2" id="admin-all-listings">
         ${all.slice(0, 100).map((l) => {
           const m = meta[l.id] || {};
           const featured = l.featured || m.featured;
+          const sticky = l.sticky || m.sticky;
+          const vip = l.level === 'vip' || m.vip || m.level === 'vip';
           return `<div class="flex flex-wrap items-center justify-between gap-2 border-b py-2">
-            <div><strong>${l.name}</strong> <span class="text-xs text-slate-500">${l.area || ''} • ${l.status || 'live'}</span>
-              ${featured ? '<span class="badge-featured">Featured</span>' : ''}${m.vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
+            <div><strong>${esc(l.name)}</strong> <span class="text-xs text-slate-500">${esc(l.area || '')} • ${esc(l.status || 'live')}</span>
+              ${featured ? '<span class="badge-featured">Featured</span>' : ''}${sticky ? '<span class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded ml-1">Sticky</span>' : ''}${vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
             <div class="flex gap-1 text-xs">
-              <button type="button" data-feat="${l.id}" class="admin-feat px-2 py-0.5 border rounded">Feature</button>
-              <button type="button" data-sticky="${l.id}" class="admin-sticky px-2 py-0.5 border rounded">Sticky</button>
-              <button type="button" data-vip="${l.id}" class="admin-vip px-2 py-0.5 border rounded">VIP</button>
-              ${(l.status === 'pending' || l.status === 'registered') ? `<button type="button" data-approve="${l.id}" class="text-emerald-600">Go Live</button>` : ''}
+              <button type="button" data-feat="${esc(l.id)}" class="admin-feat px-2 py-0.5 border rounded">Feature</button>
+              <button type="button" data-sticky="${esc(l.id)}" class="admin-sticky px-2 py-0.5 border rounded">Sticky</button>
+              <button type="button" data-vip="${esc(l.id)}" class="admin-vip px-2 py-0.5 border rounded">VIP</button>
+              ${(l.status === 'pending' || l.status === 'registered') ? `<button type="button" data-approve="${esc(l.id)}" class="text-emerald-600">Go Live</button>` : ''}
             </div></div>`;
         }).join('') || '<p class="text-slate-500">No listings.</p>'}
       </div>`;
 
-    el.querySelector('#admin-export-all-csv')?.addEventListener('click', () => P.exportCSV(all, 'urdfw-all-listings.csv'));
-    el.querySelector('#admin-seed-demo')?.addEventListener('click', () => { P.seedDemoData(); alert('Demo listing meta seeded.'); P.renderAdminListings(el); });
+    el.querySelector('#admin-export-all-csv')?.addEventListener('click', () => {
+      if (P.exportCSV) P.exportCSV(all, 'urdfw-all-listings.csv');
+      else P.portalToast?.('CSV export module not loaded');
+    });
+    el.querySelector('#admin-seed-demo')?.addEventListener('click', () => {
+      if (P.seedDemoData) { P.seedDemoData(); P.portalToast?.('Demo listing meta seeded.'); }
+      else P.portalToast?.('Seed only available in full local mode.');
+      P.renderAdminListings(el);
+    });
 
-    el.querySelectorAll('[data-feat]').forEach((b) => b.onclick = () => { P.markFeatured(b.dataset.feat, true); P.renderAdminListings(el); });
-    el.querySelectorAll('[data-sticky]').forEach((b) => b.onclick = () => { P.upgradeListing(b.dataset.sticky, 'premium'); P.renderAdminListings(el); });
-    el.querySelectorAll('[data-vip]').forEach((b) => b.onclick = () => { P.upgradeListing(b.dataset.vip, 'vip'); P.renderAdminListings(el); });
-    el.querySelectorAll('[data-approve]').forEach((b) => b.onclick = async () => {
+    const withToast = async (fn, okMsg) => {
+      try {
+        await fn();
+        if (okMsg) P.portalToast?.(okMsg);
+        P.renderAdminListings(el);
+      } catch (e) {
+        P.portalToast?.(e.message || 'Update failed');
+      }
+    };
+
+    el.querySelectorAll('[data-feat]').forEach((b) => b.onclick = () => withToast(async () => {
+      const id = b.dataset.feat;
+      P.markFeatured?.(id, true);
+      await P.adminPatchListing(id, { featured: true });
+    }, 'Marked featured'));
+    el.querySelectorAll('[data-sticky]').forEach((b) => b.onclick = () => withToast(async () => {
+      const id = b.dataset.sticky;
+      P.upgradeListing?.(id, 'premium');
+      await P.adminPatchListing(id, { featured: true, sticky: true, level: 'premium' });
+    }, 'Marked sticky / premium'));
+    el.querySelectorAll('[data-vip]').forEach((b) => b.onclick = () => withToast(async () => {
+      const id = b.dataset.vip;
+      P.upgradeListing?.(id, 'vip');
+      await P.adminPatchListing(id, { featured: true, sticky: true, level: 'vip' });
+    }, 'Marked VIP'));
+    el.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => withToast(async () => {
       const id = b.dataset.approve;
-      if (P.apiConfig?.mode === 'remote' && token) {
-        await fetch('/api/listings/' + id, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-          body: JSON.stringify({ status: 'live' }),
-        });
-      } else {
+      await P.adminPatchListing(id, { status: 'live' });
+      if (P.apiConfig?.mode !== 'remote') {
         const customs2 = P.get('custom_listings', []);
         const item = customs2.find((x) => x.id === id);
         if (item) { item.status = 'approved'; P.set('custom_listings', customs2); }
       }
-      P.renderAdminListings(el);
-    });
+    }, 'Listing is live'));
   };
 
   P.renderAdminUsers = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading users…</p>';
     let clients = P.get('clients', []);
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+    let users = P.get('users', []);
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
       try {
         const list = await P.api.clients.list();
         if (Array.isArray(list)) { clients = list; P.set('clients', list); }
       } catch { /* keep local */ }
+      try {
+        const res = await fetch('/api/admin/users', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.ok) {
+          const data = await res.json();
+          users = Array.isArray(data) ? data : (data.users || []);
+          P.set('users', users);
+        }
+      } catch { /* keep local */ }
     }
-    const users = P.get('users', []);
+    const dir = typeof P.getUserDirectory === 'function'
+      ? P.getUserDirectory()
+      : users.map((u) => ({ name: u.name, email: u.email, role: u.role || 'member' }));
+    const esc = P.esc;
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Church Registrations (${clients.length})</h3>
           <div class="space-y-2 max-h-80 overflow-auto text-xs">
-            ${clients.map((c) => `<div class="flex justify-between border-b py-2">
-              <span>${c.name} — ${c.email}</span>
-              <span class="${c.status === 'pending' ? 'text-amber-600' : 'text-emerald-600'}">${c.status || 'approved'}</span>
-              ${c.status === 'pending' ? `<button type="button" data-client="${c.id}" class="admin-approve-client text-emerald-600 ml-2">Approve</button>` : ''}
+            ${clients.map((c) => `<div class="flex justify-between border-b py-2 gap-2">
+              <span>${esc(c.name)} — ${esc(c.email)}</span>
+              <span class="shrink-0 ${c.status === 'pending' ? 'text-amber-600' : 'text-emerald-600'}">${esc(c.status || 'approved')}</span>
+              ${c.status === 'pending' ? `<button type="button" data-client="${esc(c.id)}" class="admin-approve-client text-emerald-600 ml-2 shrink-0">Approve</button>` : ''}
             </div>`).join('') || '<p class="text-slate-500">No clients.</p>'}
           </div>
         </div>
         <div class="bg-white border rounded-3xl p-5">
-          <h3 class="font-semibold mb-3">Platform Users (${users.length})</h3>
+          <h3 class="font-semibold mb-3">Platform Users (${dir.length})</h3>
           <div class="space-y-2 max-h-80 overflow-auto text-xs">
-            ${P.getUserDirectory().map((u) => `<div class="border-b py-2">${u.name} — ${u.email} <span class="text-slate-400">(${u.role})</span></div>`).join('') || '<p class="text-slate-500">No users yet.</p>'}
+            ${dir.map((u) => `<div class="border-b py-2">${esc(u.name)} — ${esc(u.email)} <span class="text-slate-400">(${esc(u.role)})</span></div>`).join('') || '<p class="text-slate-500">No users yet.</p>'}
           </div>
         </div>
       </div>`;
 
     el.querySelectorAll('.admin-approve-client').forEach((b) => b.onclick = async () => {
-      if (P.apiConfig?.mode === 'remote') {
-        await P.api.clients.approve(b.dataset.client);
-      } else {
-        const list = P.get('clients', []);
-        const c = list.find((x) => x.id === b.dataset.client);
-        if (c) { c.status = 'approved'; P.set('clients', list); }
+      try {
+        if (P.apiConfig?.mode === 'remote') {
+          await P.api.clients.approve(b.dataset.client);
+        } else {
+          const list = P.get('clients', []);
+          const c = list.find((x) => x.id === b.dataset.client);
+          if (c) { c.status = 'approved'; P.set('clients', list); }
+        }
+        P.portalToast?.('Client approved');
+        P.renderAdminUsers(el);
+        P.renderAdminQuickStats?.();
+      } catch (e) {
+        P.portalToast?.(e.message || 'Approve failed');
       }
-      P.renderAdminUsers(el);
-      P.renderAdminQuickStats?.();
     });
   };
 
@@ -642,10 +715,10 @@
       <div class="bg-white border rounded-3xl p-5">
         <h3 class="font-semibold mb-3">Listing Claims (${claims.length})</h3>
         <div class="space-y-2 text-sm">${claims.length ? claims.map((c) => `
-          <div class="flex justify-between border rounded-2xl p-3">
-            <div><strong>${c.email || c.name || 'Claimant'}</strong> — Listing #${c.listingId}
-              <span class="text-xs ml-2 px-2 py-0.5 rounded ${c.status === 'pending' ? 'bg-amber-100' : 'bg-emerald-100'}">${c.status}</span></div>
-            ${c.status === 'pending' ? `<button type="button" data-claim="${c.id}" class="admin-approve-claim text-xs text-emerald-600">Approve</button>` : ''}
+          <div class="flex justify-between border rounded-2xl p-3 gap-2">
+            <div><strong>${P.esc(c.email || c.name || 'Claimant')}</strong> — Listing #${P.esc(c.listingId || c.listing_id || '—')}
+              <span class="text-xs ml-2 px-2 py-0.5 rounded ${c.status === 'pending' ? 'bg-amber-100' : 'bg-emerald-100'}">${P.esc(c.status)}</span></div>
+            ${c.status === 'pending' ? `<button type="button" data-claim="${P.esc(c.id)}" class="admin-approve-claim text-xs text-emerald-600 shrink-0">Approve</button>` : ''}
           </div>`).join('') : '<p class="text-slate-500 text-sm">No claims submitted yet.</p>'}
       </div>`;
 
@@ -676,7 +749,7 @@
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Orders (${orders.length})</h3>
-          <div class="text-xs space-y-1 max-h-64 overflow-auto">${orders.map((o) => `<div class="py-1 border-b">${o.ref} — $${o.amount} ${o.plan} via ${o.gateway}</div>`).join('') || 'No orders.'}</div>
+          <div class="text-xs space-y-1 max-h-64 overflow-auto">${orders.map((o) => `<div class="py-1 border-b">${P.esc(o.ref || o.id || '—')} — $${o.amount ?? 0} ${P.esc(o.plan || '')} via ${P.esc(o.gateway || o.provider || '—')}</div>`).join('') || 'No orders.'}</div>
         </div>
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Coupons</h3>
@@ -782,52 +855,21 @@
   };
 
   P.renderAdminSeo = async function (el) {
-    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading SEO settings…</div>';
-    let pages = ['index.html', 'directory.html', 'features.html', 'pricing.html', 'contact.html', 'about.html', 'register.html', 'member-dashboard.html'];
-    let pageSettings = {};
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading control panel…</div>';
     if (P.apiConfig?.mode === 'remote') {
       try {
         const token = localStorage.getItem('urdfw_api_token');
-        const res = await fetch('/api/seo/pages', { headers: { Authorization: 'Bearer ' + token } });
-        if (res.ok) {
-          const data = await res.json();
-          pageSettings = data.pages || {};
-          if (data.defaults?.length) pages = data.defaults;
-          P.set('page_settings', pageSettings);
+        const settingsRes = await fetch('/api/platform/site-settings', { headers: { Authorization: 'Bearer ' + token } });
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          P.set('site_settings', data.settings || P.get('site_settings', {}));
         }
       } catch { /* use local */ }
     }
-    if (!Object.keys(pageSettings).length) {
-      pages.forEach((p) => { pageSettings[p] = P.getPageSettings(p); });
+    if (P.renderAdminSeoControlPanel) {
+      return P.renderAdminSeoControlPanel(el);
     }
-    el.innerHTML = `
-      <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Page SEO Settings <span class="text-xs font-normal text-slate-500">(saved to server)</span></h3>
-        <div class="space-y-4">${pages.map((p) => {
-          const s = pageSettings[p] || { title: '', description: '', noindex: false };
-          return `<form data-page="${p}" class="admin-seo-form border rounded-2xl p-4 text-sm">
-            <div class="font-medium mb-2">${p}</div>
-            <input name="title" value="${(s.title || '').replace(/"/g, '&quot;')}" placeholder="SEO title" class="w-full border rounded px-3 py-1.5 mb-2 text-xs">
-            <textarea name="description" rows="2" placeholder="Meta description" class="w-full border rounded px-3 py-1.5 text-xs">${s.description || ''}</textarea>
-            <label class="text-xs flex items-center gap-2 mt-2"><input type="checkbox" name="noindex" ${s.noindex ? 'checked' : ''}> noindex</label>
-            <button type="submit" class="mt-2 px-3 py-1 text-xs border rounded-2xl">Save</button>
-          </form>`;
-        }).join('')}</div>
-      </div>`;
-
-    el.querySelectorAll('.admin-seo-form').forEach((form) => {
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        const fd = new FormData(form);
-        const patch = {
-          title: fd.get('title'),
-          description: fd.get('description'),
-          noindex: fd.get('noindex') === 'on',
-        };
-        await P.setPageSettings(form.dataset.page, patch);
-        P.portalToast?.('SEO settings saved for ' + form.dataset.page);
-      };
-    });
+    el.innerHTML = '<div class="text-sm text-red-600 p-4">Control panel module not loaded. Ensure js/platform/25-control-panel.js is in the loader.</div>';
   };
 
   P.renderAdminIntegrations = async function (el) {

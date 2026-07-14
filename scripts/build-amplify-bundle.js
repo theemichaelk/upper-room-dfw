@@ -15,11 +15,8 @@ const STATIC_EXCLUDE = new Set([
 ]);
 const STATIC_SKIP_FILES = new Set([
   'deploy-manifest.json',
-  '18-portal.js',
   'build-amplify-bundle.js',
   'ensure-admins.js',
-  'main.css',
-  'main.js',
 ]);
 
 function rimraf(dir) {
@@ -96,6 +93,7 @@ const ENV_KEYS = [
   'PAYPAL_API_USERNAME', 'PAYPAL_API_PASSWORD', 'PAYPAL_API_SIGNATURE',
   'DB_BACKUP_BUCKET', 'DB_BACKUP_KEY', 'DB_BACKUP_INTERVAL_MS',
   'RECAPTCHA_SITE_KEY', 'RECAPTCHA_SECRET_KEY', 'DATABASE_PATH',
+  'CLOUDFRONT_DIST_ID', 'CLOUDFLARE_ZONE_ID', 'CLOUDFLARE_API_TOKEN', 'TELEMETRY_WEBHOOK_SECRET',
 ];
 const envLines = ENV_KEYS.filter((k) => process.env[k]).map((k) => `${k}=${process.env[k]}`);
 if (!envLines.some((l) => l.startsWith('DATABASE_PATH='))) {

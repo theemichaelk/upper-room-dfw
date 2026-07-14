@@ -33,9 +33,10 @@ const PLATFORM_FILES = [
   'js/platform/09-billing.js', 'js/platform/10-admin.js', 'js/platform/11-integrations.js',
   'js/platform/12-embed.js', 'js/platform/13-seo.js', 'js/platform/14-bookmarks.js',
   'js/platform/15-global-init.js', 'js/platform/16-dashboards.js',
-  'js/platform/17-api-bridge.js', 'js/platform/18-portal.js', 'js/platform/19-member-portal.js', 'js/platform/loader.js',
-  'css/platform.css', 'css/responsive.css', 'css/portal.css',
-  'data/platform-config.json', 'data/injection-config.json',
+  'js/platform/17-api-bridge.js', 'js/platform/18-portal.js', 'js/platform/19-member-portal.js',
+  'js/platform/23-404-rescue.js', 'js/platform/24-site-shell.js', 'js/platform/loader.js',
+  'css/platform.css', 'css/responsive.css', 'css/portal.css', 'css/404.css',
+  'data/platform-config.json', 'data/injection-config.json', 'data/404-intents.json',
   'data/i18n/en.json', 'data/i18n/es.json', 'data/i18n/ar.json',
 ];
 
@@ -108,6 +109,19 @@ async function main() {
     });
   }
 
+  const notFound = await fetch('this-page-does-not-exist-xyz.html');
+  if (notFound.status === 404 && notFound.body.includes('urdfw-404-page')) {
+    console.log('  ✓ 404 rescue page (HTTP 404)'); pass++;
+  } else { console.log('  ✗ 404 rescue page', notFound.status); fail++; }
+
+  const page404 = await fetch('404.html');
+  if (page404.status === 200 && page404.body.includes('urdfw-404-categories') && page404.body.includes('data-urdfw-shell')) {
+    console.log('  ✓ 404.html template + shell'); pass++;
+  } else { console.log('  ✗ 404.html template'); fail++; }
+  if (page404.body.includes('urdfw-404-category-label') && page404.body.includes('Global Events')) {
+    console.log('  ✓ 404 category matrix'); pass++;
+  } else { console.log('  ✗ 404 category matrix'); fail++; }
+
   const church = await fetch('churches/the-grove-community-church.html');
   if (church.body.includes('platform/loader.js')) { console.log('  ✓ church page has platform'); pass++; }
   else { console.log('  ✗ church page missing platform'); fail++; }
@@ -144,6 +158,12 @@ async function main() {
   if (admin.body.includes('admin-sidebar') && admin.body.includes('data-admin-tab')) {
     console.log('  ✓ admin: sidebar navigation'); pass++;
   } else { console.log('  ✗ admin: sidebar navigation'); fail++; }
+  if (admin.body.includes('admin-loader.js') && admin.body.includes('mobile-menu')) {
+    console.log('  ✓ admin: slim loader + mobile menu'); pass++;
+  } else { console.log('  ✗ admin: slim loader + mobile menu'); fail++; }
+  if (!/admin-demo-fill|value="michaelk@tsbrenterprises\.com"/.test(admin.body)) {
+    console.log('  ✓ admin: no hardcoded demo credentials in HTML'); pass++;
+  } else { console.log('  ✗ admin: hardcoded demo credentials still present'); fail++; }
 
   if (member.body.includes('portal-login') && member.body.includes('member-forgot-pass')) {
     console.log('  ✓ member-dashboard: portal login UI'); pass++;

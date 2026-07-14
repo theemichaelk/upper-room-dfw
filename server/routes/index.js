@@ -356,6 +356,24 @@ function createRouter(db, limiters = {}) {
     res.json(db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all());
   });
 
+  router.get('/admin/users', adminRequired, (req, res) => {
+    const rows = db.prepare(`
+      SELECT id, email, name, role, created_at
+      FROM users
+      ORDER BY
+        CASE role WHEN 'admin' THEN 0 ELSE 1 END,
+        created_at DESC
+      LIMIT 500
+    `).all();
+    res.json(rows.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      createdAt: u.created_at,
+    })));
+  });
+
   router.post('/admin/backup-db', adminRequired, async (req, res) => {
     const dbPath = process.env.DATABASE_PATH || require('path').join(__dirname, '..', 'data', 'urdfw.db');
     const result = await backupNow(dbPath);
@@ -941,18 +959,22 @@ function createRouter(db, limiters = {}) {
     const patch = req.body || {};
     const fields = [];
     const vals = [];
-    const allowed = ['name', 'area', 'description', 'phone', 'website', 'times', 'status', 'featured'];
+    const allowed = ['name', 'area', 'description', 'phone', 'website', 'times', 'status', 'featured', 'sticky', 'level'];
     for (const k of allowed) {
       if (patch[k] !== undefined) {
-        const col = k === 'description' ? 'description' : k === 'featured' ? 'featured' : k;
         if (k === 'description') {
           fields.push('description = ?', 'full_description = ?');
           vals.push(patch[k], patch[k]);
-        } else if (k === 'featured') {
-          fields.push('featured = ?');
+        } else if (k === 'featured' || k === 'sticky') {
+          fields.push(`${k} = ?`);
           vals.push(patch[k] ? 1 : 0);
+        } else if (k === 'level') {
+          const level = String(patch[k] || 'standard').toLowerCase();
+          if (!['standard', 'premium', 'vip'].includes(level)) continue;
+          fields.push('level = ?');
+          vals.push(level);
         } else {
-          fields.push(`${col} = ?`);
+          fields.push(`${k} = ?`);
           vals.push(patch[k]);
         }
       }

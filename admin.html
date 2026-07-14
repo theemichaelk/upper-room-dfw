@@ -5,9 +5,20 @@
   <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
 
   <meta charset="UTF-8">
+  <link rel="icon" href="images/logo-upper-room-dfw.png" type="image/png" sizes="any">
+  <link rel="apple-touch-icon" href="images/logo-upper-room-dfw.png">
+  <meta property="og:image" content="https://upperroomdfw.com/images/logo-upper-room-dfw.jpg">
+  <meta property="og:image:alt" content="Upper Room DFW — King Jesus">
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- urdfw-telemetry:v1 -->
 <!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+
 
 
 
@@ -28,13 +39,14 @@
   <link rel="stylesheet" href="css/portal.css">
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body class="tail-container bg-slate-50">
   <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
     <div class="max-w-screen-2xl mx-auto px-6">
       <div class="flex items-center justify-between h-16">
         <a href="index.html" class="flex items-center gap-x-2.5">
-          <div class="w-10 h-10 bg-[#0369a1] rounded-2xl flex items-center justify-center"><i class="fa-solid fa-church text-white text-2xl"></i></div>
+          <img src="images/logo-upper-room-dfw.png" alt="Upper Room DFW — King Jesus" class="urdfw-brand-logo h-11 w-11 object-contain shrink-0" width="44" height="44" loading="eager">
           <span class="font-semibold text-xl">Upper Room DFW</span>
           <span class="portal-badge portal-badge-admin">Admin</span>
         </a>
@@ -44,8 +56,14 @@
           <a href="member-dashboard.html">Member Portal</a>
           <a href="feature-checklist.html" class="text-xs px-3 py-1 border rounded-2xl">Features</a>
         </div>
-        <button id="mobile-hamburger" class="md:hidden w-10 h-10"><i class="fa-solid fa-bars"></i></button>
+        <button type="button" id="mobile-hamburger" class="md:hidden w-10 h-10" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu"><i class="fa-solid fa-bars"></i></button>
       </div>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden border-t px-6 py-4 bg-white text-sm flex flex-col gap-y-2">
+      <a href="index.html" class="py-1">Home</a>
+      <a href="directory.html" class="py-1">Directory</a>
+      <a href="member-dashboard.html" class="py-1">Member Portal</a>
+      <a href="feature-checklist.html" class="py-1">Features</a>
     </div>
   </nav>
 
@@ -83,15 +101,15 @@
           <div id="admin-login-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
             <i class="fa-solid fa-circle-exclamation mr-1"></i> Invalid email or password.
           </div>
-          <form id="admin-login-form" class="space-y-4">
+          <form id="admin-login-form" class="space-y-4" autocomplete="on">
             <div>
-              <label class="text-xs font-semibold text-slate-600 block mb-1.5">Admin Email</label>
-              <input id="admin-email" type="email" placeholder="michaelk@tsbrenterprises.com" class="portal-field" autocomplete="username" value="michaelk@tsbrenterprises.com">
+              <label class="text-xs font-semibold text-slate-600 block mb-1.5" for="admin-email">Admin Email</label>
+              <input id="admin-email" type="email" placeholder="admin@example.com" class="portal-field" autocomplete="username" required>
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-600 block mb-1.5">Admin Password</label>
+              <label class="text-xs font-semibold text-slate-600 block mb-1.5" for="admin-pass">Admin Password</label>
               <div class="relative">
-                <input id="admin-pass" type="password" placeholder="Enter admin password" class="portal-field pr-11" autocomplete="current-password">
+                <input id="admin-pass" type="password" placeholder="Enter admin password" class="portal-field pr-11" autocomplete="current-password" required>
                 <button type="button" id="admin-toggle-pass" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" aria-label="Toggle password visibility">
                   <i class="fa-solid fa-eye text-sm"></i>
                 </button>
@@ -104,11 +122,6 @@
               <i class="fa-solid fa-shield-halved"></i> Enter Admin Dashboard
             </button>
           </form>
-          <div class="portal-divider">or</div>
-          <a href="#" id="admin-demo-fill" class="portal-quick-link">
-            <i class="fa-solid fa-bolt text-amber-500"></i>
-            <span>Fill demo credentials &amp; sign in</span>
-          </a>
           <div class="mt-4 flex flex-wrap gap-3 text-xs">
             <a href="#" id="admin-forgot-pass" class="text-sky-700 font-medium">Forgot password?</a>
             <a href="member-dashboard.html" class="text-slate-500">Member login →</a>
@@ -175,6 +188,7 @@
         window.URDFWPlatform.adminLogout();
       } else {
         localStorage.removeItem('urdfw_api_token');
+        sessionStorage.removeItem('urdfw_api_token');
         document.getElementById('admin-app')?.classList.add('hidden');
         document.getElementById('login-screen')?.classList.remove('hidden');
       }
@@ -182,30 +196,53 @@
 
     function exportAdminData() {
       const P = window.URDFWPlatform;
-      if (!P?.api) return;
-      const data = P.api.exportAll();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'urdfw-admin-export-' + Date.now() + '.json';
-      a.click();
-      P.portalToast?.('Full platform data exported.');
-    }
-
-    function bootAdmin() {
-      const P = window.URDFWPlatform;
-      if (!P?.initAdminPortal) {
-        setTimeout(bootAdmin, 200);
+      if (!P?.api?.exportAll) {
+        P?.portalToast?.('Export unavailable until platform loads.');
         return;
       }
+      try {
+        const data = P.api.exportAll();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'urdfw-admin-export-' + Date.now() + '.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        P.portalToast?.('Full platform data exported.');
+      } catch (err) {
+        P.portalToast?.(err.message || 'Export failed');
+      }
+    }
+
+    let __adminBooted = false;
+    let __adminBootAttempts = 0;
+    function bootAdmin() {
+      if (__adminBooted) return;
+      const P = window.URDFWPlatform;
+      if (!P?.initAdminPortal) {
+        if (++__adminBootAttempts > 50) {
+          console.error('[URDFW] Admin portal failed to load');
+          const err = document.getElementById('admin-login-error');
+          if (err) {
+            err.classList.remove('hidden');
+            err.innerHTML = '<i class="fa-solid fa-circle-exclamation mr-1"></i> Platform scripts failed to load. Refresh the page.';
+          }
+          return;
+        }
+        setTimeout(bootAdmin, 150);
+        return;
+      }
+      __adminBooted = true;
       P.initAdminPortal({
         rootId: 'admin-platform-root',
         onLogin: () => P.renderAdminQuickStats?.(),
       });
     }
 
-    window.addEventListener('DOMContentLoaded', bootAdmin);
     document.addEventListener('urdfw:ready', bootAdmin);
+    window.addEventListener('DOMContentLoaded', bootAdmin);
   </script>
+  <!-- Full loader no-ops on admin when admin-loader is present (inject-platform compatibility) -->
+  <script src="js/platform/loader.js" defer></script>
 </body>
 </html>

@@ -314,6 +314,9 @@
       orders() {
         return call('admin.orders', async () => P.get('orders', []), '/api/admin/orders');
       },
+      users() {
+        return call('admin.users', async () => P.get('users', []), '/api/admin/users');
+      },
     },
 
     clients: {
