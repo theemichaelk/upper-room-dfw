@@ -317,6 +317,12 @@
       users() {
         return call('admin.users', async () => P.get('users', []), '/api/admin/users');
       },
+      invoices() {
+        return call('admin.invoices', async () => P.get('invoices', []), '/api/admin/invoices');
+      },
+      coupons() {
+        return call('admin.coupons', async () => P.get('coupons', []), '/api/admin/coupons');
+      },
     },
 
     clients: {

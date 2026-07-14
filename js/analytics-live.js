@@ -43,34 +43,50 @@
       </div>`;
   };
 
+  function escText(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   A.renderAdminCharts = function (el, data) {
     destroyCharts(el);
     const charts = data.charts || {};
+    /* Unique canvas IDs so Overview + Analytics tabs never collide */
+    const uid = 'ac' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const idAreas = uid + '-areas';
+    const idRegs = uid + '-regs';
+    const idLeads = uid + '-leads';
+    const idFeed = uid + '-feed';
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-4 mb-4">
         <div class="portal-panel bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
           <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-sky-400"></i> Listings by DFW Area</h3>
-          <canvas id="chart-areas" height="200"></canvas>
+          <canvas id="${idAreas}" height="200"></canvas>
         </div>
         <div class="portal-panel bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
           <h3 class="font-semibold text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-user-plus text-emerald-400"></i> Church Registrations</h3>
-          <canvas id="chart-regs" height="200"></canvas>
+          <canvas id="${idRegs}" height="200"></canvas>
         </div>
       </div>
       <div class="grid lg:grid-cols-2 gap-4">
         <div class="portal-panel">
           <h3 class="font-semibold text-sm mb-3">Lead Pipeline</h3>
-          <canvas id="chart-leads" height="180"></canvas>
+          <canvas id="${idLeads}" height="180"></canvas>
         </div>
         <div class="portal-panel">
           <h3 class="font-semibold text-sm mb-3">Recent Activity Feed</h3>
-          <div class="text-xs space-y-2 max-h-52 overflow-auto" id="activity-feed"></div>
+          <div class="text-xs space-y-2 max-h-52 overflow-auto" id="${idFeed}"></div>
         </div>
       </div>`;
 
+    const canvas = (id) => el.querySelector('#' + id);
+
     const areas = charts.listingsByArea || [];
-    if (areas.length && global.Chart) {
-      trackChart(el, new Chart(document.getElementById('chart-areas'), {
+    if (areas.length && global.Chart && canvas(idAreas)) {
+      trackChart(el, new Chart(canvas(idAreas), {
         type: 'bar',
         data: {
           labels: areas.map((a) => a.area),
@@ -87,8 +103,8 @@
     }
 
     const regs = charts.registrationsByMonth || [];
-    if (regs.length && global.Chart) {
-      trackChart(el, new Chart(document.getElementById('chart-regs'), {
+    if (regs.length && global.Chart && canvas(idRegs)) {
+      trackChart(el, new Chart(canvas(idRegs), {
         type: 'line',
         data: {
           labels: regs.map((r) => r.month),
@@ -111,8 +127,8 @@
     }
 
     const leadStatus = charts.leadsByStatus || [];
-    if (leadStatus.length && global.Chart) {
-      trackChart(el, new Chart(document.getElementById('chart-leads'), {
+    if (leadStatus.length && global.Chart && canvas(idLeads)) {
+      trackChart(el, new Chart(canvas(idLeads), {
         type: 'doughnut',
         data: {
           labels: leadStatus.map((l) => l.status),
@@ -123,20 +139,24 @@
         },
         options: { plugins: { legend: { position: 'bottom' } } },
       }));
+    } else if (canvas(idLeads) && !leadStatus.length) {
+      canvas(idLeads).parentElement.insertAdjacentHTML('beforeend', '<p class="text-xs text-slate-500 mt-2">No lead data yet.</p>');
     }
 
-    const feed = el.querySelector('#activity-feed');
+    const feed = el.querySelector('#' + idFeed);
     const items = [
-      ...(data.recent?.leads || []).map((l) => ({ type: 'lead', text: `${l.name} → ${l.church_email}`, at: l.created_at })),
-      ...(data.recent?.tickets || []).map((t) => ({ type: 'ticket', text: `${t.topic}: ${t.name}`, at: t.created_at })),
-      ...(data.recent?.orders || []).map((o) => ({ type: 'order', text: `$${o.amount} ${o.plan} — ${o.email}`, at: o.created_at })),
-    ].sort((a, b) => (b.at || '').localeCompare(a.at || '')).slice(0, 12);
+      ...(data.recent?.leads || []).map((l) => ({ type: 'lead', text: `${l.name || 'Lead'} → ${l.church_email || l.churchEmail || ''}`, at: l.created_at || l.createdAt })),
+      ...(data.recent?.tickets || []).map((t) => ({ type: 'ticket', text: `${t.topic || 'Support'}: ${t.name || t.email || ''}`, at: t.created_at || t.createdAt })),
+      ...(data.recent?.orders || []).map((o) => ({ type: 'order', text: `$${o.amount} ${o.plan || ''} — ${o.email || ''}`, at: o.created_at || o.createdAt })),
+    ].sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, 12);
 
-    feed.innerHTML = items.length
-      ? items.map((i) => `<div class="flex justify-between gap-2 py-1.5 border-b border-slate-100">
-          <span><span class="text-sky-600 font-medium">${i.type}</span> ${i.text}</span>
-          <span class="text-slate-400 shrink-0">${new Date(i.at).toLocaleDateString()}</span></div>`).join('')
-      : '<span class="text-slate-500">No activity yet — forms and registrations will appear here.</span>';
+    if (feed) {
+      feed.innerHTML = items.length
+        ? items.map((i) => `<div class="flex justify-between gap-2 py-1.5 border-b border-slate-100">
+            <span><span class="text-sky-600 font-medium">${escText(i.type)}</span> ${escText(i.text)}</span>
+            <span class="text-slate-400 shrink-0">${i.at ? new Date(i.at).toLocaleDateString() : ''}</span></div>`).join('')
+        : '<span class="text-slate-500">No activity yet — forms and registrations will appear here.</span>';
+    }
   };
 
   A.renderMemberCharts = function (el, data) {

@@ -5,6 +5,14 @@
   const P = global.URDFWPlatform;
   if (!P) return;
 
+  function escDns(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   async function dnsFetch(path, opts) {
     const token = localStorage.getItem('urdfw_api_token');
     const res = await fetch('/api' + path, {
@@ -77,8 +85,8 @@
               </div>
               <div class="space-y-2 max-h-72 overflow-auto" id="dns-site-list">
                 ${sites.length ? sites.map((s) => `
-                  <button type="button" data-site-id="${s.id}" class="dns-site-pick w-full text-left border rounded-xl p-3 text-sm hover:border-sky-400 ${s.id === selectedId ? 'border-sky-500 bg-sky-50' : ''}">
-                    <div class="font-medium">${s.domain}</div>
+                  <button type="button" data-site-id="${escDns(s.id)}" class="dns-site-pick w-full text-left border rounded-xl p-3 text-sm hover:border-sky-400 ${s.id === selectedId ? 'border-sky-500 bg-sky-50' : ''}">
+                    <div class="font-medium">${escDns(s.domain)}</div>
                     <div class="flex gap-2 mt-1">${siteTypeBadge(s.type)}<span class="text-[10px] text-slate-400">${s.recordCount || 0} records</span></div>
                   </button>`).join('') : '<p class="text-xs text-slate-400">No sites yet. Add a domain to get started.</p>'}
               </div>
@@ -88,10 +96,10 @@
               ${selectedId ? `
               <div class="bg-white border rounded-2xl p-4">
                 <div class="flex flex-wrap justify-between gap-2 mb-3">
-                  <h4 class="font-semibold text-sm">Records — ${sites.find((s) => s.id === selectedId)?.domain || ''}</h4>
+                  <h4 class="font-semibold text-sm">Records — ${escDns(sites.find((s) => s.id === selectedId)?.domain || '')}</h4>
                   ${isAdmin ? '<button type="button" id="dns-sync-route53" class="text-xs px-2 py-1 border rounded-lg">Sync from Route53</button>' : ''}
                 </div>
-                ${nameservers.length ? `<p class="text-[11px] text-slate-500 mb-3">Nameservers: ${nameservers.map((n) => `<code class="bg-slate-100 px-1 rounded">${n}</code>`).join(' ')}</p>` : ''}
+                ${nameservers.length ? `<p class="text-[11px] text-slate-500 mb-3">Nameservers: ${nameservers.map((n) => `<code class="bg-slate-100 px-1 rounded">${escDns(n)}</code>`).join(' ')}</p>` : ''}
                 <div class="overflow-x-auto">
                   <table class="w-full text-xs">
                     <thead><tr class="text-left text-slate-500 border-b"><th class="py-2">Name</th><th>Type</th><th>Value</th><th>TTL</th><th>Status</th><th></th></tr></thead>

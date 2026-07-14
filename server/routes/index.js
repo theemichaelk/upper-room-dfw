@@ -353,7 +353,77 @@ function createRouter(db, limiters = {}) {
   });
 
   router.get('/admin/orders', adminRequired, (req, res) => {
-    res.json(db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all());
+    const rows = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all();
+    res.json(rows.map((o) => ({
+      id: o.id,
+      clientId: o.client_id,
+      email: o.email,
+      gateway: o.gateway,
+      amount: o.amount,
+      plan: o.plan,
+      status: o.status,
+      ref: o.ref,
+      coupon: o.coupon,
+      createdAt: o.created_at,
+    })));
+  });
+
+  router.get('/admin/invoices', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM invoices ORDER BY date DESC LIMIT 100').all();
+    res.json(rows.map((i) => ({
+      id: i.id,
+      orderId: i.order_id,
+      clientId: i.client_id,
+      amount: i.amount,
+      plan: i.plan,
+      gateway: i.gateway,
+      status: i.status,
+      date: i.date,
+    })));
+  });
+
+  router.get('/admin/coupons', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM coupons ORDER BY code').all();
+    res.json(rows.map((c) => ({
+      code: c.code,
+      discount: c.discount,
+      type: c.type,
+      limit: c.limit_count,
+      used: c.used,
+      expires: c.expires,
+    })));
+  });
+
+  router.post('/admin/coupons', adminRequired, (req, res) => {
+    const code = String(req.body?.code || '').trim().toUpperCase();
+    const discount = Number(req.body?.discount || 0);
+    const type = (req.body?.type || 'percent') === 'fixed' ? 'fixed' : 'percent';
+    const limit = parseInt(req.body?.limit || '100', 10) || 100;
+    const expires = req.body?.expires || '2027-12-31';
+    if (!code || discount <= 0) {
+      return res.status(400).json({ ok: false, error: 'code and positive discount required' });
+    }
+    try {
+      db.prepare(`
+        INSERT INTO coupons (code, discount, type, limit_count, used, expires)
+        VALUES (?, ?, ?, ?, 0, ?)
+        ON CONFLICT(code) DO UPDATE SET discount = excluded.discount, type = excluded.type, limit_count = excluded.limit_count, expires = excluded.expires
+      `).run(code, discount, type, limit, expires);
+      const row = db.prepare('SELECT * FROM coupons WHERE code = ?').get(code);
+      res.json({
+        ok: true,
+        coupon: {
+          code: row.code,
+          discount: row.discount,
+          type: row.type,
+          limit: row.limit_count,
+          used: row.used,
+          expires: row.expires,
+        },
+      });
+    } catch (e) {
+      res.status(400).json({ ok: false, error: e.message });
+    }
   });
 
   router.get('/admin/users', adminRequired, (req, res) => {
@@ -926,6 +996,21 @@ function createRouter(db, limiters = {}) {
   router.get('/admin/reviews', adminRequired, (req, res) => {
     const rows = db.prepare('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 200').all();
     res.json(rows.map(reviewToApi));
+  });
+
+  router.patch('/admin/reviews/:id', adminRequired, (req, res) => {
+    const row = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Review not found' });
+    const status = String(req.body?.status || '').toLowerCase();
+    if (!['published', 'hidden', 'pending', 'removed'].includes(status)) {
+      return res.status(400).json({ ok: false, error: 'status must be published, hidden, pending, or removed' });
+    }
+    if (status === 'removed') {
+      db.prepare('DELETE FROM reviews WHERE id = ?').run(req.params.id);
+      return res.json({ ok: true, deleted: true });
+    }
+    db.prepare('UPDATE reviews SET status = ? WHERE id = ?').run(status, req.params.id);
+    res.json({ ok: true, review: reviewToApi(db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id)) });
   });
 
   router.post('/reviews', authRequired, (req, res) => {

@@ -511,10 +511,13 @@
   P.renderAdminOverview = async function (el) {
     el.innerHTML = '<div class="text-sm text-slate-500 py-8 text-center"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading live command center…</div>';
     const A = global.URDFWAnalytics;
+    const token = localStorage.getItem('urdfw_api_token');
+    const remote = P.apiConfig?.mode === 'remote' && token;
+
     try {
-      if (P.apiConfig?.mode === 'remote' && A?.fetchAdmin) {
+      if (remote && A?.fetchAdmin) {
         const data = await A.fetchAdmin();
-        A.renderKpiGrid(el, data.kpis);
+        A.renderKpiGrid(el, data.kpis || {});
         const chartsHost = document.createElement('div');
         el.appendChild(chartsHost);
         A.renderAdminCharts(chartsHost, data);
@@ -522,30 +525,58 @@
         actions.className = 'flex flex-wrap gap-2 mt-4';
         actions.innerHTML = `
           <button type="button" id="admin-backup-now" class="px-4 py-2 text-xs bg-slate-900 text-white rounded-xl">Backup DB to S3</button>
-          <button type="button" id="admin-refresh-stats" class="px-4 py-2 text-xs border rounded-xl">Refresh Live Data</button>`;
+          <button type="button" id="admin-refresh-stats" class="px-4 py-2 text-xs border rounded-xl">Refresh Live Data</button>
+          <button type="button" data-jump="listings" class="px-4 py-2 text-xs border rounded-xl">Listings</button>
+          <button type="button" data-jump="billing" class="px-4 py-2 text-xs border rounded-xl">Billing</button>
+          <button type="button" data-jump="support" class="px-4 py-2 text-xs border rounded-xl">Support</button>`;
         el.appendChild(actions);
         actions.querySelector('#admin-backup-now')?.addEventListener('click', async () => {
-          const token = localStorage.getItem('urdfw_api_token');
-          const r = await fetch('/api/admin/backup-db', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
-          const j = await r.json();
-          P.portalToast?.(j.ok ? 'DB backed up (' + j.bytes + ' bytes)' : (j.error || 'Backup failed'));
+          try {
+            const r = await fetch('/api/admin/backup-db', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+            const j = await r.json();
+            P.portalToast?.(j.ok ? 'DB backed up (' + (j.bytes || 0) + ' bytes)' : (j.error || 'Backup failed'));
+          } catch (e) {
+            P.portalToast?.(e.message || 'Backup failed');
+          }
         });
-        actions.querySelector('#admin-refresh-stats')?.onclick = () => P.renderAdminOverview(el);
+        actions.querySelector('#admin-refresh-stats')?.addEventListener('click', () => P.renderAdminOverview(el));
+        actions.querySelectorAll('[data-jump]').forEach((b) => {
+          b.onclick = () => {
+            document.querySelector(`.portal-nav-item[data-admin-tab="${b.dataset.jump}"]`)?.click();
+            P.showAdminTab(b.dataset.jump);
+          };
+        });
         return;
       }
-    } catch { /* fallback */ }
-    const clients = P.get('clients', []);
-    const users = P.get('users', []);
-    const orders = P.get('orders', []);
-    const claims = P.get('claims', []);
+    } catch (err) {
+      console.warn('[URDFW] Overview analytics failed', err);
+    }
+
+    /* Stats fallback (remote without charts, or local) */
+    let stats = null;
+    if (remote) {
+      try { stats = await P.api.admin.stats(); } catch { /* ignore */ }
+    }
+    const clients = stats ? stats.clients : P.get('clients', []).length;
+    const orders = stats ? stats.orders : P.get('orders', []).length;
+    const tickets = stats ? stats.tickets : P.get('support_tickets', []).filter((t) => t.status === 'open').length;
+    const listings = stats ? stats.listings : P.get('custom_listings', []).length;
+    const pending = stats ? stats.pending : P.get('clients', []).filter((c) => c.status === 'pending').length;
+    const revenue = stats ? stats.revenue : 0;
     el.innerHTML = `
-      <div class="portal-panel mb-4 text-amber-700 bg-amber-50 text-xs">Local mode — connect API for live analytics.</div>
-      <div class="grid md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Registered Clients</div><div class="text-2xl font-bold">${clients.length}</div></div>
-        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Platform Users</div><div class="text-2xl font-bold">${users.length}</div></div>
-        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Orders</div><div class="text-2xl font-bold">${orders.length}</div></div>
-        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Pending Claims</div><div class="text-2xl font-bold">${claims.filter((c) => c.status === 'pending').length}</div></div>
-      </div>`;
+      <div class="portal-panel mb-4 text-xs ${remote ? 'bg-sky-50 text-sky-800' : 'bg-amber-50 text-amber-800'}">
+        ${remote ? 'Live stats from API (charts unavailable).' : 'Local mode — connect API for full analytics.'}
+      </div>
+      <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Clients</div><div class="text-2xl font-bold">${clients}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Listings</div><div class="text-2xl font-bold">${listings}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Orders</div><div class="text-2xl font-bold">${orders}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Revenue</div><div class="text-2xl font-bold">$${revenue}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Pending</div><div class="text-2xl font-bold">${pending}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Open Tickets</div><div class="text-2xl font-bold">${tickets}</div></div>
+      </div>
+      <button type="button" id="admin-refresh-stats" class="px-4 py-2 text-xs border rounded-xl">Refresh</button>`;
+    el.querySelector('#admin-refresh-stats')?.addEventListener('click', () => P.renderAdminOverview(el));
   };
 
   P.renderAdminListings = async function (el) {
@@ -571,29 +602,52 @@
     const meta = P.get('listing_meta', {});
     const esc = P.esc;
 
+    const renderRows = (list) => list.slice(0, 150).map((l) => {
+      const m = meta[l.id] || {};
+      const featured = l.featured || m.featured;
+      const sticky = l.sticky || m.sticky;
+      const vip = l.level === 'vip' || m.vip || m.level === 'vip';
+      const slug = l.slug ? `churches/${l.slug}.html` : '';
+      return `<div class="flex flex-wrap items-center justify-between gap-2 border-b py-2 admin-listing-row" data-name="${esc((l.name || '').toLowerCase())}" data-area="${esc((l.area || '').toLowerCase())}">
+        <div>
+          <strong>${slug ? `<a href="${esc(slug)}" class="hover:underline text-sky-800" target="_blank" rel="noopener">${esc(l.name)}</a>` : esc(l.name)}</strong>
+          <span class="text-xs text-slate-500"> ${esc(l.area || '')} • ${esc(l.status || 'live')}</span>
+          ${featured ? '<span class="badge-featured ml-1">Featured</span>' : ''}
+          ${sticky ? '<span class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded ml-1">Sticky</span>' : ''}
+          ${vip ? '<span class="badge-vip ml-1">VIP</span>' : ''}
+        </div>
+        <div class="flex flex-wrap gap-1 text-xs">
+          <button type="button" data-feat="${esc(l.id)}" data-on="${featured ? '1' : '0'}" class="admin-feat px-2 py-0.5 border rounded">${featured ? 'Unfeature' : 'Feature'}</button>
+          <button type="button" data-sticky="${esc(l.id)}" class="admin-sticky px-2 py-0.5 border rounded">Sticky</button>
+          <button type="button" data-vip="${esc(l.id)}" class="admin-vip px-2 py-0.5 border rounded">VIP</button>
+          ${(l.status === 'pending' || l.status === 'registered') ? `<button type="button" data-approve="${esc(l.id)}" class="text-emerald-600 px-2">Go Live</button>` : ''}
+        </div></div>`;
+    }).join('') || '<p class="text-slate-500">No listings.</p>';
+
     el.innerHTML = `
-      <div class="flex flex-wrap gap-2 mb-4">
-        <button type="button" id="admin-export-all-csv" class="px-3 py-1.5 text-xs border rounded-2xl">Export All CSV</button>
+      <div class="flex flex-wrap gap-2 mb-4 items-center">
+        <input id="admin-listing-search" type="search" placeholder="Search name or area…" class="border rounded-xl px-3 py-1.5 text-xs min-w-[200px]">
+        <button type="button" id="admin-export-all-csv" class="px-3 py-1.5 text-xs border rounded-2xl">Export CSV</button>
         <button type="button" id="admin-seed-demo" class="px-3 py-1.5 text-xs border rounded-2xl">Seed Demo Meta</button>
-        <span class="text-xs text-slate-500 self-center">${all.length} listings</span>
+        <span class="text-xs text-slate-500" id="admin-listing-count">${all.length} listings</span>
       </div>
-      <div class="bg-white border rounded-3xl p-4 max-h-[480px] overflow-auto text-sm space-y-2" id="admin-all-listings">
-        ${all.slice(0, 100).map((l) => {
-          const m = meta[l.id] || {};
-          const featured = l.featured || m.featured;
-          const sticky = l.sticky || m.sticky;
-          const vip = l.level === 'vip' || m.vip || m.level === 'vip';
-          return `<div class="flex flex-wrap items-center justify-between gap-2 border-b py-2">
-            <div><strong>${esc(l.name)}</strong> <span class="text-xs text-slate-500">${esc(l.area || '')} • ${esc(l.status || 'live')}</span>
-              ${featured ? '<span class="badge-featured">Featured</span>' : ''}${sticky ? '<span class="text-[10px] px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded ml-1">Sticky</span>' : ''}${vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
-            <div class="flex gap-1 text-xs">
-              <button type="button" data-feat="${esc(l.id)}" class="admin-feat px-2 py-0.5 border rounded">Feature</button>
-              <button type="button" data-sticky="${esc(l.id)}" class="admin-sticky px-2 py-0.5 border rounded">Sticky</button>
-              <button type="button" data-vip="${esc(l.id)}" class="admin-vip px-2 py-0.5 border rounded">VIP</button>
-              ${(l.status === 'pending' || l.status === 'registered') ? `<button type="button" data-approve="${esc(l.id)}" class="text-emerald-600">Go Live</button>` : ''}
-            </div></div>`;
-        }).join('') || '<p class="text-slate-500">No listings.</p>'}
+      <div class="bg-white border rounded-3xl p-4 max-h-[520px] overflow-auto text-sm space-y-2" id="admin-all-listings">
+        ${renderRows(all)}
       </div>`;
+
+    const listEl = el.querySelector('#admin-all-listings');
+    el.querySelector('#admin-listing-search')?.addEventListener('input', (e) => {
+      const q = (e.target.value || '').toLowerCase().trim();
+      const rows = listEl.querySelectorAll('.admin-listing-row');
+      let shown = 0;
+      rows.forEach((row) => {
+        const hit = !q || (row.dataset.name || '').includes(q) || (row.dataset.area || '').includes(q);
+        row.classList.toggle('hidden', !hit);
+        if (hit) shown++;
+      });
+      const count = el.querySelector('#admin-listing-count');
+      if (count) count.textContent = shown + ' of ' + all.length + ' listings';
+    });
 
     el.querySelector('#admin-export-all-csv')?.addEventListener('click', () => {
       if (P.exportCSV) P.exportCSV(all, 'urdfw-all-listings.csv');
@@ -617,9 +671,10 @@
 
     el.querySelectorAll('[data-feat]').forEach((b) => b.onclick = () => withToast(async () => {
       const id = b.dataset.feat;
-      P.markFeatured?.(id, true);
-      await P.adminPatchListing(id, { featured: true });
-    }, 'Marked featured'));
+      const on = b.dataset.on === '1';
+      P.markFeatured?.(id, !on);
+      await P.adminPatchListing(id, { featured: !on });
+    }, b.dataset.on === '1' ? 'Feature removed' : 'Marked featured'));
     el.querySelectorAll('[data-sticky]').forEach((b) => b.onclick = () => withToast(async () => {
       const id = b.dataset.sticky;
       P.upgradeListing?.(id, 'premium');
@@ -709,28 +764,59 @@
       try {
         const list = await P.api.claims.list();
         if (Array.isArray(list)) { claims = list; P.set('claims', list); }
-      } catch { /* keep local */ }
+      } catch (e) {
+        el.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">Could not load claims: ${P.esc(e.message)}</div>`;
+        return;
+      }
     }
+    const pending = claims.filter((c) => c.status === 'pending').length;
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Listing Claims (${claims.length})</h3>
+        <h3 class="font-semibold mb-1">Listing Claims (${claims.length})</h3>
+        <p class="text-xs text-slate-500 mb-3">${pending} pending approval</p>
         <div class="space-y-2 text-sm">${claims.length ? claims.map((c) => `
-          <div class="flex justify-between border rounded-2xl p-3 gap-2">
-            <div><strong>${P.esc(c.email || c.name || 'Claimant')}</strong> — Listing #${P.esc(c.listingId || c.listing_id || '—')}
-              <span class="text-xs ml-2 px-2 py-0.5 rounded ${c.status === 'pending' ? 'bg-amber-100' : 'bg-emerald-100'}">${P.esc(c.status)}</span></div>
-            ${c.status === 'pending' ? `<button type="button" data-claim="${P.esc(c.id)}" class="admin-approve-claim text-xs text-emerald-600 shrink-0">Approve</button>` : ''}
+          <div class="flex flex-wrap justify-between border rounded-2xl p-3 gap-2">
+            <div>
+              <strong>${P.esc(c.email || c.name || 'Claimant')}</strong>
+              ${c.name && c.email ? `<span class="text-slate-500"> · ${P.esc(c.name)}</span>` : ''}
+              <div class="text-xs text-slate-500 mt-0.5">Listing: ${P.esc(c.listingId || c.listing_id || '—')}${c.proof ? ' · Proof: ' + P.esc(c.proof) : ''}</div>
+              <span class="text-xs mt-1 inline-block px-2 py-0.5 rounded ${c.status === 'pending' ? 'bg-amber-100 text-amber-800' : c.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'}">${P.esc(c.status || 'pending')}</span>
+            </div>
+            ${c.status === 'pending' ? `<div class="flex gap-2 shrink-0">
+              <button type="button" data-claim="${P.esc(c.id)}" data-action="approved" class="admin-claim-act text-xs text-emerald-700 font-medium">Approve</button>
+              <button type="button" data-claim="${P.esc(c.id)}" data-action="rejected" class="admin-claim-act text-xs text-red-600">Reject</button>
+            </div>` : ''}
           </div>`).join('') : '<p class="text-slate-500 text-sm">No claims submitted yet.</p>'}
       </div>`;
 
-    el.querySelectorAll('.admin-approve-claim').forEach((b) => b.onclick = async () => {
-      if (P.apiConfig?.mode === 'remote') await P.api.claims.approve(b.dataset.claim);
-      else {
-        const list = P.get('claims', []);
-        const c = list.find((x) => x.id === b.dataset.claim);
-        if (c) { c.status = 'approved'; P.set('claims', list); }
+    el.querySelectorAll('.admin-claim-act').forEach((b) => b.onclick = async () => {
+      const id = b.dataset.claim;
+      const status = b.dataset.action;
+      try {
+        if (P.apiConfig?.mode === 'remote') {
+          await fetch('/api/claims/' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token'),
+            },
+            body: JSON.stringify({ status }),
+          }).then(async (r) => {
+            if (!r.ok) {
+              const j = await r.json().catch(() => ({}));
+              throw new Error(j.error || 'Claim update failed');
+            }
+          });
+        } else {
+          const list = P.get('claims', []);
+          const c = list.find((x) => x.id === id);
+          if (c) { c.status = status; P.set('claims', list); }
+        }
+        P.portalToast?.(status === 'approved' ? 'Claim approved — listing linked.' : 'Claim rejected.');
+        P.renderAdminClaims(el);
+      } catch (e) {
+        P.portalToast?.(e.message || 'Claim update failed');
       }
-      P.portalToast?.('Claim approved — listing linked to client.');
-      P.renderAdminClaims(el);
     });
   };
 
@@ -738,62 +824,126 @@
     el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading billing…</p>';
     let orders = P.get('orders', []);
     let invoices = P.get('invoices', []);
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+    let coupons = P.get('coupons', []);
+    let stripe = null;
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
       try {
-        const o = await P.api.admin.orders();
+        const [o, inv, coup, st] = await Promise.all([
+          P.api.admin.orders().catch(() => null),
+          fetch('/api/admin/invoices', { headers: { Authorization: 'Bearer ' + token } }).then((r) => r.ok ? r.json() : []).catch(() => []),
+          fetch('/api/admin/coupons', { headers: { Authorization: 'Bearer ' + token } }).then((r) => r.ok ? r.json() : []).catch(() => []),
+          fetch('/api/billing/stripe-status').then((r) => r.ok ? r.json() : null).catch(() => null),
+        ]);
         if (Array.isArray(o)) { orders = o; P.set('orders', o); }
+        if (Array.isArray(inv)) { invoices = inv; P.set('invoices', inv); }
+        if (Array.isArray(coup) && coup.length) { coupons = coup; P.set('coupons', coup); }
+        stripe = st;
       } catch { /* keep */ }
     }
-    const coupons = P.get('coupons', []);
+    const revenue = orders.reduce((s, o) => s + (Number(o.amount) || 0), 0);
+    const stripeBanner = stripe
+      ? `<div class="mb-4 p-3 rounded-2xl border text-sm ${stripe.configured || stripe.enabled ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'}">
+          <strong>Stripe:</strong> ${stripe.enabled ? (stripe.mode || 'live') : 'disabled'}
+          ${stripe.configured ? ' · prices configured' : ' · set STRIPE_PRICE_* in env'}
+          ${stripe.publishableKey ? ' · publishable key set' : ''}
+        </div>`
+      : '';
     el.innerHTML = `
+      ${stripeBanner}
+      <div class="grid md:grid-cols-3 gap-3 mb-4">
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Orders</div><div class="text-2xl font-bold">${orders.length}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Order revenue</div><div class="text-2xl font-bold">$${revenue.toLocaleString()}</div></div>
+        <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Invoices</div><div class="text-2xl font-bold">${invoices.length}</div></div>
+      </div>
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Orders (${orders.length})</h3>
-          <div class="text-xs space-y-1 max-h-64 overflow-auto">${orders.map((o) => `<div class="py-1 border-b">${P.esc(o.ref || o.id || '—')} — $${o.amount ?? 0} ${P.esc(o.plan || '')} via ${P.esc(o.gateway || o.provider || '—')}</div>`).join('') || 'No orders.'}</div>
+          <div class="text-xs space-y-1 max-h-64 overflow-auto">${orders.map((o) => `<div class="py-1.5 border-b flex justify-between gap-2">
+            <span>${P.esc(o.ref || o.id || '—')} · ${P.esc(o.email || '')}</span>
+            <span class="shrink-0">$${o.amount ?? 0} ${P.esc(o.plan || '')} <span class="text-slate-400">via ${P.esc(o.gateway || '—')}</span></span>
+          </div>`).join('') || 'No orders yet.'}</div>
         </div>
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Coupons</h3>
-          <div class="text-sm space-y-2">${coupons.map((c) => `<div class="flex justify-between"><code>${c.code}</code><span>${c.type === 'percent' ? c.discount + '%' : '$' + c.discount} off • used ${c.used}/${c.limit}</span></div>`).join('')}</div>
-          <form id="admin-add-coupon" class="mt-4 flex gap-2 text-xs">
-            <input name="code" placeholder="CODE" class="border rounded px-2 py-1">
-            <input name="discount" type="number" placeholder="10" class="border rounded px-2 py-1 w-16">
-            <button type="submit" class="px-2 py-1 bg-[#0369a1] text-white rounded">Add</button>
+          <div class="text-sm space-y-2 mb-3">${coupons.length ? coupons.map((c) => `<div class="flex justify-between border-b py-1"><code>${P.esc(c.code)}</code><span class="text-xs text-slate-600">${c.type === 'percent' ? c.discount + '%' : '$' + c.discount} off · used ${c.used || 0}/${c.limit || c.limit_count || '∞'}</span></div>`).join('') : '<p class="text-xs text-slate-500">No coupons yet.</p>'}</div>
+          <form id="admin-add-coupon" class="mt-2 flex flex-wrap gap-2 text-xs">
+            <input name="code" placeholder="CODE" class="border rounded px-2 py-1.5" required>
+            <input name="discount" type="number" min="1" placeholder="10" class="border rounded px-2 py-1.5 w-16" required>
+            <select name="type" class="border rounded px-2 py-1.5"><option value="percent">%</option><option value="fixed">$</option></select>
+            <button type="submit" class="px-3 py-1.5 bg-[#0369a1] text-white rounded">Add</button>
           </form>
         </div>
       </div>
       <div class="mt-4 bg-white border rounded-3xl p-5">
         <h3 class="font-semibold mb-2">Invoices</h3>
-        <div class="text-xs">${invoices.slice(0, 15).map((i) => `<div class="py-1">${i.id} — $${i.amount}</div>`).join('') || 'No invoices.'}</div>
+        <div class="text-xs max-h-48 overflow-auto">${invoices.slice(0, 25).map((i) => `<div class="py-1 border-b flex justify-between"><span>${P.esc(i.id)}</span><span>$${i.amount ?? 0} · ${P.esc(i.status || '')} · ${P.esc(i.date || '')}</span></div>`).join('') || 'No invoices.'}</div>
       </div>`;
 
-    el.querySelector('#admin-add-coupon')?.addEventListener('submit', (e) => {
+    el.querySelector('#admin-add-coupon')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      const list = P.get('coupons', []);
-      list.push({ code: fd.get('code').toUpperCase(), discount: +fd.get('discount'), type: 'percent', limit: 100, used: 0, expires: '2027-12-31' });
-      P.set('coupons', list);
-      P.renderAdminBilling(el);
+      const payload = {
+        code: String(fd.get('code') || '').toUpperCase(),
+        discount: +fd.get('discount'),
+        type: fd.get('type') || 'percent',
+        limit: 100,
+      };
+      try {
+        if (P.apiConfig?.mode === 'remote' && token) {
+          const r = await fetch('/api/admin/coupons', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify(payload),
+          });
+          const j = await r.json();
+          if (!j.ok) throw new Error(j.error || 'Save failed');
+        } else {
+          const list = P.get('coupons', []);
+          list.push({ ...payload, used: 0, expires: '2027-12-31' });
+          P.set('coupons', list);
+        }
+        P.portalToast?.('Coupon saved: ' + payload.code);
+        P.renderAdminBilling(el);
+      } catch (err) {
+        P.portalToast?.(err.message || 'Coupon save failed');
+      }
     });
   };
 
   P.renderAdminEmail = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading email…</p>';
     const log = P.get('email_log', []);
-    const templates = P.emailTemplates;
+    const templates = P.emailTemplates || {
+      welcome: { subject: 'Welcome', body: 'Welcome to Upper Room DFW' },
+      contact_auto_reply: { subject: 'We received your message', body: 'Thanks for contacting us.' },
+    };
     let smtpBanner = '';
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+    let campaigns = [];
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
       try {
-        const r = await fetch('/api/integrations/status', {
-          headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') },
-        });
-        const j = await r.json();
-        const smtp = (j.results || []).find((x) => x.provider === 'smtp');
-        const acumba = (j.results || []).find((x) => x.provider === 'acumbamail');
-        if (smtp?.ok) {
-          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> Acumbamail SMTP relay connected (${smtp.host || 'smtp.acumbamail.com'})</div>`;
-        } else if (acumba?.smtpActivationRequired || (smtp?.error || '').includes('535')) {
-          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900"><strong>Acumbamail SMTP not active yet.</strong> API is connected but relay login fails (535). Contact <a class="underline" href="https://acumbamail.com/contact/" target="_blank" rel="noopener">Acumbamail technical support</a> to activate transactional SMTP on your account, then run a test send.</div>`;
-        } else if (smtp?.error) {
-          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800">SMTP: ${smtp.error}</div>`;
+        const [statusRes, campRes] = await Promise.all([
+          fetch('/api/integrations/status', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/admin/campaigns', { headers: { Authorization: 'Bearer ' + token } }),
+        ]);
+        if (statusRes.ok) {
+          const j = await statusRes.json();
+          const smtp = (j.results || []).find((x) => x.provider === 'smtp');
+          const acumba = (j.results || []).find((x) => x.provider === 'acumbamail');
+          if (smtp?.ok) {
+            smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> SMTP connected (${P.esc(smtp.host || smtp.message || 'relay')})</div>`;
+          } else if (acumba?.smtpActivationRequired || (smtp?.error || '').includes('535')) {
+            smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900"><strong>SMTP not fully active.</strong> Contact email provider support to enable transactional relay, then send a test.</div>`;
+          } else if (smtp?.error) {
+            smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800">SMTP: ${P.esc(smtp.error)}</div>`;
+          } else {
+            smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-slate-50 border text-sm text-slate-600">SMTP status unknown — try a connection test below.</div>`;
+          }
+        }
+        if (campRes.ok) {
+          const cj = await campRes.json();
+          campaigns = cj.campaigns || [];
         }
       } catch { /* ignore */ }
     }
@@ -801,56 +951,57 @@
       ${smtpBanner}
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
-          <h3 class="font-semibold mb-3">Email Templates</h3>
-          <p id="admin-campaigns-hint" class="text-xs text-slate-500 mb-2"></p>
-          <div class="space-y-3 text-sm">${Object.entries(templates).map(([k, t]) => `
+          <h3 class="font-semibold mb-2">Email Templates</h3>
+          <p class="text-xs text-slate-500 mb-3">${campaigns.length ? campaigns.length + ' live campaigns on event bus' : 'Template previews (server sends branded HTML)'}</p>
+          <div class="space-y-3 text-sm max-h-80 overflow-auto">${Object.entries(templates).map(([k, t]) => `
             <div class="border rounded-2xl p-3">
-              <div class="font-medium text-xs uppercase text-sky-600">${k}</div>
-              <div class="text-xs mt-1"><strong>Subject:</strong> ${t.subject}</div>
-              <div class="text-xs text-slate-500 mt-1">${t.body}</div>
+              <div class="font-medium text-xs uppercase text-sky-600">${P.esc(k)}</div>
+              <div class="text-xs mt-1"><strong>Subject:</strong> ${P.esc(t.subject)}</div>
+              <div class="text-xs text-slate-500 mt-1">${P.esc(t.body)}</div>
             </div>`).join('')}
           </div>
+          ${campaigns.length ? `<div class="mt-4 text-xs space-y-1"><h4 class="font-semibold text-sm mb-1">Campaigns</h4>${campaigns.slice(0, 12).map((c) => `<div class="py-0.5 border-b">${P.esc(c.id || c.name || c.event || JSON.stringify(c))}</div>`).join('')}</div>` : ''}
         </div>
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Send Test Email</h3>
           <form id="admin-test-email" class="space-y-2 text-sm">
-            <select name="template" class="w-full border rounded px-3 py-2"><option value="smtp_ping">smtp_ping (connection test)</option>${Object.keys(templates).map((k) => `<option value="${k}">${k}</option>`).join('')}</select>
-            <input name="email" placeholder="recipient@email.com" class="w-full border rounded px-3 py-2">
+            <select name="template" class="w-full border rounded px-3 py-2">
+              <option value="smtp_ping">smtp_ping (connection test)</option>
+              ${Object.keys(templates).map((k) => `<option value="${P.esc(k)}">${P.esc(k)}</option>`).join('')}
+            </select>
+            <input name="email" type="email" required placeholder="recipient@email.com" class="w-full border rounded px-3 py-2">
             <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-2xl text-sm">Send Test via SMTP</button>
           </form>
-          <h4 class="font-semibold text-sm mt-6 mb-2">Email Log (${log.length})</h4>
-          <div class="text-xs max-h-48 overflow-auto">${log.slice(0, 20).map((e) => `<div class="py-1 border-b">${e.template}: ${e.subject} → ${e.to}</div>`).join('') || 'Empty.'}</div>
+          <h4 class="font-semibold text-sm mt-6 mb-2">Local Email Log (${log.length})</h4>
+          <div class="text-xs max-h-48 overflow-auto">${log.slice(0, 20).map((e) => `<div class="py-1 border-b">${P.esc(e.template)}: ${P.esc(e.subject)} → ${P.esc(e.to)}</div>`).join('') || 'Empty (server sends do not appear here).'}</div>
         </div>
       </div>`;
-
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
-      fetch('/api/admin/campaigns', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } })
-        .then((r) => r.json())
-        .then((j) => {
-          const hint = el.querySelector('#admin-campaigns-hint');
-          if (hint && j.campaigns) hint.textContent = j.campaigns.length + ' live campaigns wired to event bus (welcome, leads, payments, etc.)';
-        })
-        .catch(() => {});
-    }
 
     el.querySelector('#admin-test-email').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      const email = fd.get('email');
-      if (P.apiConfig?.mode === 'remote') {
-        const token = localStorage.getItem('urdfw_api_token');
-        const r = await fetch('/api/admin/test-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-          body: JSON.stringify({ email, template: fd.get('template') }),
-        });
-        const j = await r.json();
-        P.portalToast?.(j.ok ? 'Test email sent to ' + email : (j.error || 'Send failed'));
-      } else {
-        P.sendEmail(fd.get('template'), { email, name: 'Admin Test' });
-        P.portalToast?.('Email logged (local mode).');
+      const email = String(fd.get('email') || '').trim();
+      if (!email) { P.portalToast?.('Recipient email required'); return; }
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+      try {
+        if (P.apiConfig?.mode === 'remote') {
+          const r = await fetch('/api/admin/test-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ email, template: fd.get('template') }),
+          });
+          const j = await r.json();
+          P.portalToast?.(j.ok ? 'Test email sent to ' + email : (j.error || 'Send failed'));
+        } else {
+          P.sendEmail?.(fd.get('template'), { email, name: 'Admin Test' });
+          P.portalToast?.('Email logged (local mode).');
+        }
+        P.renderAdminEmail(el);
+      } catch (err) {
+        P.portalToast?.(err.message || 'Send failed');
+        if (btn) { btn.disabled = false; btn.textContent = 'Send Test via SMTP'; }
       }
-      P.renderAdminEmail(el);
     };
   };
 
@@ -934,31 +1085,31 @@
       </div>
       <div class="grid lg:grid-cols-3 gap-4 mb-6">
         ${stats.map((s) => {
-          const cfg = P.getIntegrationConfig(s.provider);
+          const cfg = (typeof P.getIntegrationConfig === 'function' ? P.getIntegrationConfig(s.provider) : null) || {};
           const keyLabel = cfg.source === 'env'
-            ? (cfg.apiKeySet ? `API key: ${cfg.apiKey || 'configured'}` : 'API key not in .env')
-            : (cfg.apiKeySet ? 'API key set' : 'No API key');
-          return `<div class="portal-panel" data-provider-card="${s.provider}">
+            ? (cfg.apiKeySet || cfg.apiKey ? `API key: ${cfg.apiKey || 'configured'}` : 'API key not in .env')
+            : (cfg.apiKeySet || cfg.apiKey ? 'API key set' : 'No API key');
+          return `<div class="portal-panel" data-provider-card="${P.esc(s.provider)}">
             <div class="flex items-center justify-between mb-3">
               <div class="font-semibold capitalize flex items-center gap-2">
-                <i class="fa-solid fa-plug text-sky-600"></i> ${s.provider}
+                <i class="fa-solid fa-plug text-sky-600"></i> ${P.esc(s.provider)}
               </div>
               <span class="text-[10px] px-2 py-0.5 rounded-full ${cfg.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${cfg.enabled ? 'Enabled' : 'Off'}</span>
             </div>
-            <div class="text-2xl font-bold text-[#0369a1]">${s.syncedCount}</div>
-            <div class="text-xs text-slate-500 mb-3">synced contacts · list <code>${cfg.listId || '—'}</code></div>
-            <div class="text-[10px] text-slate-500 mb-2 font-mono">${keyLabel}</div>
-            <form class="admin-int-config space-y-2 text-xs mb-3" data-provider="${s.provider}">
-              <input name="listId" value="${(cfg.listId || '').replace(/"/g, '&quot;')}" placeholder="List ID" class="w-full border rounded-lg px-2 py-1.5">
-              <input name="apiKey" type="text" value="${cfg.source === 'env' ? (cfg.apiKey || 'from .env') : ''}" placeholder="API key (admin: from .env)" class="w-full border rounded-lg px-2 py-1.5 bg-slate-50" readonly>
+            <div class="text-2xl font-bold text-[#0369a1]">${s.syncedCount ?? 0}</div>
+            <div class="text-xs text-slate-500 mb-3">synced contacts · list <code>${P.esc(cfg.listId || '—')}</code></div>
+            <div class="text-[10px] text-slate-500 mb-2 font-mono">${P.esc(keyLabel)}</div>
+            <form class="admin-int-config space-y-2 text-xs mb-3" data-provider="${P.esc(s.provider)}">
+              <input name="listId" value="${P.esc(cfg.listId || '')}" placeholder="List ID" class="w-full border rounded-lg px-2 py-1.5">
+              <input name="apiKey" type="text" value="${cfg.source === 'env' ? P.esc(cfg.apiKey || 'from .env') : ''}" placeholder="API key (admin: from .env)" class="w-full border rounded-lg px-2 py-1.5 bg-slate-50" readonly>
               <label class="flex items-center gap-2"><input type="checkbox" name="enabled" ${cfg.enabled ? 'checked' : ''}> Enabled</label>
               <button type="submit" class="w-full py-1.5 border rounded-lg hover:bg-slate-50">Save list settings</button>
             </form>
             <div class="flex flex-wrap gap-1">
-              <button type="button" data-test="${s.provider}" class="admin-int-test px-2 py-1 text-[11px] border rounded-lg">Test</button>
-              <button type="button" data-sync="${s.provider}" class="admin-sync-btn px-2 py-1 text-[11px] border rounded-lg bg-[#0369a1] text-white">Sync All</button>
+              <button type="button" data-test="${P.esc(s.provider)}" class="admin-int-test px-2 py-1 text-[11px] border rounded-lg">Test</button>
+              <button type="button" data-sync="${P.esc(s.provider)}" class="admin-sync-btn px-2 py-1 text-[11px] border rounded-lg bg-[#0369a1] text-white">Sync All</button>
             </div>
-            <div class="mt-2 text-[10px] text-slate-400 admin-int-status" data-status="${s.provider}"></div>
+            <div class="mt-2 text-[10px] text-slate-400 admin-int-status" data-status="${P.esc(s.provider)}"></div>
           </div>`;
         }).join('')}
       </div>
@@ -995,12 +1146,16 @@
         e.preventDefault();
         const provider = form.dataset.provider;
         const fd = new FormData(form);
-        const res = await P.api.integrations.configure(provider, {
-          listId: fd.get('listId'),
-          enabled: fd.get('enabled') === 'on',
-        });
-        P.portalToast?.(res.ok ? `${provider} config saved via API` : 'Config save failed');
-        P.renderAdminIntegrations(el);
+        try {
+          const res = await P.api.integrations.configure(provider, {
+            listId: fd.get('listId'),
+            enabled: fd.get('enabled') === 'on',
+          });
+          P.portalToast?.(res?.ok !== false ? `${provider} config saved` : 'Config save failed');
+          P.renderAdminIntegrations(el);
+        } catch (err) {
+          P.portalToast?.(err.message || 'Config save failed');
+        }
       };
     });
 
@@ -1009,14 +1164,22 @@
         const provider = b.dataset.test;
         const statusEl = el.querySelector(`[data-status="${provider}"]`);
         if (statusEl) statusEl.textContent = 'Testing connection…';
-        const res = await P.api.integrations.test(provider);
-        if (statusEl) {
-          statusEl.textContent = res.ok
-            ? `✓ ${res.message} (${res.latencyMs}ms)`
-            : `✗ ${res.error || 'Test failed'}`;
-          statusEl.className = 'mt-2 text-[10px] ' + (res.ok ? 'text-emerald-600' : 'text-red-600') + ' admin-int-status';
+        try {
+          const res = await P.api.integrations.test(provider);
+          if (statusEl) {
+            statusEl.textContent = res?.ok
+              ? `✓ ${res.message || 'OK'} (${res.latencyMs || '?'}ms)`
+              : `✗ ${res?.error || 'Test failed'}`;
+            statusEl.className = 'mt-2 text-[10px] ' + (res?.ok ? 'text-emerald-600' : 'text-red-600') + ' admin-int-status';
+          }
+          P.portalToast?.(res?.ok ? provider + ' OK' : (res?.error || 'Test failed'));
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = '✗ ' + (err.message || 'Test failed');
+            statusEl.className = 'mt-2 text-[10px] text-red-600 admin-int-status';
+          }
+          P.portalToast?.(err.message || 'Test failed');
         }
-        P.renderAdminIntegrations(el);
       };
     });
 
@@ -1025,24 +1188,33 @@
         const provider = b.dataset.sync;
         const statusEl = el.querySelector(`[data-status="${provider}"]`);
         if (statusEl) statusEl.textContent = 'Syncing via API…';
-        const res = await P.api.integrations.syncAll(provider);
-        if (statusEl) {
-          statusEl.textContent = res.ok
-            ? `Synced ${res.synced} subscriber(s) to ${provider}`
-            : `✗ ${res.error || 'Sync failed'}`;
+        try {
+          const res = await P.api.integrations.syncAll(provider);
+          if (statusEl) {
+            statusEl.textContent = res?.ok
+              ? `Synced ${res.synced || 0} subscriber(s) to ${provider}`
+              : `✗ ${res?.error || 'Sync failed'}`;
+          }
+          P.portalToast?.(res?.ok ? `Synced ${res.synced || 0} contacts to ${provider}` : (res?.error || 'Sync failed'));
+          if (res?.ok) P.renderAdminIntegrations(el);
+        } catch (err) {
+          if (statusEl) statusEl.textContent = '✗ ' + (err.message || 'Sync failed');
+          P.portalToast?.(err.message || 'Sync failed');
         }
-        P.portalToast?.(res.ok ? `Synced ${res.synced} contacts to ${provider}` : (res.error || 'Sync failed'));
-        P.renderAdminIntegrations(el);
       };
     });
 
     el.querySelector('#admin-int-subscribe')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = new FormData(e.target).get('email');
-      const res = await P.api.integrations.subscribe(email);
-      P.portalToast?.(res.ok ? `Subscribed ${email} across ${res.synced} integration(s)` : 'Subscribe failed');
-      e.target.reset();
-      P.renderAdminIntegrations(el);
+      try {
+        const res = await P.api.integrations.subscribe(email);
+        P.portalToast?.(res?.ok ? `Subscribed ${email}` : (res?.error || 'Subscribe failed'));
+        e.target.reset();
+        if (res?.ok) P.renderAdminIntegrations(el);
+      } catch (err) {
+        P.portalToast?.(err.message || 'Subscribe failed');
+      }
     });
 
     if (P.apiConfig?.mode === 'remote') {
@@ -1073,64 +1245,113 @@
   P.renderAdminReviews = async function (el) {
     el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading reviews…</p>';
     let flat = [];
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
       try {
         flat = await P.api.reviews.listAll();
-      } catch { /* fallback */ }
+        if (!Array.isArray(flat)) flat = [];
+      } catch (e) {
+        el.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">Could not load reviews: ${P.esc(e.message)}</div>`;
+        return;
+      }
     }
     if (!flat.length) {
       const reviews = P.get('reviews', {});
-      flat = Object.entries(reviews).flatMap(([lid, revs]) => revs.map((r) => ({ ...r, listingId: lid })));
+      flat = Object.entries(reviews).flatMap(([lid, revs]) => (revs || []).map((r) => ({ ...r, listingId: lid })));
     }
-    const byListing = {};
-    flat.forEach((r) => {
-      const lid = r.listingId || r.listing_id || 'unknown';
-      if (!byListing[lid]) byListing[lid] = [];
-      byListing[lid].push(r);
-    });
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Reviews by Listing (${flat.length})</h3>
-        <div class="space-y-4 text-sm max-h-[400px] overflow-auto">${Object.keys(byListing).length ? Object.entries(byListing).map(([lid, revs]) => `
-          <div><div class="font-medium text-xs text-slate-500">Listing #${lid}</div>
-          ${revs.map((r) => `<div class="border rounded p-2 mt-1 text-xs">${P.renderStars?.(r.stars) || r.stars + '★'} ${r.author}: ${r.text}</div>`).join('')}
+        <h3 class="font-semibold mb-1">Reviews (${flat.length})</h3>
+        <p class="text-xs text-slate-500 mb-3">Hide or remove moderated content</p>
+        <div class="space-y-2 text-sm max-h-[480px] overflow-auto">${flat.length ? flat.map((r) => `
+          <div class="border rounded-2xl p-3 flex flex-wrap justify-between gap-2">
+            <div>
+              <div class="text-xs text-slate-500">Listing ${P.esc(r.listingId || r.listing_id || '—')} · ${P.esc(r.status || 'published')}</div>
+              <div class="mt-1">${P.renderStars?.(r.stars) || (r.stars || 0) + '★'} <strong>${P.esc(r.author || 'Anonymous')}</strong></div>
+              <div class="text-xs text-slate-600 mt-1">${P.esc(r.text || '')}</div>
+            </div>
+            ${r.id ? `<div class="flex gap-2 text-xs shrink-0">
+              <button type="button" data-rid="${P.esc(r.id)}" data-status="hidden" class="admin-rev-act text-amber-700">Hide</button>
+              <button type="button" data-rid="${P.esc(r.id)}" data-status="published" class="admin-rev-act text-emerald-700">Publish</button>
+              <button type="button" data-rid="${P.esc(r.id)}" data-status="removed" class="admin-rev-act text-red-600">Remove</button>
+            </div>` : ''}
           </div>`).join('') : '<p class="text-slate-500">No reviews yet.</p>'}
       </div>`;
+
+    el.querySelectorAll('.admin-rev-act').forEach((b) => b.onclick = async () => {
+      try {
+        const r = await fetch('/api/admin/reviews/' + encodeURIComponent(b.dataset.rid), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ status: b.dataset.status }),
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j.ok === false) throw new Error(j.error || 'Update failed');
+        P.portalToast?.(b.dataset.status === 'removed' ? 'Review removed' : 'Review ' + b.dataset.status);
+        P.renderAdminReviews(el);
+      } catch (e) {
+        P.portalToast?.(e.message || 'Review update failed');
+      }
+    });
   };
 
   P.renderAdminSupport = async function (el) {
     el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading support tickets…</p>';
     let tickets = P.get('support_tickets', []);
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
       try {
-        const res = await fetch('/api/support', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } });
+        const res = await fetch('/api/support', { headers: { Authorization: 'Bearer ' + token } });
         if (res.ok) { tickets = await res.json(); P.set('support_tickets', tickets); }
-      } catch { /* keep */ }
+        else throw new Error('Support API ' + res.status);
+      } catch (e) {
+        el.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">Could not load tickets: ${P.esc(e.message)}</div>`;
+        return;
+      }
     }
+    if (!Array.isArray(tickets)) tickets = [];
+    const open = tickets.filter((t) => t.status === 'open' || !t.status).length;
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Support Tickets (${tickets.length})</h3>
-        <div class="space-y-2 text-sm">${tickets.map((t) => `
-          <div class="border rounded-2xl p-3 flex justify-between">
-            <div><strong>${t.name || t.email}</strong> — ${t.topic || 'General'}<div class="text-xs text-slate-500 mt-1">${t.message}</div></div>
-            <button type="button" data-ticket="${t.id}" class="admin-close-ticket text-xs text-emerald-600">${t.status === 'open' ? 'Close' : t.status}</button>
-          </div>`).join('') || '<p class="text-slate-500">No tickets.</p>'}
+        <h3 class="font-semibold mb-1">Support Tickets (${tickets.length})</h3>
+        <p class="text-xs text-slate-500 mb-3">${open} open</p>
+        <div class="space-y-2 text-sm">${tickets.length ? tickets.map((t) => `
+          <div class="border rounded-2xl p-3 flex flex-wrap justify-between gap-2">
+            <div>
+              <strong>${P.esc(t.name || t.email || 'Visitor')}</strong>
+              <span class="text-slate-500"> — ${P.esc(t.topic || 'General')}</span>
+              <span class="text-[10px] ml-2 px-2 py-0.5 rounded ${t.status === 'closed' ? 'bg-slate-100' : 'bg-emerald-100 text-emerald-800'}">${P.esc(t.status || 'open')}</span>
+              <div class="text-xs text-slate-500 mt-1">${P.esc(t.message || '')}</div>
+              ${t.email ? `<div class="text-[11px] text-slate-400 mt-1">${P.esc(t.email)}</div>` : ''}
+            </div>
+            ${t.status !== 'closed' ? `<button type="button" data-ticket="${P.esc(t.id)}" class="admin-close-ticket text-xs text-emerald-700 shrink-0 font-medium">Close</button>` : ''}
+          </div>`).join('') : '<p class="text-slate-500">No tickets.</p>'}
       </div>`;
 
     el.querySelectorAll('.admin-close-ticket').forEach((b) => b.onclick = async () => {
       const id = b.dataset.ticket;
-      if (P.apiConfig?.mode === 'remote') {
-        await fetch('/api/support/' + id, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') },
-          body: JSON.stringify({ status: 'closed' }),
-        });
-      } else {
-        const list = P.get('support_tickets', []);
-        const t = list.find((x) => x.id === id);
-        if (t) { t.status = 'closed'; P.set('support_tickets', list); }
+      try {
+        if (P.apiConfig?.mode === 'remote') {
+          const r = await fetch('/api/support/' + encodeURIComponent(id), {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ status: 'closed' }),
+          });
+          if (!r.ok) {
+            const j = await r.json().catch(() => ({}));
+            throw new Error(j.error || 'Close failed');
+          }
+        } else {
+          const list = P.get('support_tickets', []);
+          const t = list.find((x) => x.id === id);
+          if (t) { t.status = 'closed'; P.set('support_tickets', list); }
+        }
+        P.portalToast?.('Ticket closed');
+        P.renderAdminSupport(el);
+        P.renderAdminQuickStats?.();
+      } catch (e) {
+        P.portalToast?.(e.message || 'Could not close ticket');
       }
-      P.renderAdminSupport(el);
     });
   };
 
@@ -1165,35 +1386,44 @@
     el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading API panel…</p>';
     const st = P.api?.getStatus?.() || { mode: 'local', connected: true, endpoints: {}, recentCalls: [] };
     const onProd = typeof window !== 'undefined' && /upperroomdfw\.com|amplifyapp\.com|cloudfront\.net/i.test(window.location.hostname || '');
-    let hooks = P.get('webhooks', []);
-    let hookLog = P.get('webhook_log', []);
+    let hooks = P.get('webhooks', []) || [];
+    let hookLog = P.get('webhook_log', []) || [];
     let eventLog = [];
     let platform = null;
-    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+    let health = null;
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
       try {
-        const [hookList, wlog, elog, plat] = await Promise.all([
-          P.api.webhooks.list(),
-          P.api.webhooks.log(),
-          P.api.webhooks.eventsLog(),
-          fetch('/api/platform/integrations', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } }).then((r) => r.ok ? r.json() : null),
+        const [hookList, wlog, elog, plat, hlth] = await Promise.all([
+          P.api.webhooks.list().catch(() => []),
+          P.api.webhooks.log().catch(() => []),
+          P.api.webhooks.eventsLog().catch(() => []),
+          fetch('/api/platform/integrations', { headers: { Authorization: 'Bearer ' + token } }).then((r) => r.ok ? r.json() : null),
+          fetch('/api/health').then((r) => r.ok ? r.json() : null).catch(() => null),
         ]);
-        hooks = hookList;
-        hookLog = wlog;
-        eventLog = elog;
+        hooks = Array.isArray(hookList) ? hookList : (hookList?.webhooks || []);
+        hookLog = Array.isArray(wlog) ? wlog : (wlog?.entries || []);
+        eventLog = Array.isArray(elog) ? elog : (elog?.entries || []);
         platform = plat;
+        health = hlth;
         P.set('webhooks', hooks);
-      } catch { /* keep local */ }
+      } catch (e) {
+        console.warn('[URDFW] API panel load', e);
+      }
     }
     const platformRows = platform?.platform ? Object.entries(platform.platform).map(([k, v]) => {
-      const on = v && (v.enabled === true || v.enabled === undefined && v.host);
-      return `<div class="flex justify-between py-1 border-b text-xs"><span class="capitalize">${k}</span><span class="${on ? 'text-emerald-600' : 'text-slate-400'}">${on ? 'env ✓' : 'off'}</span></div>`;
+      const on = v && (v.enabled === true || (v.enabled === undefined && v.host));
+      return `<div class="flex justify-between py-1 border-b text-xs"><span class="capitalize">${P.esc(k)}</span><span class="${on ? 'text-emerald-600' : 'text-slate-400'}">${on ? 'env ✓' : 'off'}</span></div>`;
     }).join('') : '';
+    const envReady = health?.envReady ? Object.entries(health.envReady).map(([k, v]) =>
+      `<span class="inline-flex items-center gap-1 mr-2 text-[10px] px-2 py-0.5 rounded-full ${v ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-500'}">${P.esc(k)}: ${v === true ? 'on' : v === false ? 'off' : P.esc(String(v))}</span>`
+    ).join('') : '';
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="portal-panel">
           <h3 class="font-semibold mb-3">API Connection</h3>
           <p class="text-xs text-slate-500 mb-4">${onProd ? 'Production is locked to remote API — credentials load from server .env.' : 'Local mode uses browser storage. Switch to remote when your backend is ready.'}</p>
-          ${onProd ? `<div class="text-sm mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800"><i class="fa-solid fa-link mr-1"></i> Connected: <strong>${st.mode}</strong> → ${st.endpoints?.base || location.origin}</div>` : `
+          ${onProd || st.mode === 'remote' ? `<div class="text-sm mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800"><i class="fa-solid fa-link mr-1"></i> Mode: <strong>${P.esc(st.mode)}</strong> → ${P.esc(st.endpoints?.base || location.origin)}${health?.ok ? ' · health OK' : ''}</div>` : `
           <form id="admin-api-config" class="space-y-3 text-sm">
             <div>
               <label class="text-xs font-medium">Mode</label>
@@ -1204,31 +1434,38 @@
             </div>
             <div>
               <label class="text-xs font-medium">Base URL</label>
-              <input name="base" value="${st.endpoints?.base || ''}" placeholder="https://api.yourdomain.com" class="w-full border rounded-xl px-3 py-2 text-sm">
+              <input name="base" value="${P.esc(st.endpoints?.base || '')}" placeholder="https://api.yourdomain.com" class="w-full border rounded-xl px-3 py-2 text-sm">
             </div>
             <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl text-sm">Save API Config</button>
           </form>`}
+          ${envReady ? `<div class="mt-3 mb-2">${envReady}</div>` : ''}
           ${platformRows ? `<div class="mt-4"><h4 class="text-xs font-semibold mb-2">Platform .env services</h4>${platformRows}</div>` : ''}
           <div class="mt-4 text-xs space-y-1">
-            <div><strong>Auth:</strong> ${st.endpoints?.auth || '/api/auth'}</div>
-            <div><strong>Billing:</strong> ${st.endpoints?.billing || '/api/billing'}</div>
-            <div><strong>Listings:</strong> ${st.endpoints?.listings || '/api/listings'}</div>
-            <div><strong>Integrations:</strong> ${st.endpoints?.integrations || '/api/integrations'}</div>
+            <div><strong>Auth:</strong> ${P.esc(st.endpoints?.auth || '/api/auth')}</div>
+            <div><strong>Billing:</strong> ${P.esc(st.endpoints?.billing || '/api/billing')}</div>
+            <div><strong>Listings:</strong> ${P.esc(st.endpoints?.listings || '/api/listings')}</div>
+            <div><strong>Integrations:</strong> ${P.esc(st.endpoints?.integrations || '/api/integrations')}</div>
           </div>
         </div>
         <div class="portal-panel">
           <h3 class="font-semibold mb-3">Webhooks</h3>
           <form id="admin-webhook-form" class="flex gap-2 text-xs mb-4">
-            <input name="url" placeholder="https://hooks.example.com/urdfw" class="flex-1 border rounded-xl px-3 py-2" required>
+            <input name="url" type="url" placeholder="https://hooks.example.com/urdfw" class="flex-1 border rounded-xl px-3 py-2" required>
             <button type="submit" class="px-3 py-2 bg-slate-800 text-white rounded-xl">Add</button>
           </form>
-          <div class="text-xs space-y-2 max-h-32 overflow-auto mb-4">${hooks.length ? hooks.map((h) => `<div class="py-1 border-b font-mono flex justify-between gap-2"><span>${h.url}</span>${h.active === false ? '<span class="text-red-500">off</span>' : ''}</div>`).join('') : '<span class="text-slate-500">No webhooks registered.</span>'}</div>
+          <div class="text-xs space-y-2 max-h-36 overflow-auto mb-4">${hooks.length ? hooks.map((h) => `<div class="py-1 border-b font-mono flex justify-between gap-2 items-center">
+            <span class="truncate">${P.esc(h.url)}</span>
+            <span class="shrink-0 flex gap-2 items-center">
+              ${h.active === false ? '<span class="text-red-500">off</span>' : '<span class="text-emerald-600">on</span>'}
+              ${h.id ? `<button type="button" data-hook-del="${P.esc(h.id)}" class="text-red-600 hover:underline">Remove</button>` : ''}
+            </span>
+          </div>`).join('') : '<span class="text-slate-500">No webhooks registered.</span>'}</div>
           <h4 class="font-semibold text-xs mb-2">Recent API Calls</h4>
-          <div class="text-[11px] space-y-1 max-h-32 overflow-auto font-mono">${(st.recentCalls || []).map((c) => `<div class="py-1 border-b">${c.name} • ${c.source} • ${c.ms}ms</div>`).join('') || 'No calls yet.'}</div>
+          <div class="text-[11px] space-y-1 max-h-32 overflow-auto font-mono">${(st.recentCalls || []).map((c) => `<div class="py-1 border-b">${P.esc(c.name)} • ${P.esc(c.source)} • ${c.ms}ms</div>`).join('') || 'No calls yet.'}</div>
           <h4 class="font-semibold text-xs mt-4 mb-2">Webhook Delivery Log</h4>
-          <div class="text-[11px] max-h-24 overflow-auto">${hookLog.slice(0, 10).map((l) => `<div class="py-0.5">${l.event || l.action} → ${l.url || l.target} <span class="text-slate-400">${l.status || ''}</span></div>`).join('') || 'Empty.'}</div>
+          <div class="text-[11px] max-h-24 overflow-auto">${hookLog.slice(0, 12).map((l) => `<div class="py-0.5">${P.esc(l.event || l.action || l.event_type || 'event')} → ${P.esc(l.url || l.target || l.webhook_url || '')} <span class="text-slate-400">${P.esc(l.status || l.http_status || '')}</span></div>`).join('') || 'Empty.'}</div>
           <h4 class="font-semibold text-xs mt-4 mb-2">Platform Events</h4>
-          <div class="text-[11px] max-h-24 overflow-auto">${eventLog.slice(0, 10).map((e) => `<div class="py-0.5">${e.type || e.event} — ${e.at || e.created_at}</div>`).join('') || 'No events yet.'}</div>
+          <div class="text-[11px] max-h-24 overflow-auto">${eventLog.slice(0, 12).map((e) => `<div class="py-0.5">${P.esc(e.type || e.event || e.name || 'event')} — ${P.esc(e.at || e.created_at || '')}</div>`).join('') || 'No events yet.'}</div>
         </div>
       </div>`;
 
@@ -1244,10 +1481,24 @@
     el.querySelector('#admin-webhook-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const url = new FormData(e.target).get('url');
-      await P.api.webhooks.register(url, ['payment.completed', 'user.registered', 'lead.created', 'support.created']);
-      P.portalToast?.('Webhook registered.');
-      e.target.reset();
-      P.renderAdminApi(el);
+      try {
+        await P.api.webhooks.register(url, ['payment.completed', 'user.registered', 'lead.created', 'support.created']);
+        P.portalToast?.('Webhook registered.');
+        e.target.reset();
+        P.renderAdminApi(el);
+      } catch (err) {
+        P.portalToast?.(err.message || 'Webhook register failed');
+      }
+    });
+
+    el.querySelectorAll('[data-hook-del]').forEach((b) => b.onclick = async () => {
+      try {
+        await P.api.webhooks.remove(b.dataset.hookDel);
+        P.portalToast?.('Webhook removed');
+        P.renderAdminApi(el);
+      } catch (err) {
+        P.portalToast?.(err.message || 'Remove failed');
+      }
     });
   };
 
