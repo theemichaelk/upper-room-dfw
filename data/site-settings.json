@@ -17,12 +17,12 @@
   "newsletterPopup": {
     "enabled": true,
     "delayMs": 5000,
-    "autoCloseMs": 5000,
-    "scrollPercent": 40,
+    "autoCloseMs": 12000,
+    "scrollPercent": 35,
     "frequencyDays": 14,
     "dismissDays": 7,
-    "title": "Stay connected with DFW faith",
-    "subtitle": "Get the weekly church digest in your inbox."
+    "title": "Join the Upper Room list",
+    "subtitle": "Welcome email, weekly DFW faith digest, news, directory updates, and occasional discounts—free, anytime unsubscribe."
   },
-  "updatedAt": "2026-07-15T05:15:00.000Z"
+  "updatedAt": "2026-07-15T20:00:00.000Z"
 }

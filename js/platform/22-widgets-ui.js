@@ -209,11 +209,17 @@
       popup.innerHTML = `
         <div class="urdfw-nl-popup__card">
           <button type="button" class="urdfw-nl-popup__close" aria-label="Close">&times;</button>
-          <h2 id="urdfw-nl-title" class="urdfw-nl-popup__title">${cfg.title || 'Stay connected'}</h2>
-          <p class="urdfw-nl-popup__subtitle">${cfg.subtitle || ''}</p>
+          <h2 id="urdfw-nl-title" class="urdfw-nl-popup__title">${cfg.title || 'Join the Upper Room list'}</h2>
+          <p class="urdfw-nl-popup__subtitle">${cfg.subtitle || 'Welcome email, weekly digest, news, updates, and occasional discounts.'}</p>
+          <ul class="urdfw-nl-popup__perks" style="list-style:none;margin:0 0 0.75rem;padding:0;font-size:0.8rem;color:#334155;text-align:left">
+            <li style="margin:0.25rem 0">✓ Welcome email when you join</li>
+            <li style="margin:0.25rem 0">✓ Weekly DFW faith &amp; church digest</li>
+            <li style="margin:0.25rem 0">✓ News, updates &amp; directory tips</li>
+            <li style="margin:0.25rem 0">✓ Occasional discounts &amp; invites</li>
+          </ul>
           <form class="urdfw-nl-popup__form urdfw-nl-popup__form--row" id="urdfw-nl-popup-form">
-            <input type="email" name="email" required placeholder="you@church.org" autocomplete="email" aria-label="Email address">
-            <button type="submit">Subscribe</button>
+            <input type="email" name="email" required placeholder="you@email.com" autocomplete="email" aria-label="Email address">
+            <button type="submit">Subscribe free</button>
           </form>
           <button type="button" class="urdfw-nl-popup__dismiss">Not now</button>
         </div>`;
