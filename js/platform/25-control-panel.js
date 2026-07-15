@@ -113,15 +113,27 @@
         </div>
       </div>
 
+      <!-- Full DNS editor: add / edit / delete NS, A, TXT, CNAME (+ more) -->
+      <div class="mt-4 bg-gradient-to-br from-sky-50 to-white border border-sky-100 rounded-3xl p-5" id="seo-dns-manager-wrap">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 class="font-semibold text-sky-950"><i class="fa-solid fa-pen-to-square text-sky-600 mr-1"></i> DNS Manager</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Edit, add, and delete <strong>nameservers (NS)</strong>, <strong>A</strong>, <strong>TXT</strong>, and <strong>CNAME</strong> records. Synced to Route53 when configured.</p>
+          </div>
+          <button type="button" id="seo-open-dns-tab" class="text-xs px-3 py-1.5 border border-sky-200 rounded-xl bg-white text-sky-800">Open full DNS tab →</button>
+        </div>
+        <div id="seo-dns-manager" class="min-h-[12rem]"></div>
+      </div>
+
       <div class="mt-4 bg-white border rounded-3xl p-5 text-sm" id="edge-dns-monitor">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <h3 class="font-semibold"><i class="fa-solid fa-shield-halved text-sky-600 mr-1"></i> Edge DNS Integrity Monitor</h3>
-            <p class="text-xs text-slate-500 mt-1">Public resolver view — nameservers, A-records, and CNAME propagation for <code>${esc(edgeDns?.domain || 'upperroomdfw.com')}</code></p>
+            <p class="text-xs text-slate-500 mt-1">Public resolver view — what the internet currently resolves for <code>${esc(edgeDns?.domain || 'upperroomdfw.com')}</code> (read-only check after you edit above)</p>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-xs px-3 py-1 rounded-full border ${propColor}">${prop.status || 'unknown'} · ${prop.score || '—'}</span>
-            <button type="button" id="cp-edge-dns-refresh" class="text-xs px-3 py-1 border rounded-xl">Refresh</button>
+            <button type="button" id="cp-edge-dns-refresh" class="text-xs px-3 py-1 border rounded-xl">Refresh probe</button>
           </div>
         </div>
         <table class="w-full text-xs">
@@ -139,7 +151,36 @@
         </div>
       </div>`;
 
-    el.querySelector('#cp-edge-dns-refresh')?.addEventListener('click', () => P.renderSeoHubPanel(el));
+    /* Embed interactive DNS manager (add / edit / delete) */
+    const dnsHost = el.querySelector('#seo-dns-manager');
+    if (dnsHost) {
+      if (typeof P.renderSeoDnsManager === 'function') {
+        P.renderSeoDnsManager(dnsHost);
+      } else if (typeof P.renderDnsPanel === 'function') {
+        P.renderDnsPanel(dnsHost, { admin: true, compact: true });
+      } else {
+        dnsHost.innerHTML = `<div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          DNS module not loaded. Hard-refresh the page, or use the <button type="button" class="underline" data-jump-dns>DNS</button> sidebar tab.
+        </div>`;
+        dnsHost.querySelector('[data-jump-dns]')?.addEventListener('click', () => P.showAdminTab?.('dns'));
+      }
+    }
+
+    el.querySelector('#seo-open-dns-tab')?.addEventListener('click', () => P.showAdminTab?.('dns'));
+
+    el.querySelector('#cp-edge-dns-refresh')?.addEventListener('click', async () => {
+      const mon = el.querySelector('#edge-dns-monitor');
+      if (!mon) return;
+      mon.querySelector('tbody')?.insertAdjacentHTML('beforeend', '<tr id="edge-probe-busy"><td colspan="3" class="py-2 text-slate-500">Probing…</td></tr>');
+      try {
+        const dnsRes = await fetch('/api/platform/edge-dns', { headers: { Authorization: 'Bearer ' + token } });
+        if (dnsRes.ok) {
+          /* Re-render full hub so monitor + manager stay in sync */
+          return P.renderSeoHubPanel(el);
+        }
+      } catch { /* ignore */ }
+      mon.querySelector('#edge-probe-busy')?.remove();
+    });
 
     el.querySelector('#cp-duplicates-btn')?.addEventListener('click', async () => {
       const status = el.querySelector('#cp-duplicates-status');
@@ -203,10 +244,9 @@
         <div id="cp-verify-detail" class="hidden text-[10px] font-mono bg-slate-50 border rounded-2xl p-3 overflow-auto max-h-48"></div>
       </form>`;
 
-    el.querySelector('#cp-site-settings-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const patch = {
+    function collectSiteSettingsPatch(form) {
+      const fd = new FormData(form);
+      return {
         gtmId: fd.get('gtmId'),
         ga4Id: fd.get('ga4Id'),
         customHeadHtml: fd.get('customHeadHtml'),
@@ -217,31 +257,75 @@
         },
         newsletterPopup: { enabled: fd.get('nlEnabled') === 'on' },
       };
+    }
+
+    async function saveSiteSettingsFromForm(form, statusEl) {
+      const patch = collectSiteSettingsPatch(form);
+      if (statusEl) statusEl.textContent = 'Saving…';
       if (P.api?.siteSettings?.save) {
         const res = await P.api.siteSettings.save(patch);
+        if (res?.ok === false) throw new Error(res.error || 'Save failed');
         P.set('site_settings', res.settings || patch);
         P.applySiteTelemetry?.(res.settings || patch);
-        P.portalToast?.('Site settings saved');
-      } else {
-        P.set('site_settings', { ...siteSettings, ...patch });
-        P.portalToast?.('Saved locally');
+        const exportWarn = res.exported && res.exported.ok === false
+          ? ' (static file export skipped — values live in database)'
+          : '';
+        const msg = (res.message || 'Site settings saved') + exportWarn;
+        if (statusEl) {
+          statusEl.innerHTML = `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(msg) || msg}</span>`;
+        }
+        P.portalToast?.(msg);
+        return res;
+      }
+      P.set('site_settings', { ...siteSettings, ...patch });
+      P.portalToast?.('Saved locally');
+      if (statusEl) statusEl.textContent = 'Saved locally';
+      return { ok: true, settings: patch };
+    }
+
+    el.querySelector('#cp-site-settings-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const status = el.querySelector('#cp-settings-status');
+      try {
+        await saveSiteSettingsFromForm(e.target, status);
+      } catch (err) {
+        const msg = err.message || 'Save failed';
+        if (status) status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(msg) || msg}</span>`;
+        P.portalToast?.(msg);
       }
     });
 
     el.querySelector('#cp-rebuild-btn')?.addEventListener('click', async () => {
       const status = el.querySelector('#cp-settings-status');
-      status.textContent = 'Rebuilding…';
+      const form = el.querySelector('#cp-site-settings-form');
       const token = localStorage.getItem('urdfw_api_token');
+      status.textContent = 'Saving settings & rebuilding…';
       try {
+        /* Always save form values into SQLite first */
+        if (form) {
+          try { await saveSiteSettingsFromForm(form, null); } catch (e) {
+            /* still attempt rebuild with empty settings body if save failed */
+            console.warn('[URDFW] pre-rebuild save', e);
+          }
+        }
+        const patch = form ? collectSiteSettingsPatch(form) : undefined;
         const res = await fetch('/api/platform/rebuild', {
           method: 'POST',
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ invalidateCache: true }),
+          body: JSON.stringify({ invalidateCache: true, settings: patch }),
         });
-        const data = await res.json();
-        status.textContent = data.ok ? (data.message || 'Rebuild complete') : (data.error || 'Failed');
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok && data.ok === false) throw new Error(data.error || 'Rebuild failed');
+        const warn = (data.warnings || []).length
+          ? ` · notes: ${(data.warnings || []).slice(0, 2).join('; ')}`
+          : '';
+        status.innerHTML = data.ok !== false
+          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(data.message || 'Rebuild complete') || data.message}${P.esc?.(warn) || warn}</span>`
+          : `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(data.error || data.message || 'Failed') || 'Failed'}</span>`;
+        P.portalToast?.(data.message || (data.ok !== false ? 'Rebuild complete' : 'Rebuild failed'));
       } catch (err) {
-        status.textContent = err.message;
+        status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(err.message) || err.message}</span>`;
+        P.portalToast?.(err.message);
       }
     });
 
@@ -256,16 +340,17 @@
           headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
           body: '{}',
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || ('Verify HTTP ' + res.status));
         status.innerHTML = data.ok
-          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${data.reason || 'Verified'}</span>`
-          : `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${data.reason || data.error || 'Failed'}</span>`;
+          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(data.reason || 'Verified') || 'Verified'}</span>`
+          : `<span class="text-amber-800"><i class="fa-solid fa-circle-exclamation"></i> ${P.esc?.(data.reason || data.error || 'Not fully verified on static HTML') || 'Not verified'}</span>`;
         if (detail && (data.checks || data.probes)) {
           detail.classList.remove('hidden');
           detail.textContent = JSON.stringify({ checks: data.checks, configured: data.configured, probes: data.probes }, null, 2);
         }
       } catch (err) {
-        status.textContent = err.message;
+        status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(err.message) || err.message}</span>`;
       }
     });
   };

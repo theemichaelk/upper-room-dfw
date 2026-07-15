@@ -125,15 +125,32 @@ function createRouter(db, limiters = {}) {
     res.json({ ok: true, settings: getSiteSettings(db) });
   });
 
-  router.put('/platform/site-settings', adminRequired, (req, res) => {
-    const settings = setSiteSettings(db, req.body || {});
-    let exported = null;
+  router.put('/platform/site-settings', adminRequired, async (req, res) => {
     try {
-      exported = exportSiteSettingsJson(db);
+      const settings = setSiteSettings(db, req.body || {});
+      let exported = null;
+      try {
+        exported = await exportSiteSettingsJson(db);
+      } catch (err) {
+        /* Never fail the save on read-only FS — SQLite is source of truth */
+        exported = {
+          ok: false,
+          error: err.message,
+          sourceOfTruth: 'sqlite',
+          message: 'Settings saved in database; static JSON export skipped',
+        };
+      }
+      res.json({
+        ok: true,
+        settings,
+        exported,
+        message: exported?.s3?.ok
+          ? 'Settings saved and published to CDN (data/site-settings.json)'
+          : 'Settings saved to database (live for API + JS telemetry)',
+      });
     } catch (err) {
-      exported = { ok: false, error: err.message };
+      res.status(500).json({ ok: false, error: err.message });
     }
-    res.json({ ok: true, settings, exported });
   });
 
   router.post('/platform/telemetry/verify', adminRequired, async (req, res) => {
@@ -311,12 +328,19 @@ function createRouter(db, limiters = {}) {
     const patch = req.body?.settings || req.body || {};
     delete patch.secret;
     const settings = setSiteSettings(db, patch);
-    const exported = exportSiteSettingsJson(db);
+    let exported = null;
+    try {
+      exported = await exportSiteSettingsJson(db);
+    } catch (err) {
+      exported = { ok: false, error: err.message, sourceOfTruth: 'sqlite' };
+    }
     res.json({
       ok: true,
       settings,
       exported,
-      message: 'Site settings synced — run npm run build:static && deploy:s3 to bake tags into HTML for scrapers',
+      message: 'Site settings synced to database' +
+        (exported?.s3?.ok ? ' and S3' : '') +
+        ' — scrapers that need baked HTML tags still require npm run build:static && deploy:s3',
     });
   });
 
@@ -1532,6 +1556,19 @@ function createRouter(db, limiters = {}) {
     if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
     try {
       const record = await dnsService.addRecord(db, site.id, req.body || {});
+      res.json({ ok: true, record });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.patch('/dns/records/:id', authRequired, async (req, res) => {
+    const row = db.prepare('SELECT site_id FROM dns_records WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Record not found' });
+    const site = dnsService.getSite(db, row.site_id);
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    try {
+      const record = await dnsService.updateRecord(db, req.params.id, req.body || {});
       res.json({ ok: true, record });
     } catch (err) {
       res.status(400).json({ ok: false, error: err.message });

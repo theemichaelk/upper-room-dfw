@@ -27,10 +27,10 @@
     'js/analytics-live.js',
     'js/platform/16-dashboards.js',
     'js/platform/17-api-bridge.js',
+    'js/platform/20-dns.js',
     'js/platform/25-control-panel.js',
     'js/platform/26-blog-admin.js',
     'js/platform/18-portal.js',
-    'js/platform/20-dns.js',
     'js/platform/21-telemetry.js',
   ];
 

@@ -117,7 +117,7 @@ async function upsertRoute53Record(hostedZoneId, { type, name, value, ttl, prior
   } else if (recordType === 'TXT') {
     const txt = value.startsWith('"') ? value : `"${value}"`;
     resourceRecordSet.ResourceRecords = [{ Value: txt }];
-  } else if (recordType === 'CNAME') {
+  } else if (recordType === 'CNAME' || recordType === 'NS') {
     const v = value.endsWith('.') ? value : value + '.';
     resourceRecordSet.ResourceRecords = [{ Value: v }];
   } else {
@@ -149,20 +149,44 @@ async function upsertRoute53Record(hostedZoneId, { type, name, value, ttl, prior
   return true;
 }
 
-async function deleteRoute53Record(hostedZoneId, { type, name, value, ttl }) {
+async function deleteRoute53Record(hostedZoneId, { type, name, value, ttl, priority }) {
   const client = getRoute53();
+  const recordType = type.toUpperCase();
+  let resourceRecordSet = {
+    Name: name,
+    Type: recordType,
+    TTL: ttl || 300,
+    ResourceRecords: [],
+  };
+
+  if (recordType === 'A' && (String(value).includes('cloudfront.net') || String(value).startsWith('alias:'))) {
+    const target = String(value).replace(/^alias:/, '');
+    resourceRecordSet = {
+      Name: name,
+      Type: 'A',
+      AliasTarget: {
+        HostedZoneId: process.env.CLOUDFRONT_HOSTED_ZONE_ID || 'Z2FDTNDATAQYW2',
+        DNSName: target.endsWith('.') ? target : target + '.',
+        EvaluateTargetHealth: false,
+      },
+    };
+  } else if (recordType === 'MX') {
+    const pri = priority != null ? priority : 10;
+    resourceRecordSet.ResourceRecords = [{ Value: `${pri} ${String(value).replace(/^\d+\s+/, '')}` }];
+  } else if (recordType === 'TXT') {
+    const txt = String(value).startsWith('"') ? value : `"${value}"`;
+    resourceRecordSet.ResourceRecords = [{ Value: txt }];
+  } else if (recordType === 'CNAME' || recordType === 'NS') {
+    const v = String(value).endsWith('.') ? value : value + '.';
+    resourceRecordSet.ResourceRecords = [{ Value: v }];
+  } else {
+    resourceRecordSet.ResourceRecords = [{ Value: value }];
+  }
+
   await client.send(new ChangeResourceRecordSetsCommand({
     HostedZoneId: hostedZoneId,
     ChangeBatch: {
-      Changes: [{
-        Action: 'DELETE',
-        ResourceRecordSet: {
-          Name: name,
-          Type: type.toUpperCase(),
-          TTL: ttl || 300,
-          ResourceRecords: [{ Value: value }],
-        },
-      }],
+      Changes: [{ Action: 'DELETE', ResourceRecordSet: resourceRecordSet }],
     },
   }));
 }
@@ -339,12 +363,78 @@ async function removeRecord(db, recordId) {
         name: fqdn(row.name, row.domain),
         value: row.value,
         ttl: row.ttl,
+        priority: row.priority,
       });
-    } catch { /* best effort */ }
+    } catch { /* best effort — still remove local row */ }
   }
 
   db.prepare('DELETE FROM dns_records WHERE id = ?').run(recordId);
   return { ok: true };
+}
+
+/**
+ * Update an existing DNS record (edit name/type/value/TTL).
+ * When Route53 is live: DELETE old set then UPSERT new (covers type/name changes).
+ */
+async function updateRecord(db, recordId, data) {
+  const row = db.prepare('SELECT r.*, s.domain, s.hosted_zone_id FROM dns_records r JOIN sites s ON s.id = r.site_id WHERE r.id = ?').get(recordId);
+  if (!row) throw new Error('Record not found');
+
+  const type = (data.type || row.record_type || 'A').toUpperCase();
+  if (!VALID_TYPES.has(type)) throw new Error('Invalid record type: ' + type);
+
+  const name = (data.name != null ? data.name : row.name) || '@';
+  const value = (data.value != null ? String(data.value) : row.value || '').trim();
+  if (!value) throw new Error('Record value required');
+  const ttl = data.ttl != null ? parseInt(data.ttl, 10) || 300 : (row.ttl || 300);
+  const priority = data.priority != null ? parseInt(data.priority, 10) : row.priority;
+
+  const zoneId = resolveHostedZoneId(row);
+  let status = row.status || 'pending';
+  let route53Synced = row.route53_synced ? 1 : 0;
+  let error = null;
+  const now = new Date().toISOString();
+
+  if (zoneId && route53Ready()) {
+    try {
+      /* Remove previous RRset when name/type/value changed and it was synced */
+      if (row.route53_synced) {
+        try {
+          await deleteRoute53Record(zoneId, {
+            type: row.record_type,
+            name: fqdn(row.name, row.domain),
+            value: row.value,
+            ttl: row.ttl,
+            priority: row.priority,
+          });
+        } catch { /* may already be gone or alias form */ }
+      }
+      await upsertRoute53Record(zoneId, {
+        type,
+        name: fqdn(name, row.domain),
+        value,
+        ttl,
+        priority,
+      });
+      status = 'active';
+      route53Synced = 1;
+    } catch (err) {
+      status = 'error';
+      error = err.message;
+    }
+  } else {
+    status = 'external';
+    route53Synced = 0;
+  }
+
+  db.prepare(`
+    UPDATE dns_records
+    SET record_type = ?, name = ?, value = ?, ttl = ?, priority = ?,
+        route53_synced = ?, status = ?, error = ?, updated_at = ?
+    WHERE id = ?
+  `).run(type, name, value, ttl, priority, route53Synced, status, error, now, recordId);
+
+  return recordToApi(db.prepare('SELECT * FROM dns_records WHERE id = ?').get(recordId));
 }
 
 async function syncSiteFromRoute53(db, siteId) {
@@ -360,21 +450,27 @@ async function syncSiteFromRoute53(db, siteId) {
   const now = new Date().toISOString();
 
   for (const rr of sets) {
-    if (['NS', 'SOA'].includes(rr.Type)) continue;
+    /* Import NS (including apex) so SEO/DNS editor can show & manage them; skip SOA only */
+    if (rr.Type === 'SOA') continue;
     const shortName = rr.Name.replace(new RegExp('\\.?' + site.domain.replace(/\./g, '\\.') + '\\.?$'), '') || '@';
+    const nameKey = shortName === site.domain ? '@' : shortName.replace(/\.$/, '');
     const values = rr.AliasTarget
       ? ['alias:' + rr.AliasTarget.DNSName.replace(/\.$/, '')]
-      : (rr.ResourceRecords || []).map((r) => r.Value.replace(/^"|"$/g, ''));
+      : (rr.ResourceRecords || []).map((r) => r.Value.replace(/^"|"$/g, '').replace(/\.$/, rr.Type === 'NS' || rr.Type === 'CNAME' ? '' : ''));
 
     for (const val of values) {
+      let normalized = val;
+      if ((rr.Type === 'NS' || rr.Type === 'CNAME') && normalized.endsWith('.')) {
+        normalized = normalized.slice(0, -1);
+      }
       const exists = db.prepare('SELECT id FROM dns_records WHERE site_id = ? AND record_type = ? AND name = ? AND value = ?')
-        .get(siteId, rr.Type, shortName === site.domain ? '@' : shortName.replace(/\.$/, ''), val);
+        .get(siteId, rr.Type, nameKey, normalized);
       if (exists) continue;
 
       db.prepare(`
         INSERT INTO dns_records (id, site_id, record_type, name, value, ttl, route53_synced, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, 1, 'active', ?, ?)
-      `).run(crypto.randomUUID(), siteId, rr.Type, shortName === site.domain ? '@' : shortName.replace(/\.$/, ''), val, rr.TTL || 300, now, now);
+      `).run(crypto.randomUUID(), siteId, rr.Type, nameKey, normalized, rr.TTL || 300, now, now);
       imported += 1;
     }
   }
@@ -430,6 +526,7 @@ module.exports = {
   createSite,
   listRecords,
   addRecord,
+  updateRecord,
   removeRecord,
   syncSiteFromRoute53,
   ensureClientSite,

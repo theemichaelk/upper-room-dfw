@@ -1,10 +1,12 @@
 /**
- * Site-wide telemetry, head injection, widgets — persisted in platform_settings.
+ * Site-wide telemetry, head injection, widgets — persisted in platform_settings (SQLite).
+ * JSON export is best-effort: project data/ when writable, else /tmp, plus S3 on Amplify.
  */
 const fs = require('fs');
 const path = require('path');
 const { getSetting, setSetting } = require('./platform-settings');
 const { normalizeSearchConsole } = require('./verification-tokens');
+const { writeDataFile, isLambdaLike, projectRoot: pkgRoot, isWritableFsError } = require('./writable-fs');
 
 const SETTINGS_KEY = 'site_settings';
 
@@ -100,26 +102,102 @@ function getPublicSiteSettings(db) {
 }
 
 function projectRoot() {
-  return path.join(__dirname, '..', '..');
+  return pkgRoot();
 }
 
+/**
+ * Export public site-settings JSON for static clients.
+ * Never throws EROFS — SQLite remains source of truth on Amplify.
+ * @returns {Promise|{ok, path?, bytes?, s3?, warning?}}
+ */
 function exportSiteSettingsJson(db, rootDir) {
-  const root = rootDir || projectRoot();
-  const outPath = path.join(root, 'data', 'site-settings.json');
   const payload = getPublicSiteSettings(db);
-  fs.mkdirSync(path.dirname(outPath), { recursive: true });
-  fs.writeFileSync(outPath, JSON.stringify(payload, null, 2) + '\n');
-  return { ok: true, path: outPath, bytes: fs.statSync(outPath).size };
+  const body = JSON.stringify(payload, null, 2) + '\n';
+
+  /* Prefer explicit rootDir for local builds / scripts */
+  if (rootDir && !isLambdaLike()) {
+    try {
+      const outPath = path.join(rootDir, 'data', 'site-settings.json');
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.writeFileSync(outPath, body);
+      return Promise.resolve({
+        ok: true,
+        path: outPath,
+        bytes: Buffer.byteLength(body),
+        mode: 'project',
+        persisted: true,
+      }).then(async (local) => {
+        try {
+          const { uploadPublicAsset } = require('./writable-fs');
+          const s3 = await uploadPublicAsset('data/site-settings.json', body, 'application/json');
+          return { ...local, s3 };
+        } catch {
+          return local;
+        }
+      });
+    } catch (err) {
+      if (!isWritableFsError(err)) {
+        return Promise.resolve({ ok: false, error: err.message, code: err.code });
+      }
+      /* fall through to writeDataFile */
+    }
+  }
+
+  return writeDataFile('data/site-settings.json', body, {
+    s3Key: 'data/site-settings.json',
+    contentType: 'application/json',
+    uploadS3: true,
+  }).then((result) => ({
+    ok: result.ok || result.local?.ok || result.s3?.ok,
+    path: result.local?.path,
+    bytes: result.local?.bytes,
+    mode: result.local?.mode || (result.s3?.ok ? 's3' : 'none'),
+    s3: result.s3,
+    warning: result.local?.warning || (!result.local?.ok ? result.message : undefined),
+    message: result.message,
+    persisted: true,
+    sourceOfTruth: 'sqlite',
+  })).catch((err) => ({
+    ok: false,
+    error: err.message,
+    sourceOfTruth: 'sqlite',
+    message: 'Settings remain in database; static JSON export failed',
+  }));
+}
+
+/** Sync helper for scripts that expect a blocking write */
+function exportSiteSettingsJsonSync(db, rootDir) {
+  const payload = getPublicSiteSettings(db);
+  const body = JSON.stringify(payload, null, 2) + '\n';
+  const root = rootDir || projectRoot();
+  const candidates = [
+    path.join(root, 'data', 'site-settings.json'),
+    path.join(process.env.TMPDIR || '/tmp', 'urdfw-data', 'site-settings.json'),
+  ];
+  for (const outPath of candidates) {
+    try {
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.writeFileSync(outPath, body);
+      return { ok: true, path: outPath, bytes: Buffer.byteLength(body) };
+    } catch (err) {
+      if (!isWritableFsError(err)) return { ok: false, error: err.message };
+    }
+  }
+  return { ok: false, error: 'No writable path for site-settings.json', sourceOfTruth: 'sqlite' };
 }
 
 function loadStaticSiteSettings(rootDir) {
-  const file = path.join(rootDir || projectRoot(), 'data', 'site-settings.json');
-  if (!fs.existsSync(file)) return mergeSettings(null);
-  try {
-    return mergeSettings(JSON.parse(fs.readFileSync(file, 'utf8')));
-  } catch {
-    return mergeSettings(null);
+  const candidates = [
+    path.join(rootDir || projectRoot(), 'data', 'site-settings.json'),
+    path.join(process.env.TMPDIR || '/tmp', 'urdfw-data', 'site-settings.json'),
+  ];
+  for (const file of candidates) {
+    if (!fs.existsSync(file)) continue;
+    try {
+      return mergeSettings(JSON.parse(fs.readFileSync(file, 'utf8')));
+    } catch { /* try next */ }
   }
+  return mergeSettings(null);
 }
 
 module.exports = {
@@ -129,6 +207,7 @@ module.exports = {
   setSiteSettings,
   getPublicSiteSettings,
   exportSiteSettingsJson,
+  exportSiteSettingsJsonSync,
   loadStaticSiteSettings,
   mergeSettings,
 };
