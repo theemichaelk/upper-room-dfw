@@ -319,10 +319,15 @@
         const warn = (data.warnings || []).length
           ? ` · notes: ${(data.warnings || []).slice(0, 2).join('; ')}`
           : '';
-        status.innerHTML = data.ok !== false
-          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(data.message || 'Rebuild complete') || data.message}${P.esc?.(warn) || warn}</span>`
+        const cacheStep = (data.steps || []).find((s) => s.step === 'cacheInvalidation');
+        const cacheNote = cacheStep && cacheStep.ok === false
+          ? ' Cache purge incomplete — settings are still saved.'
+          : '';
+        const softOk = data.ok !== false || (data.serverless && (data.steps || []).some((s) => s.step === 'saveSettings' && s.ok));
+        status.innerHTML = softOk
+          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(data.message || 'Rebuild complete') || data.message}${P.esc?.(warn) || warn}${P.esc?.(cacheNote) || cacheNote}</span>`
           : `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(data.error || data.message || 'Failed') || 'Failed'}</span>`;
-        P.portalToast?.(data.message || (data.ok !== false ? 'Rebuild complete' : 'Rebuild failed'));
+        P.portalToast?.(data.message || (softOk ? 'Settings saved' : 'Rebuild failed'));
       } catch (err) {
         status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(err.message) || err.message}</span>`;
         P.portalToast?.(err.message);

@@ -1,31 +1,54 @@
 /**
- * Global CDN cache invalidation — CloudFront + Cloudflare.
+ * Global CDN cache invalidation — CloudFront (AWS SDK) + Cloudflare.
+ * Avoids shelling out to `aws` CLI (not available on Amplify Lambda).
  */
-const { execSync } = require('child_process');
 const https = require('https');
 
-function invalidateCloudFront(opts = {}) {
+let CloudFrontClient;
+let CreateInvalidationCommand;
+
+function getCloudFrontClient() {
+  if (!CloudFrontClient) {
+    ({ CloudFrontClient, CreateInvalidationCommand } = require('@aws-sdk/client-cloudfront'));
+  }
+  return new CloudFrontClient({
+    region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-2',
+  });
+}
+
+async function invalidateCloudFront(opts = {}) {
   const distId = opts.distributionId || process.env.CLOUDFRONT_DIST_ID || 'EI9QWFII46LGX';
-  const region = opts.region || process.env.AWS_REGION || 'us-east-2';
-  const paths = opts.paths || ['/*'];
-  const pathsArg = paths.map((p) => `"${p}"`).join(' ');
+  const paths = (opts.paths && opts.paths.length) ? opts.paths : ['/*'];
+  const callerRef = 'urdfw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
   try {
-    const out = execSync(
-      `aws cloudfront create-invalidation --distribution-id ${distId} --paths ${pathsArg} --region ${region} --output json`,
-      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
-    );
-    const json = JSON.parse(out);
+    const client = getCloudFrontClient();
+    const out = await client.send(new CreateInvalidationCommand({
+      DistributionId: distId,
+      InvalidationBatch: {
+        CallerReference: callerRef,
+        Paths: {
+          Quantity: paths.length,
+          Items: paths,
+        },
+      },
+    }));
     return {
       ok: true,
       provider: 'cloudfront',
       distributionId: distId,
-      invalidationId: json?.Invalidation?.Id,
-      status: json?.Invalidation?.Status,
+      invalidationId: out?.Invalidation?.Id,
+      status: out?.Invalidation?.Status,
       paths,
     };
   } catch (err) {
-    return { ok: false, provider: 'cloudfront', error: err.stderr?.toString() || err.message };
+    return {
+      ok: false,
+      provider: 'cloudfront',
+      distributionId: distId,
+      error: err.message || String(err),
+      paths,
+    };
   }
 }
 
@@ -33,7 +56,12 @@ function purgeCloudflare(opts = {}) {
   const zoneId = opts.zoneId || process.env.CLOUDFLARE_ZONE_ID;
   const token = opts.apiToken || process.env.CLOUDFLARE_API_TOKEN;
   if (!zoneId || !token) {
-    return { ok: false, provider: 'cloudflare', skipped: true, error: 'CLOUDFLARE_ZONE_ID or CLOUDFLARE_API_TOKEN not set' };
+    return Promise.resolve({
+      ok: true,
+      provider: 'cloudflare',
+      skipped: true,
+      reason: 'CLOUDFLARE_ZONE_ID / CLOUDFLARE_API_TOKEN not set',
+    });
   }
 
   const body = JSON.stringify(
@@ -77,10 +105,11 @@ function purgeCloudflare(opts = {}) {
 
 async function invalidateAll(opts = {}) {
   const results = [];
-  results.push(invalidateCloudFront(opts));
+  results.push(await invalidateCloudFront(opts));
   results.push(await purgeCloudflare(opts));
+  const hardFail = results.some((r) => r.ok === false && !r.skipped);
   return {
-    ok: results.every((r) => r.ok || r.skipped),
+    ok: !hardFail,
     results,
     at: new Date().toISOString(),
   };

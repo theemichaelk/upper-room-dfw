@@ -108,29 +108,48 @@
     return m ? m[1].trim() : s;
   }
 
+  function isAdminOrPortalPage() {
+    const path = (global.location?.pathname || '').toLowerCase();
+    return (
+      path.includes('admin') ||
+      path.includes('member-dashboard') ||
+      path.includes('billing-hub') ||
+      !!document.getElementById('admin-platform-root') ||
+      !!document.getElementById('login-screen')
+    );
+  }
+
   /** Runtime layer — supplements build-time injection; scrapers still need baked HTML. */
   P.applySiteTelemetry = function (settings) {
     if (!settings) return;
+    const portal = isAdminOrPortalPage();
     const sc = settings.searchConsole || {};
     ensureMeta('google-site-verification', normalizeVerificationToken(sc.google));
     ensureMeta('msvalidate.01', normalizeVerificationToken(sc.bing));
     ensureMeta('y_key', normalizeVerificationToken(sc.yahoo));
 
+    /* Portal pages: skip re-injecting GA/GTM/ads if already baked — avoids double tags + main-thread work */
+    const alreadyHasGa = !!document.querySelector('script[src*="gtag/js"], script[src*="googletagmanager.com/gtm.js"]');
     const gtmOk = settings.gtmId && /^GTM-[A-Z0-9]+$/i.test(settings.gtmId) && !/GTM-(TEST|REBUILD|XXX|EXAMPLE)/i.test(settings.gtmId);
     const ga4Ok = settings.ga4Id && /^G-[A-Z0-9]+$/i.test(settings.ga4Id) && !/G-(TEST|REBUILD|XXX|EXAMPLE)/i.test(settings.ga4Id);
-    if (gtmOk) injectGtm(settings.gtmId);
-    else if (ga4Ok) injectGa4(settings.ga4Id);
+    if (!alreadyHasGa) {
+      if (gtmOk) injectGtm(settings.gtmId);
+      else if (ga4Ok) injectGa4(settings.ga4Id);
+    }
 
-    injectCustomHead(settings.customHeadHtml);
-    (settings.headInjectionScripts || []).forEach(injectHeadScript);
-    (settings.footerScripts || []).forEach((entry) => {
-      if (!entry) return;
-      const s = document.createElement('script');
-      if (entry.src) s.src = entry.src;
-      else if (entry.inline) s.textContent = entry.inline;
-      else return;
-      document.body.appendChild(s);
-    });
+    /* Never inject AdSense / heavy custom head on admin or member portals */
+    if (!portal) {
+      injectCustomHead(settings.customHeadHtml);
+      (settings.headInjectionScripts || []).forEach(injectHeadScript);
+      (settings.footerScripts || []).forEach((entry) => {
+        if (!entry) return;
+        const s = document.createElement('script');
+        if (entry.src) s.src = entry.src;
+        else if (entry.inline) s.textContent = entry.inline;
+        else return;
+        document.body.appendChild(s);
+      });
+    }
 
     P._siteSettings = settings;
     global.dispatchEvent(new CustomEvent('urdfw:telemetry:ready', { detail: settings }));
