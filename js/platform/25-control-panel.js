@@ -272,148 +272,240 @@
         </section>
 
         <div class="flex flex-wrap gap-2">
-          <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl">Save Settings</button>
-          <button type="button" id="cp-rebuild-btn" class="px-4 py-2 bg-emerald-700 text-white rounded-xl">Save &amp; Rebuild</button>
-          <button type="button" id="cp-verify-btn" class="px-4 py-2 border rounded-xl">Verify Live HTML</button>
+          <button type="button" id="cp-save-btn" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl font-medium">
+            <i class="fa-solid fa-floppy-disk mr-1"></i> Save Settings
+          </button>
+          <button type="button" id="cp-rebuild-btn" class="px-4 py-2 bg-emerald-700 text-white rounded-xl font-medium">
+            <i class="fa-solid fa-hammer mr-1"></i> Save &amp; Rebuild
+          </button>
+          <button type="button" id="cp-verify-btn" class="px-4 py-2 border rounded-xl font-medium">
+            <i class="fa-solid fa-magnifying-glass mr-1"></i> Verify Live HTML
+          </button>
         </div>
-        <div id="cp-settings-status" class="text-xs text-slate-500"></div>
+        <div id="cp-settings-status" class="text-xs text-slate-500 min-h-[1.25rem]" role="status" aria-live="polite"></div>
         <div id="cp-verify-detail" class="hidden text-[10px] font-mono bg-slate-50 border rounded-2xl p-3 overflow-auto max-h-48"></div>
       </form>`;
 
-    function collectSiteSettingsPatch(form) {
-      const fd = new FormData(form);
+    const form = el.querySelector('#cp-site-settings-form');
+    const statusEl = () => el.querySelector('#cp-settings-status');
+    const setStatus = (html, kind) => {
+      const s = statusEl();
+      if (!s) return;
+      if (!html) { s.textContent = ''; return; }
+      if (kind === 'ok') s.innerHTML = `<span class="text-emerald-700"><i class="fa-solid fa-circle-check mr-1"></i>${html}</span>`;
+      else if (kind === 'err') s.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark mr-1"></i>${html}</span>`;
+      else if (kind === 'warn') s.innerHTML = `<span class="text-amber-800"><i class="fa-solid fa-circle-exclamation mr-1"></i>${html}</span>`;
+      else s.textContent = html;
+    };
+    const authHeaders = () => {
+      const token = localStorage.getItem('urdfw_api_token') || sessionStorage.getItem('urdfw_api_token') || '';
       return {
-        gtmId: fd.get('gtmId'),
-        ga4Id: fd.get('ga4Id'),
-        customHeadHtml: fd.get('customHeadHtml'),
-        customBodyHtml: fd.get('customBodyHtml'),
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      };
+    };
+    const requireToken = () => {
+      const token = localStorage.getItem('urdfw_api_token') || sessionStorage.getItem('urdfw_api_token');
+      if (!token) throw new Error('Not signed in — refresh and log in as admin again.');
+      return token;
+    };
+
+    function collectSiteSettingsPatch(formEl) {
+      if (!formEl) throw new Error('Settings form not found');
+      const val = (name) => {
+        const node = formEl.elements?.namedItem?.(name) || formEl.querySelector(`[name="${name}"]`);
+        if (!node) return '';
+        if (node.type === 'checkbox') return node.checked;
+        return node.value != null ? String(node.value) : '';
+      };
+      return {
+        gtmId: val('gtmId').trim(),
+        ga4Id: val('ga4Id').trim(),
+        customHeadHtml: val('customHeadHtml'),
+        customBodyHtml: val('customBodyHtml'),
         searchConsole: {
-          google: normalizeVerificationToken(fd.get('scGoogle')),
-          bing: normalizeVerificationToken(fd.get('scBing')),
-          yahoo: normalizeVerificationToken(fd.get('scYahoo')),
+          google: normalizeVerificationToken(val('scGoogle')),
+          bing: normalizeVerificationToken(val('scBing')),
+          yahoo: normalizeVerificationToken(val('scYahoo')),
         },
-        newsletterPopup: { enabled: fd.get('nlEnabled') === 'on' },
+        newsletterPopup: {
+          ...(siteSettings.newsletterPopup || {}),
+          enabled: !!val('nlEnabled'),
+        },
       };
     }
 
     const bodyTa = el.querySelector('#cp-custom-body-html');
-    el.querySelector('#cp-body-clear')?.addEventListener('click', () => {
+    el.querySelector('#cp-body-clear')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
       if (!bodyTa) return;
       if (bodyTa.value.trim() && !confirm('Clear all custom body HTML? Save Settings afterward to persist.')) return;
       bodyTa.value = '';
       bodyTa.focus();
       P.portalToast?.('Body HTML cleared — click Save Settings to store');
     });
-    el.querySelector('#cp-body-snippet-gtm')?.addEventListener('click', () => {
+    el.querySelector('#cp-body-snippet-gtm')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
       if (!bodyTa) return;
-      const gtm = (el.querySelector('[name="gtmId"]')?.value || 'GTM-XXXX').trim() || 'GTM-XXXX';
+      const gtm = (form?.querySelector('[name="gtmId"]')?.value || 'GTM-XXXX').trim() || 'GTM-XXXX';
       const snip = `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtm}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
       bodyTa.value = (bodyTa.value ? bodyTa.value.replace(/\s*$/, '') + '\n\n' : '') + snip + '\n';
       bodyTa.focus();
     });
-    el.querySelector('#cp-body-snippet-comment')?.addEventListener('click', () => {
+    el.querySelector('#cp-body-snippet-comment')?.addEventListener('click', (ev) => {
+      ev.preventDefault();
       if (!bodyTa) return;
       bodyTa.value = (bodyTa.value ? bodyTa.value.replace(/\s*$/, '') + '\n' : '') + '<!-- custom body inject -->\n';
       bodyTa.focus();
     });
 
-    async function saveSiteSettingsFromForm(form, statusEl) {
+    async function saveSiteSettingsDirect(opts) {
+      opts = opts || {};
+      requireToken();
       const patch = collectSiteSettingsPatch(form);
-      if (statusEl) statusEl.textContent = 'Saving…';
-      if (P.api?.siteSettings?.save) {
-        const res = await P.api.siteSettings.save(patch);
-        if (res?.ok === false) throw new Error(res.error || 'Save failed');
-        P.set('site_settings', res.settings || patch);
-        P.applySiteTelemetry?.(res.settings || patch);
-        const exportWarn = res.exported && res.exported.ok === false
-          ? ' (static file export skipped — values live in database)'
-          : '';
-        const msg = (res.message || 'Site settings saved') + exportWarn;
-        if (statusEl) {
-          statusEl.innerHTML = `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(msg) || msg}</span>`;
-        }
-        P.portalToast?.(msg);
-        return res;
+      setStatus(opts.quiet ? '' : 'Saving…');
+
+      /* Prefer direct fetch so we never depend on api-bridge quirks */
+      const res = await fetch('/api/platform/site-settings', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(patch),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || data.message || ('Save failed (HTTP ' + res.status + ')'));
       }
-      P.set('site_settings', { ...siteSettings, ...patch });
-      P.portalToast?.('Saved locally');
-      if (statusEl) statusEl.textContent = 'Saved locally';
-      return { ok: true, settings: patch };
+      if (data.settings) P.set('site_settings', data.settings);
+      else P.set('site_settings', { ...P.get('site_settings', {}), ...patch });
+      try { P.applySiteTelemetry?.(data.settings || patch); } catch (e) {
+        console.warn('[URDFW] applySiteTelemetry after save', e);
+      }
+      const exportWarn = data.exported && data.exported.ok === false
+        ? ' (static export note: ' + esc(data.exported.error || 'skipped') + ')'
+        : '';
+      const msg = (data.message || 'Site settings saved') + exportWarn;
+      if (!opts.quiet) {
+        setStatus(esc(msg), 'ok');
+        P.portalToast?.(msg);
+      }
+      return data;
     }
 
-    el.querySelector('#cp-site-settings-form')?.addEventListener('submit', async (e) => {
+    async function withBusy(btn, fn) {
+      const buttons = [el.querySelector('#cp-save-btn'), el.querySelector('#cp-rebuild-btn'), el.querySelector('#cp-verify-btn')];
+      buttons.forEach((b) => { if (b) b.disabled = true; });
+      const prev = btn ? btn.innerHTML : '';
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Working…';
+      try {
+        return await fn();
+      } finally {
+        buttons.forEach((b) => { if (b) b.disabled = false; });
+        if (btn && prev) btn.innerHTML = prev;
+      }
+    }
+
+    /* Prevent native form submit (Enter key) from navigating away */
+    form?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const status = el.querySelector('#cp-settings-status');
+      el.querySelector('#cp-save-btn')?.click();
+    });
+
+    el.querySelector('#cp-save-btn')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const btn = ev.currentTarget;
       try {
-        await saveSiteSettingsFromForm(e.target, status);
+        await withBusy(btn, () => saveSiteSettingsDirect({ quiet: false }));
       } catch (err) {
-        const msg = err.message || 'Save failed';
-        if (status) status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(msg) || msg}</span>`;
-        P.portalToast?.(msg);
+        console.error('[URDFW] Save Settings failed', err);
+        setStatus(esc(err.message || 'Save failed'), 'err');
+        P.portalToast?.(err.message || 'Save failed');
       }
     });
 
-    el.querySelector('#cp-rebuild-btn')?.addEventListener('click', async () => {
-      const status = el.querySelector('#cp-settings-status');
-      const form = el.querySelector('#cp-site-settings-form');
-      const token = localStorage.getItem('urdfw_api_token');
-      status.textContent = 'Saving settings & rebuilding…';
+    el.querySelector('#cp-rebuild-btn')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const btn = ev.currentTarget;
       try {
-        /* Always save form values into SQLite first */
-        if (form) {
-          try { await saveSiteSettingsFromForm(form, null); } catch (e) {
-            /* still attempt rebuild with empty settings body if save failed */
+        await withBusy(btn, async () => {
+          requireToken();
+          setStatus('Saving settings & rebuilding…');
+          let patch;
+          try {
+            await saveSiteSettingsDirect({ quiet: true });
+            patch = collectSiteSettingsPatch(form);
+          } catch (e) {
             console.warn('[URDFW] pre-rebuild save', e);
+            patch = collectSiteSettingsPatch(form);
           }
-        }
-        const patch = form ? collectSiteSettingsPatch(form) : undefined;
-        const res = await fetch('/api/platform/rebuild', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ invalidateCache: true, settings: patch }),
+          const res = await fetch('/api/platform/rebuild', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ invalidateCache: true, settings: patch }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok && data.ok === false) throw new Error(data.error || ('Rebuild failed (HTTP ' + res.status + ')'));
+
+          const warn = (data.warnings || []).length
+            ? ' · notes: ' + (data.warnings || []).slice(0, 2).join('; ')
+            : '';
+          const cacheStep = (data.steps || []).find((s) => s.step === 'cacheInvalidation');
+          const cacheNote = cacheStep && cacheStep.ok === false
+            ? ' Cache purge incomplete — settings are still saved.'
+            : '';
+          const softOk = data.ok !== false
+            || (data.serverless && (data.steps || []).some((s) => s.step === 'saveSettings' && s.ok))
+            || (data.steps || []).some((s) => s.step === 'exportSiteSettings' && s.ok);
+
+          const msg = (data.message || (softOk ? 'Settings saved' : 'Rebuild failed')) + warn + cacheNote;
+          setStatus(esc(msg), softOk ? 'ok' : 'err');
+          P.portalToast?.(data.message || (softOk ? 'Settings saved' : 'Rebuild failed'));
+          return data;
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok && data.ok === false) throw new Error(data.error || 'Rebuild failed');
-        const warn = (data.warnings || []).length
-          ? ` · notes: ${(data.warnings || []).slice(0, 2).join('; ')}`
-          : '';
-        const cacheStep = (data.steps || []).find((s) => s.step === 'cacheInvalidation');
-        const cacheNote = cacheStep && cacheStep.ok === false
-          ? ' Cache purge incomplete — settings are still saved.'
-          : '';
-        const softOk = data.ok !== false || (data.serverless && (data.steps || []).some((s) => s.step === 'saveSettings' && s.ok));
-        status.innerHTML = softOk
-          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(data.message || 'Rebuild complete') || data.message}${P.esc?.(warn) || warn}${P.esc?.(cacheNote) || cacheNote}</span>`
-          : `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(data.error || data.message || 'Failed') || 'Failed'}</span>`;
-        P.portalToast?.(data.message || (softOk ? 'Settings saved' : 'Rebuild failed'));
       } catch (err) {
-        status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(err.message) || err.message}</span>`;
-        P.portalToast?.(err.message);
+        console.error('[URDFW] Rebuild failed', err);
+        setStatus(esc(err.message || 'Rebuild failed'), 'err');
+        P.portalToast?.(err.message || 'Rebuild failed');
       }
     });
 
-    el.querySelector('#cp-verify-btn')?.addEventListener('click', async () => {
-      const status = el.querySelector('#cp-settings-status');
+    el.querySelector('#cp-verify-btn')?.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const btn = ev.currentTarget;
       const detail = el.querySelector('#cp-verify-detail');
-      status.textContent = 'Probing live HTML (apex + /index.html)…';
-      const token = localStorage.getItem('urdfw_api_token');
       try {
-        const res = await fetch('/api/platform/telemetry/verify', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: '{}',
+        await withBusy(btn, async () => {
+          requireToken();
+          setStatus('Probing live HTML (apex + /index.html)…');
+          const res = await fetch('/api/platform/telemetry/verify', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: '{}',
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok && data.ok === false && !data.reason) {
+            throw new Error(data.error || ('Verify failed (HTTP ' + res.status + ')'));
+          }
+          if (data.ok) {
+            setStatus(esc(data.reason || 'Verified — configured tags found in live HTML'), 'ok');
+          } else {
+            setStatus(esc(data.reason || data.error || 'Not fully verified on static HTML (save & deploy bake may still be needed)'), 'warn');
+          }
+          if (detail && (data.checks || data.probes || data.configured)) {
+            detail.classList.remove('hidden');
+            detail.textContent = JSON.stringify({
+              ok: data.ok,
+              reason: data.reason,
+              checks: data.checks,
+              configured: data.configured,
+              probes: data.probes,
+            }, null, 2);
+          }
+          return data;
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || ('Verify HTTP ' + res.status));
-        status.innerHTML = data.ok
-          ? `<span class="text-emerald-700"><i class="fa-solid fa-circle-check"></i> ${P.esc?.(data.reason || 'Verified') || 'Verified'}</span>`
-          : `<span class="text-amber-800"><i class="fa-solid fa-circle-exclamation"></i> ${P.esc?.(data.reason || data.error || 'Not fully verified on static HTML') || 'Not verified'}</span>`;
-        if (detail && (data.checks || data.probes)) {
-          detail.classList.remove('hidden');
-          detail.textContent = JSON.stringify({ checks: data.checks, configured: data.configured, probes: data.probes }, null, 2);
-        }
       } catch (err) {
-        status.innerHTML = `<span class="text-red-700"><i class="fa-solid fa-circle-xmark"></i> ${P.esc?.(err.message) || err.message}</span>`;
+        console.error('[URDFW] Verify failed', err);
+        setStatus(esc(err.message || 'Verify failed'), 'err');
+        P.portalToast?.(err.message || 'Verify failed');
       }
     });
   };
