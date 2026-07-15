@@ -121,47 +121,80 @@ function headBlock(opts) {
 <body class="tail-container bg-slate-50 text-slate-800" data-urdfw-shell="global">`;
 }
 
-function blogSidebar(prefix, post, relatedPosts) {
- const related = (relatedPosts || []).slice(0, 4).map((r) =>
- `<li><a href="${prefix}blog/${r.slug}.html">${esc(r.title)}</a></li>`
- ).join('');
- return `
- <aside class="urdfw-blog-sidebar" id="urdfw-sidebar-widgets" aria-label="Blog sidebar">
- <div class="urdfw-widget-card urdfw-blog-subscribe-widget">
- <div class="urdfw-blog-subscribe-widget__badge"><i class="fa-solid fa-envelope-open-text"></i> Free updates</div>
- <h2 class="urdfw-blog-subscribe-widget__title">Join the Upper Room list</h2>
- <p class="urdfw-blog-subscribe-widget__lead">Get a warm welcome note, weekly DFW faith digest, news, partner discounts when available, and church-directory updates—no spam.</p>
- <ul class="urdfw-blog-subscribe-widget__perks">
- <li><i class="fa-solid fa-check text-emerald-600"></i> Welcome email when you join</li>
- <li><i class="fa-solid fa-check text-emerald-600"></i> Weekly church &amp; events digest</li>
- <li><i class="fa-solid fa-check text-emerald-600"></i> News &amp; directory updates</li>
- <li><i class="fa-solid fa-check text-emerald-600"></i> Occasional discounts &amp; invites</li>
- </ul>
- <form id="urdfw-blog-sidebar-subscribe" class="urdfw-blog-subscribe-widget__form" novalidate>
- <label class="sr-only" for="urdfw-blog-sub-email">Email</label>
- <input id="urdfw-blog-sub-email" type="email" name="email" required placeholder="you@email.com" autocomplete="email">
- <button type="submit">Subscribe free</button>
- </form>
- <p class="urdfw-blog-subscribe-widget__fine">Unsubscribe anytime. <a href="${prefix}email-updates.html">Email updates page</a> · <a href="${prefix}privacy-policy.html">Privacy</a></p>
- </div>
- <div class="urdfw-widget-card">
- <h3 class="text-sm font-semibold text-slate-900 mb-2">Find a church</h3>
- <ul class="urdfw-blog-side-links text-sm space-y-1.5">
- <li><a href="${prefix}directory.html"><i class="fa-solid fa-church mr-1 text-sky-600"></i> DFW directory</a></li>
- <li><a href="${prefix}register.html"><i class="fa-solid fa-plus mr-1 text-sky-600"></i> List your church</a></li>
- <li><a href="${prefix}events.html"><i class="fa-solid fa-calendar mr-1 text-sky-600"></i> Faith events</a></li>
- <li><a href="${prefix}index.html"><i class="fa-solid fa-house mr-1 text-sky-600"></i> Homepage</a></li>
- </ul>
- </div>
- ${related ? `<div class="urdfw-widget-card">
- <h3 class="text-sm font-semibold text-slate-900 mb-2">More guides</h3>
- <ul class="urdfw-blog-side-links text-sm space-y-2">${related}</ul>
- </div>` : ''}
- <div class="urdfw-widget-card text-xs text-slate-500">
- <p class="mb-1 font-semibold text-slate-700">${esc(post.city || 'DFW')}</p>
- <p>Local guides for families and pastors exploring churches across Dallas–Fort Worth.</p>
- </div>
- </aside>`;
+function blogSidebar(prefix, post) {
+  return `
+  <aside class="urdfw-blog-sidebar" id="urdfw-sidebar-widgets" aria-label="Blog sidebar">
+    <div class="urdfw-widget-card urdfw-blog-subscribe-widget">
+      <div class="urdfw-blog-subscribe-widget__badge"><i class="fa-solid fa-envelope-open-text"></i> Free updates</div>
+      <h2 class="urdfw-blog-subscribe-widget__title">Join the Upper Room list</h2>
+      <p class="urdfw-blog-subscribe-widget__lead">Get a warm welcome note, weekly DFW faith digest, news, partner discounts when available, and church-directory updates—no spam.</p>
+      <ul class="urdfw-blog-subscribe-widget__perks">
+        <li><i class="fa-solid fa-check text-emerald-600"></i> Welcome email when you join</li>
+        <li><i class="fa-solid fa-check text-emerald-600"></i> Weekly church &amp; events digest</li>
+        <li><i class="fa-solid fa-check text-emerald-600"></i> News &amp; directory updates</li>
+        <li><i class="fa-solid fa-check text-emerald-600"></i> Occasional discounts &amp; invites</li>
+      </ul>
+      <form id="urdfw-blog-sidebar-subscribe" class="urdfw-blog-subscribe-widget__form" novalidate>
+        <label class="sr-only" for="urdfw-blog-sub-email">Email</label>
+        <input id="urdfw-blog-sub-email" type="email" name="email" required placeholder="you@email.com" autocomplete="email">
+        <button type="submit">Subscribe free</button>
+      </form>
+      <p class="urdfw-blog-subscribe-widget__fine">Unsubscribe anytime. <a href="${prefix}email-updates.html">Email updates page</a> · <a href="${prefix}privacy-policy.html">Privacy</a></p>
+    </div>
+    <div class="urdfw-widget-card">
+      <h3 class="text-sm font-semibold text-slate-900 mb-2">Find a church</h3>
+      <ul class="urdfw-blog-side-links text-sm space-y-1.5">
+        <li><a href="${prefix}directory.html"><i class="fa-solid fa-church mr-1 text-sky-600"></i> DFW directory</a></li>
+        <li><a href="${prefix}register.html"><i class="fa-solid fa-plus mr-1 text-sky-600"></i> List your church</a></li>
+        <li><a href="${prefix}events.html"><i class="fa-solid fa-calendar mr-1 text-sky-600"></i> Faith events</a></li>
+        <li><a href="${prefix}index.html"><i class="fa-solid fa-house mr-1 text-sky-600"></i> Homepage</a></li>
+      </ul>
+    </div>
+    <div class="urdfw-widget-card text-xs text-slate-500">
+      <p class="mb-1 font-semibold text-slate-700">${esc(post.city || 'DFW')}</p>
+      <p>Local guides for families and pastors exploring churches across Dallas–Fort Worth.</p>
+    </div>
+  </aside>`;
+}
+
+/** Prefer same-city posts, then fill with other published posts */
+function pickRelatedPosts(post, pool, limit = 3) {
+  const others = (pool || []).filter((p) => p.slug !== post.slug);
+  const sameCity = others.filter((p) => (p.city || '') === (post.city || ''));
+  const rest = others.filter((p) => (p.city || '') !== (post.city || ''));
+  return [...sameCity, ...rest].slice(0, limit);
+}
+
+function relatedPostsSection(prefix, relatedPosts) {
+  const list = relatedPosts || [];
+  if (!list.length) return '';
+  const cards = list.map((r) => {
+    const img = r.image || (r.images && r.images[0] && r.images[0].src) || 'images/12.jpg';
+    return `
+      <article class="urdfw-related-card">
+        <a href="${prefix}blog/${r.slug}.html" class="urdfw-related-card__link">
+          <img src="${prefix}${img}" alt="${esc(r.title)}" class="urdfw-related-card__img" width="400" height="220" loading="lazy">
+          <div class="urdfw-related-card__body">
+            <p class="urdfw-related-card__meta"><i class="fa-solid fa-location-dot text-sky-600"></i> ${esc(r.city || 'DFW')} · ${formatDate(r.publishedAt)}</p>
+            <h3 class="urdfw-related-card__title">${esc(r.title)}</h3>
+            <p class="urdfw-related-card__excerpt">${esc(shortExcerpt(r.excerpt, 110))}</p>
+            <span class="urdfw-related-card__cta">Read guide →</span>
+          </div>
+        </a>
+      </article>`;
+  }).join('\n');
+
+  return `
+  <section class="urdfw-related-posts" aria-labelledby="urdfw-related-heading">
+    <div class="urdfw-related-posts__header">
+      <h2 id="urdfw-related-heading" class="urdfw-related-posts__title">Related posts</h2>
+      <p class="urdfw-related-posts__sub">Keep exploring DFW church guides and local faith resources.</p>
+    </div>
+    <div class="urdfw-related-posts__grid">
+${cards}
+    </div>
+    <p class="urdfw-related-posts__all"><a href="${prefix}blog.html">View all blog guides →</a></p>
+  </section>`;
 }
 
 function blogSidebarScript() {
@@ -209,52 +242,53 @@ function postPage(post, baseUrl, opts = {}) {
  const hero = post.image || (post.images && post.images[0] && post.images[0].src) || 'images/12.jpg';
  const heroAlt = (post.images && post.images[0] && post.images[0].alt) || post.title;
  const robots = live ? '' : ' <meta name="robots" content="noindex,nofollow">\n';
- const related = (opts.relatedPosts || []).filter((p) => p.slug !== post.slug).slice(0, 4);
- const jsonLd = JSON.stringify({
- '@context': 'https://schema.org',
- '@type': 'BlogPosting',
- headline: post.title,
- description: post.excerpt,
- datePublished: post.publishedAt,
- dateModified: post.updatedAt || post.publishedAt,
- author: { '@type': 'Organization', name: 'Upper Room DFW Editorial' },
- publisher: {
- '@type': 'Organization',
- name: 'Upper Room DFW',
- logo: { '@type': 'ImageObject', url: `${baseUrl}/images/logo-upper-room-dfw.png` },
- },
- image: (post.images || [{ src: hero }]).map((im) => `${baseUrl}/${im.src || im}`),
- mainEntityOfPage: url,
- keywords: (post.keywords || []).join(', '),
- articleSection: post.city,
- wordCount: wordCount(post.content),
- about: [
- { '@type': 'Thing', name: 'Church directory' },
- { '@type': 'Place', name: post.city || 'Dallas–Fort Worth' },
- ],
- });
+  const related = pickRelatedPosts(post, opts.relatedPosts || [], 3);
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt || post.publishedAt,
+    author: { '@type': 'Organization', name: 'Upper Room DFW Editorial' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Upper Room DFW',
+      logo: { '@type': 'ImageObject', url: `${baseUrl}/images/logo-upper-room-dfw.png` },
+    },
+    image: (post.images || [{ src: hero }]).map((im) => `${baseUrl}/${im.src || im}`),
+    mainEntityOfPage: url,
+    keywords: (post.keywords || []).join(', '),
+    articleSection: post.city,
+    wordCount: wordCount(post.content),
+    about: [
+      { '@type': 'Thing', name: 'Church directory' },
+      { '@type': 'Place', name: post.city || 'Dallas–Fort Worth' },
+    ],
+  });
 
- return `${headBlock({ title, description: post.excerpt, canonical: url, prefix, keywords: post.keywords }).replace('</head>', `${robots} <meta property="og:image" content="${baseUrl}/${hero}">\n <meta name="author" content="Upper Room DFW Editorial">\n</head>`)}
+  return `${headBlock({ title, description: post.excerpt, canonical: url, prefix, keywords: post.keywords }).replace('</head>', `${robots}  <meta property="og:image" content="${baseUrl}/${hero}">\n  <meta name="author" content="Upper Room DFW Editorial">\n</head>`)}
 ${navBlock(prefix)}
 <div class="urdfw-blog-layout max-w-screen-2xl mx-auto px-4 sm:px-6 py-10">
- <p class="urdfw-blog-layout__back mb-4"><a href="${prefix}blog.html" class="text-sm text-sky-700 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Blog</a></p>
- ${live ? '' : `<div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm"><strong>Scheduled:</strong> Publishes ${formatDate(post.publishedAt)} (Central). Not yet in the public index or RSS.</div>`}
- <div class="urdfw-page-with-sidebar urdfw-blog-with-sidebar">
- <main class="urdfw-blog-main min-w-0">
- <article class="bg-white border rounded-2xl overflow-hidden shadow-sm" itemscope itemtype="https://schema.org/BlogPosting">
- <img src="${prefix}${hero}" alt="${esc(heroAlt)}" class="w-full h-56 md:h-72 object-cover" loading="eager" itemprop="image">
- <div class="p-6 md:p-8 prose prose-slate max-w-none">
- <p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-location-dot text-sky-600"></i> ${esc(post.city)} · <time datetime="${post.publishedAt}" itemprop="datePublished">${formatDate(post.publishedAt)}</time> · ${post.readMinutes || 8} min read</p>
- <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4" itemprop="headline">${esc(post.title)}</h1>
- <div class="urdfw-blog-content text-slate-700 leading-relaxed" itemprop="articleBody">${post.content}</div>
- </div>
- </article>
- <div class="mt-8 p-5 bg-sky-50 border border-sky-100 rounded-2xl text-sm">
- <strong>Find a church in ${esc(post.city)}</strong> — <a href="${prefix}directory.html" class="text-sky-700 underline">Browse the DFW directory</a> or <a href="${prefix}register.html" class="text-sky-700 underline">list your church</a>. Start from the <a href="${prefix}index.html" class="text-sky-700 underline">Upper Room DFW homepage</a>.
- </div>
- </main>
- ${blogSidebar(prefix, post, related)}
- </div>
+  <p class="urdfw-blog-layout__back mb-4"><a href="${prefix}blog.html" class="text-sm text-sky-700 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Blog</a></p>
+  ${live ? '' : `<div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm"><strong>Scheduled:</strong> Publishes ${formatDate(post.publishedAt)} (Central). Not yet in the public index or RSS.</div>`}
+  <div class="urdfw-page-with-sidebar urdfw-blog-with-sidebar">
+    <main class="urdfw-blog-main min-w-0">
+      <article class="bg-white border rounded-2xl overflow-hidden shadow-sm" itemscope itemtype="https://schema.org/BlogPosting">
+        <img src="${prefix}${hero}" alt="${esc(heroAlt)}" class="w-full h-56 md:h-72 object-cover" loading="eager" itemprop="image">
+        <div class="p-6 md:p-8 prose prose-slate max-w-none">
+          <p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-location-dot text-sky-600"></i> ${esc(post.city)} · <time datetime="${post.publishedAt}" itemprop="datePublished">${formatDate(post.publishedAt)}</time> · ${post.readMinutes || 8} min read</p>
+          <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4" itemprop="headline">${esc(post.title)}</h1>
+          <div class="urdfw-blog-content text-slate-700 leading-relaxed" itemprop="articleBody">${post.content}</div>
+        </div>
+      </article>
+      <div class="mt-8 p-5 bg-sky-50 border border-sky-100 rounded-2xl text-sm">
+        <strong>Find a church in ${esc(post.city)}</strong> — <a href="${prefix}directory.html" class="text-sky-700 underline">Browse the DFW directory</a> or <a href="${prefix}register.html" class="text-sky-700 underline">list your church</a>. Start from the <a href="${prefix}index.html" class="text-sky-700 underline">Upper Room DFW homepage</a>.
+      </div>
+    </main>
+    ${blogSidebar(prefix, post)}
+  </div>
+  ${relatedPostsSection(prefix, related)}
 </div>
 <script type="application/ld+json">${jsonLd}</script>
 ${blogSidebarScript()}
