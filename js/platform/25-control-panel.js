@@ -488,15 +488,22 @@
           if (data.ok) {
             setStatus(esc(data.reason || 'Verified — configured tags found in live HTML'), 'ok');
           } else {
-            setStatus(esc(data.reason || data.error || 'Not fully verified on static HTML (save & deploy bake may still be needed)'), 'warn');
+            const detailMsg = (data.failureDetails && data.failureDetails[0])
+              || data.reason
+              || data.error
+              || 'Not fully verified on static HTML';
+            setStatus(esc(detailMsg), 'warn');
           }
-          if (detail && (data.checks || data.probes || data.configured)) {
+          if (detail && (data.checks || data.probes || data.configured || data.failureDetails)) {
             detail.classList.remove('hidden');
             detail.textContent = JSON.stringify({
               ok: data.ok,
               reason: data.reason,
+              failures: data.failures,
+              failureDetails: data.failureDetails,
               checks: data.checks,
               configured: data.configured,
+              detected: data.detected,
               probes: data.probes,
             }, null, 2);
           }

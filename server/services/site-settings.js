@@ -110,6 +110,21 @@ function setSiteSettings(db, patch) {
     footerScripts: patch.footerScripts !== undefined ? patch.footerScripts : current.footerScripts,
     updatedAt: new Date().toISOString(),
   });
+
+  /* Keep body noscript GTM id in sync with gtmId field (fix GTM-XXXX → real container) */
+  if (next.gtmId && next.customBodyHtml) {
+    next.customBodyHtml = String(next.customBodyHtml)
+      .replace(/id=GTM-XXXX/gi, 'id=' + next.gtmId)
+      .replace(/id=["']GTM-XXXX["']/gi, 'id="' + next.gtmId + '"');
+  }
+  /* If gtmId is set, strip duplicate full GTM bootstrap from customHead (platform injects it) */
+  if (next.gtmId && next.customHeadHtml && /googletagmanager\.com\/gtm\.js/i.test(next.customHeadHtml)) {
+    next.customHeadHtml = String(next.customHeadHtml)
+      .replace(/<!--\s*Google Tag Manager\s*-->[\s\S]*?<!--\s*End Google Tag Manager\s*-->/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?googletagmanager\.com\/gtm\.js[\s\S]*?<\/script>\s*/gi, '')
+      .trim() + (next.customHeadHtml.endsWith('\n') ? '\n' : '');
+  }
+
   setSetting(db, SETTINGS_KEY, next);
   return next;
 }

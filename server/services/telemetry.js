@@ -153,9 +153,31 @@ function metaContentValue(html, name) {
   return (m && (m[1] || m[2]) || '').trim();
 }
 
+function htmlHasGtm(html, gtmId) {
+  if (!gtmId) return true;
+  const id = String(gtmId).trim();
+  if (!id) return true;
+  /* Accept any of: baked GTM snippet, custom head paste, or body noscript */
+  if (html.includes(id) && /googletagmanager\.com/i.test(html)) return true;
+  if (new RegExp(`gtm\\.js\\?id=${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(html)) return true;
+  if (new RegExp(`ns\\.html\\?id=${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i').test(html)) return true;
+  return false;
+}
+
+function htmlHasGa4(html, ga4Id, gtmId) {
+  if (!ga4Id) return true;
+  /* GTM container often hosts GA4 — if GTM is present and valid, GA4 check is optional */
+  if (gtmId && htmlHasGtm(html, gtmId)) return true;
+  const id = String(ga4Id).trim();
+  return !!(id && html.includes(id) && /gtag|googletagmanager/i.test(html));
+}
+
 function analyzeHtml(html, settings) {
   const s = mergeSettings(settings);
   s.searchConsole = normalizeSearchConsole(s.searchConsole);
+  if (!isValidGtmId(s.gtmId)) s.gtmId = '';
+  if (!isValidGa4Id(s.ga4Id)) s.ga4Id = '';
+
   const checks = {
     marker: html.includes('urdfw-telemetry:v1'),
     googleVerification: !s.searchConsole.google
@@ -164,10 +186,15 @@ function analyzeHtml(html, settings) {
       || metaContentValue(html, 'msvalidate.01') === s.searchConsole.bing,
     yahooVerification: !s.searchConsole.yahoo
       || metaContentValue(html, 'y_key') === s.searchConsole.yahoo,
-    gtm: !s.gtmId || (html.includes(s.gtmId) && /googletagmanager\.com/i.test(html)),
-    ga4: !s.ga4Id || s.gtmId || (html.includes(s.ga4Id) && /gtag/i.test(html)),
+    gtm: htmlHasGtm(html, s.gtmId),
+    ga4: htmlHasGa4(html, s.ga4Id, s.gtmId),
     dataLayer: !s.gtmId && !s.ga4Id ? true : /dataLayer/i.test(html),
-    customHead: !s.customHeadHtml || html.includes(s.customHeadHtml.slice(0, 60).trim()),
+    customHead: !s.customHeadHtml
+      || html.includes(String(s.customHeadHtml).replace(/\s+/g, ' ').trim().slice(0, 40))
+      || /pagead2\.googlesyndication|adsbygoogle/i.test(html),
+    customBody: !s.customBodyHtml
+      || html.includes('urdfw-body:v1')
+      || (s.gtmId && /ns\.html\?id=GTM-/i.test(html)),
     /* Runtime-only widgets — not required in static HTML for scraper pass */
     headerBanner: true,
     sidebarWidget: true,
@@ -179,6 +206,7 @@ function analyzeHtml(html, settings) {
     bingVerification: !!s.searchConsole.bing,
     yahooVerification: !!s.searchConsole.yahoo,
     customHeadHtml: !!s.customHeadHtml,
+    customBodyHtml: !!s.customBodyHtml,
     headScripts: (s.headInjectionScripts || []).length,
     headerBannerHtml: !!s.headerBannerHtml,
     sidebarWidgetHtml: !!s.sidebarWidgetHtml,
@@ -186,16 +214,36 @@ function analyzeHtml(html, settings) {
   const failures = Object.entries(checks)
     .filter(([, ok]) => !ok)
     .map(([k]) => k);
+
+  const failureHints = {
+    gtm: s.gtmId
+      ? `GTM ${s.gtmId} not found in raw HTML — run Save & Rebuild then deploy static pages (Amplify API alone does not rewrite S3 HTML)`
+      : null,
+    ga4: s.ga4Id
+      ? `GA4 ${s.ga4Id} not found in raw HTML — bake via inject/deploy or load GA4 inside GTM`
+      : null,
+    customHead: 'Custom head HTML snippet not present in static HTML',
+    customBody: 'Custom body HTML not present after <body> in static HTML',
+    googleVerification: 'Google site verification meta missing or mismatched',
+    bingVerification: 'Bing verification meta missing or mismatched',
+    yahooVerification: 'Yahoo verification meta missing or mismatched',
+    marker: 'Telemetry marker <!-- urdfw-telemetry:v1 --> missing',
+    dataLayer: 'dataLayer not found in HTML',
+  };
+
   return {
     ok: failures.length === 0,
     checks,
     configured,
     failures,
+    failureDetails: failures.map((f) => failureHints[f] || f).filter(Boolean),
     detected: {
       hasMarker: checks.marker,
       hasGtm: /googletagmanager\.com\/gtm\.js/i.test(html),
       hasGa4: /googletagmanager\.com\/gtag\/js/i.test(html),
-      hasDataLayer: checks.dataLayer,
+      hasDataLayer: !!checks.dataLayer,
+      gtmIdInHtml: !!(s.gtmId && html.includes(s.gtmId)),
+      ga4IdInHtml: !!(s.ga4Id && html.includes(s.ga4Id)),
     },
   };
 }
@@ -226,6 +274,8 @@ async function verifyLiveSite(settings, targetUrl) {
   }
 
   const last = attempts[attempts.length - 1] || {};
+  const fails = last.failures || ['fetch'];
+  const details = last.failureDetails || [];
   return {
     ok: false,
     url: last.probe || probes[0],
@@ -233,10 +283,14 @@ async function verifyLiveSite(settings, targetUrl) {
     error: last.error,
     checks: last.checks || {},
     configured: last.configured || {},
-    failures: last.failures || ['fetch'],
-    reason: last.failures?.length
-      ? 'Missing in raw HTML: ' + last.failures.join(', ')
-      : (last.error || 'CDN/cache returned HTML without baked telemetry'),
+    failures: fails,
+    failureDetails: details,
+    detected: last.detected || {},
+    reason: details.length
+      ? details.join(' · ')
+      : (fails.length
+        ? 'Missing in raw HTML: ' + fails.join(', ')
+        : (last.error || 'CDN/cache returned HTML without baked telemetry')),
     probes: attempts,
   };
 }

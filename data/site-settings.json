@@ -2,13 +2,14 @@
   "ok": true,
   "version": "1.0.0",
   "ga4Id": "G-204RJE9QSF",
-  "gtmId": "",
+  "gtmId": "GTM-5LDRMLLJ",
   "searchConsole": {
     "google": "gStUxdXBMZR_ImlwUScDVFroLj-lHYrESNxjBsj25xc",
     "bing": "",
     "yahoo": ""
   },
-  "customHeadHtml": "<meta name=\"google-site-verification\" content=\"gStUxdXBMZR_ImlwUScDVFroLj-lHYrESNxjBsj25xc\" />\n\n<script async src=\"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5150713093785557\"\n     crossorigin=\"anonymous\"></script>\n",
+  "customHeadHtml": "<script async src=\"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5150713093785557\" crossorigin=\"anonymous\"></script>\n",
+  "customBodyHtml": "<noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id=GTM-5LDRMLLJ\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>\n",
   "headInjectionScripts": [],
   "footerScripts": [],
   "headerBannerHtml": "",
@@ -23,5 +24,5 @@
     "title": "Stay connected with DFW faith",
     "subtitle": "Get the weekly church digest in your inbox."
   },
-  "updatedAt": "2026-07-15T01:10:00.000Z"
+  "updatedAt": "2026-07-15T05:15:00.000Z"
 }
