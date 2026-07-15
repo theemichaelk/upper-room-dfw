@@ -66,20 +66,37 @@
 
   function injectCustomHead(html) {
     if (!html || document.getElementById(MARKER_ID + '-custom')) return;
+    /* Marker must exist before node moves so re-entry guards work */
+    const marker = document.createElement('meta');
+    marker.id = MARKER_ID + '-custom';
+    marker.setAttribute('data-urdfw', 'custom-head');
+    document.head.appendChild(marker);
+
     const wrap = document.createElement('div');
-    wrap.id = MARKER_ID + '-custom';
     wrap.innerHTML = html;
-    while (wrap.firstChild) {
+    /* Always detach firstChild — script nodes were left in wrap (infinite loop). */
+    let safety = 0;
+    while (wrap.firstChild && safety++ < 200) {
       const node = wrap.firstChild;
-      if (node.tagName === 'SCRIPT') {
+      wrap.removeChild(node);
+      if (node.nodeType !== 1) continue; /* skip text/comments */
+      const tag = (node.tagName || '').toUpperCase();
+      if (tag === 'SCRIPT') {
         const s = document.createElement('script');
-        if (node.src) s.src = node.src;
-        else s.textContent = node.textContent;
+        if (node.src) {
+          s.src = node.src;
+          if (node.async) s.async = true;
+          if (node.defer) s.defer = true;
+          const co = node.getAttribute('crossorigin');
+          if (co != null) s.setAttribute('crossorigin', co);
+        } else {
+          s.textContent = node.textContent || '';
+        }
         document.head.appendChild(s);
-      } else if (node.tagName === 'META' || node.tagName === 'LINK') {
+      } else if (tag === 'META' || tag === 'LINK' || tag === 'STYLE') {
         document.head.appendChild(node);
       } else {
-        document.head.appendChild(node);
+        /* Other nodes (e.g. stray div) — skip to avoid polluting head */
       }
     }
   }
