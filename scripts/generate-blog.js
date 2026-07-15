@@ -185,15 +185,18 @@ function relatedPostsSection(prefix, relatedPosts) {
   }).join('\n');
 
   return `
-  <section class="urdfw-related-posts" aria-labelledby="urdfw-related-heading">
-    <div class="urdfw-related-posts__header">
-      <h2 id="urdfw-related-heading" class="urdfw-related-posts__title">Related posts</h2>
-      <p class="urdfw-related-posts__sub">Keep exploring DFW church guides and local faith resources.</p>
-    </div>
-    <div class="urdfw-related-posts__grid">
+  <section class="urdfw-related-posts" id="related-posts" aria-labelledby="urdfw-related-heading">
+    <div class="urdfw-related-posts__inner">
+      <div class="urdfw-related-posts__header">
+        <p class="urdfw-related-posts__eyebrow"><i class="fa-solid fa-book-open"></i> Keep reading</p>
+        <h2 id="urdfw-related-heading" class="urdfw-related-posts__title">Related posts</h2>
+        <p class="urdfw-related-posts__sub">More DFW church guides and local faith resources you may like.</p>
+      </div>
+      <div class="urdfw-related-posts__grid">
 ${cards}
+      </div>
+      <p class="urdfw-related-posts__all"><a href="${prefix}blog.html">View all blog guides →</a></p>
     </div>
-    <p class="urdfw-related-posts__all"><a href="${prefix}blog.html">View all blog guides →</a></p>
   </section>`;
 }
 
@@ -272,7 +275,7 @@ ${navBlock(prefix)}
 <div class="urdfw-blog-layout max-w-screen-2xl mx-auto px-4 sm:px-6 py-10">
   <p class="urdfw-blog-layout__back mb-4"><a href="${prefix}blog.html" class="text-sm text-sky-700 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Blog</a></p>
   ${live ? '' : `<div class="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm"><strong>Scheduled:</strong> Publishes ${formatDate(post.publishedAt)} (Central). Not yet in the public index or RSS.</div>`}
-  <div class="urdfw-page-with-sidebar urdfw-blog-with-sidebar">
+  <div class="urdfw-blog-with-sidebar">
     <main class="urdfw-blog-main min-w-0">
       <article class="bg-white border rounded-2xl overflow-hidden shadow-sm" itemscope itemtype="https://schema.org/BlogPosting">
         <img src="${prefix}${hero}" alt="${esc(heroAlt)}" class="w-full h-56 md:h-72 object-cover" loading="eager" itemprop="image">
@@ -287,8 +290,8 @@ ${navBlock(prefix)}
       </div>
     </main>
     ${blogSidebar(prefix, post)}
+    ${relatedPostsSection(prefix, related)}
   </div>
-  ${relatedPostsSection(prefix, related)}
 </div>
 <script type="application/ld+json">${jsonLd}</script>
 ${blogSidebarScript()}
