@@ -31,7 +31,25 @@ const rootPages = fs.readdirSync(ROOT)
   .filter((f) => f.endsWith('.html') && !exclude.has(f))
   .map((f) => ({ path: f, mtime: fs.statSync(path.join(ROOT, f)).mtime.toISOString().slice(0, 10) }));
 
-const blogPosts = walkHtml(path.join(ROOT, 'blog'), [], 'blog');
+/* Only published blog posts (drip schedule) enter the sitemap */
+let blogPosts = [];
+try {
+  const blogData = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'blog-posts.json'), 'utf8'));
+  const now = Date.now();
+  blogPosts = (blogData.posts || [])
+    .filter((p) => p.publishedAt && new Date(p.publishedAt).getTime() <= now && p.status !== 'draft')
+    .map((p) => {
+      const rel = `blog/${p.slug}.html`;
+      const full = path.join(ROOT, 'blog', `${p.slug}.html`);
+      const mtime = fs.existsSync(full)
+        ? fs.statSync(full).mtime.toISOString().slice(0, 10)
+        : String(p.publishedAt).slice(0, 10);
+      return { path: rel, mtime };
+    });
+} catch {
+  blogPosts = walkHtml(path.join(ROOT, 'blog'), [], 'blog');
+}
+
 const churches = walkHtml(path.join(ROOT, 'churches'), [], 'churches')
   .filter((p) => p.path !== 'churches/index.html');
 

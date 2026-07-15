@@ -80,6 +80,42 @@ function createRouter(db, limiters = {}) {
     res.json(buildPublicStats(db));
   });
 
+  /* ─── MOBILE PUSH TOKENS ─── */
+  router.post('/devices/push-token', formLimiter, (req, res) => {
+    try {
+      const token = String(req.body?.token || '').trim();
+      if (!token || token.length < 20 || token.length > 512) {
+        return res.status(400).json({ ok: false, error: 'Invalid token' });
+      }
+      const platform = String(req.body?.platform || '').slice(0, 32);
+      const deviceName = String(req.body?.deviceName || '').slice(0, 120);
+      const appVersion = String(req.body?.appVersion || '').slice(0, 32);
+      const now = new Date().toISOString();
+      const existing = db.prepare('SELECT id FROM push_devices WHERE token = ?').get(token);
+      if (existing) {
+        db.prepare(`
+          UPDATE push_devices
+          SET platform = ?, device_name = ?, app_version = ?, enabled = 1, updated_at = ?
+          WHERE token = ?
+        `).run(platform, deviceName, appVersion, now, token);
+        return res.json({ ok: true, id: existing.id, updated: true });
+      }
+      const id = uuid();
+      db.prepare(`
+        INSERT INTO push_devices (id, token, platform, device_name, app_version, enabled, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+      `).run(id, token, platform, deviceName, appVersion, now, now);
+      return res.json({ ok: true, id, updated: false });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message || 'Failed to save token' });
+    }
+  });
+
+  router.get('/devices/push-token/count', adminRequired, (req, res) => {
+    const row = db.prepare('SELECT COUNT(*) AS c FROM push_devices WHERE enabled = 1').get();
+    res.json({ ok: true, count: row?.c || 0 });
+  });
+
   router.get('/analytics/admin', adminRequired, (req, res) => {
     res.json(buildAdminAnalytics(db));
   });

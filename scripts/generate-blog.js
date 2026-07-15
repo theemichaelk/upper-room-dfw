@@ -31,6 +31,22 @@ function formatDate(iso) {
   }
 }
 
+/** Drip schedule: only surface posts whose publishedAt is on or before now (America/Chicago day). */
+function isPublished(post, now = new Date()) {
+  if (!post || !post.publishedAt) return false;
+  if (post.status === 'draft') return false;
+  return new Date(post.publishedAt).getTime() <= now.getTime();
+}
+
+function publishedPosts(data, now = new Date()) {
+  return (data.posts || []).filter((p) => isPublished(p, now));
+}
+
+function wordCount(html) {
+  const t = String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return t ? t.split(' ').filter(Boolean).length : 0;
+}
+
 function navBlock(prefix) {
   const p = prefix || '';
   return `
@@ -104,26 +120,56 @@ function headBlock(opts) {
 <body class="tail-container bg-slate-50 text-slate-800" data-urdfw-shell="global">`;
 }
 
-function postPage(post, baseUrl) {
+function postPage(post, baseUrl, opts = {}) {
   const prefix = '../';
   const url = `${baseUrl}/blog/${post.slug}.html`;
   const title = `${post.title} | Upper Room DFW Blog`;
-  return `${headBlock({ title, description: post.excerpt, canonical: url, prefix, keywords: post.keywords })}
+  const live = opts.live !== false && isPublished(post);
+  const hero = post.image || (post.images && post.images[0] && post.images[0].src) || 'images/12.jpg';
+  const heroAlt = (post.images && post.images[0] && post.images[0].alt) || post.title;
+  const robots = live ? '' : '  <meta name="robots" content="noindex,nofollow">\n';
+  const jsonLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt || post.publishedAt,
+    author: { '@type': 'Organization', name: 'Upper Room DFW Editorial' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Upper Room DFW',
+      logo: { '@type': 'ImageObject', url: `${baseUrl}/images/logo-upper-room-dfw.png` },
+    },
+    image: (post.images || [{ src: hero }]).map((im) => `${baseUrl}/${im.src || im}`),
+    mainEntityOfPage: url,
+    keywords: (post.keywords || []).join(', '),
+    articleSection: post.city,
+    wordCount: wordCount(post.content),
+    about: [
+      { '@type': 'Thing', name: 'Church directory' },
+      { '@type': 'Place', name: post.city || 'Dallas–Fort Worth' },
+    ],
+  });
+
+  return `${headBlock({ title, description: post.excerpt, canonical: url, prefix, keywords: post.keywords }).replace('</head>', `${robots}  <meta property="og:image" content="${baseUrl}/${hero}">\n  <meta name="author" content="Upper Room DFW Editorial">\n</head>`)}
 ${navBlock(prefix)}
 <main class="max-w-3xl mx-auto px-6 py-10">
   <a href="${prefix}blog.html" class="text-sm text-sky-700 hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Blog</a>
-  <article class="mt-6 bg-white border rounded-2xl overflow-hidden shadow-sm">
-    <img src="${prefix}${post.image}" alt="${esc(post.title)}" class="w-full h-56 md:h-72 object-cover" loading="eager">
+  ${live ? '' : `<div class="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm"><strong>Scheduled:</strong> Publishes ${formatDate(post.publishedAt)} (Central). Not yet in the public index or RSS.</div>`}
+  <article class="mt-6 bg-white border rounded-2xl overflow-hidden shadow-sm" itemscope itemtype="https://schema.org/BlogPosting">
+    <img src="${prefix}${hero}" alt="${esc(heroAlt)}" class="w-full h-56 md:h-72 object-cover" loading="eager" itemprop="image">
     <div class="p-6 md:p-8 prose prose-slate max-w-none">
-      <p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-location-dot text-sky-600"></i> ${esc(post.city)} · ${formatDate(post.publishedAt)} · ${post.readMinutes} min read</p>
-      <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4">${esc(post.title)}</h1>
-      <div class="urdfw-blog-content text-slate-700 leading-relaxed">${post.content}</div>
+      <p class="text-xs text-slate-500 mb-2"><i class="fa-solid fa-location-dot text-sky-600"></i> ${esc(post.city)} · <time datetime="${post.publishedAt}" itemprop="datePublished">${formatDate(post.publishedAt)}</time> · ${post.readMinutes || 8} min read · ~${wordCount(post.content)} words</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4" itemprop="headline">${esc(post.title)}</h1>
+      <div class="urdfw-blog-content text-slate-700 leading-relaxed" itemprop="articleBody">${post.content}</div>
     </div>
   </article>
   <div class="mt-8 p-5 bg-sky-50 border border-sky-100 rounded-2xl text-sm">
-    <strong>Find a church in ${esc(post.city)}</strong> — <a href="${prefix}directory.html" class="text-sky-700 underline">Browse the DFW directory</a> or <a href="${prefix}register.html" class="text-sky-700 underline">list your church</a>.
+    <strong>Find a church in ${esc(post.city)}</strong> — <a href="${prefix}directory.html" class="text-sky-700 underline">Browse the DFW directory</a> or <a href="${prefix}register.html" class="text-sky-700 underline">list your church</a>. Start from the <a href="${prefix}index.html" class="text-sky-700 underline">Upper Room DFW homepage</a>.
   </div>
 </main>
+<script type="application/ld+json">${jsonLd}</script>
 ${footerBlock(prefix)}
 <script src="${prefix}js/main.js" defer></script>
 <script src="${prefix}js/platform/loader.js" defer></script>
@@ -133,11 +179,14 @@ ${footerBlock(prefix)}
 }
 
 function blogIndexPage(data) {
-  const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  const cards = posts.map((post) => `
+  const posts = publishedPosts(data).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const scheduled = (data.posts || []).filter((p) => !isPublished(p)).sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+  const cards = posts.map((post) => {
+    const img = post.image || (post.images && post.images[0] && post.images[0].src) || 'images/12.jpg';
+    return `
       <article class="urdfw-blog-card bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
         <a href="blog/${post.slug}.html" class="block">
-          <img src="${post.image}" alt="${esc(post.title)}" class="w-full h-48 object-cover" loading="lazy">
+          <img src="${img}" alt="${esc(post.title)}" class="w-full h-48 object-cover" loading="lazy">
           <div class="p-5">
             <p class="text-xs text-slate-500 mb-1"><i class="fa-solid fa-location-dot text-sky-600"></i> ${esc(post.city)} · ${formatDate(post.publishedAt)}</p>
             <h2 class="text-lg font-semibold text-slate-900 leading-snug">${esc(post.title)}</h2>
@@ -145,45 +194,53 @@ function blogIndexPage(data) {
             <span class="inline-block mt-3 text-sm font-semibold text-sky-700">Read more →</span>
           </div>
         </a>
-      </article>`).join('\n');
+      </article>`;
+  }).join('\n');
+
+  const dripNote = scheduled.length
+    ? `<p class="text-sm text-sky-100/90 mt-3 max-w-2xl">${scheduled.length} additional local SEO guides are scheduled weekly (1 per week). Next: <strong>${esc(scheduled[0].title)}</strong> on ${formatDate(scheduled[0].publishedAt)}.</p>`
+    : '';
 
   const jsonLd = JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Blog',
     name: 'Upper Room DFW Faith Blog',
     url: `${data.baseUrl}/blog.html`,
-    description: 'Local church insights, DFW faith stories, and directory tips.',
+    description: 'Local church insights, DFW faith stories, and directory tips for churches near me and churches in Texas.',
     blogPost: posts.map((p) => ({
       '@type': 'BlogPosting',
       headline: p.title,
       url: `${data.baseUrl}/blog/${p.slug}.html`,
       datePublished: p.publishedAt,
-      image: `${data.baseUrl}/${p.image}`,
+      image: `${data.baseUrl}/${p.image || (p.images && p.images[0] && p.images[0].src) || 'images/12.jpg'}`,
     })),
   });
 
   return `${headBlock({
-    title: 'Blog | Upper Room DFW — DFW Church Insights & Faith Stories',
-    description: 'Locally SEO-optimized faith stories, church guides, and DFW community insights from Upper Room DFW.',
+    title: 'Blog | Upper Room DFW — Churches Near Me & DFW Church Directory Guides',
+    description: 'Authoritative local SEO guides for churches near me, church directory research, and churches in DFW/Texas from Upper Room DFW.',
     canonical: `${data.baseUrl}/blog.html`,
     prefix: '',
-    keywords: ['DFW churches blog', 'Dallas church guide', 'Fort Worth faith', 'Plano churches'],
+    keywords: ['churches near me', 'church directory', 'churches in DFW', 'churches in Texas', 'Upper Room DFW', 'best directory in Texas'],
   })}
 ${navBlock('')}
 <header class="bg-gradient-to-br from-sky-900 to-sky-600 text-white py-14">
   <div class="max-w-screen-2xl mx-auto px-6">
     <h1 class="text-3xl md:text-4xl font-bold">DFW Faith Blog</h1>
-    <p class="mt-2 text-sky-100 max-w-2xl">Locally relevant guides for choosing churches, youth programs, outreach, and events across Dallas–Fort Worth.</p>
+    <p class="mt-2 text-sky-100 max-w-2xl">Long-form, locally optimized guides for choosing churches, youth programs, outreach, and directory strategy across Dallas–Fort Worth — built for SEO, AEO, and GEO.</p>
+    ${dripNote}
     <div class="mt-4 flex flex-wrap gap-3 text-sm">
       <a href="feed.xml" class="px-3 py-1.5 bg-white/15 rounded-xl hover:bg-white/25"><i class="fa-solid fa-rss mr-1"></i> RSS Feed</a>
       <a href="sitemap.xml" class="px-3 py-1.5 bg-white/15 rounded-xl hover:bg-white/25"><i class="fa-solid fa-sitemap mr-1"></i> Sitemap</a>
       <a href="directory.html" class="px-3 py-1.5 bg-white text-sky-900 rounded-xl font-semibold">Browse Directory</a>
+      <a href="index.html" class="px-3 py-1.5 bg-white/15 rounded-xl hover:bg-white/25">Homepage</a>
     </div>
   </div>
 </header>
 <main class="max-w-screen-2xl mx-auto px-6 py-12">
+  <p class="text-sm text-slate-600 mb-6">${posts.length} published guides · weekly drip continues through scheduled local SEO topics</p>
   <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6" id="urdfw-blog-grid">
-${cards}
+${cards || '<p class="text-slate-500">No published posts yet.</p>'}
   </div>
 </main>
 <script type="application/ld+json">${jsonLd}</script>
@@ -196,7 +253,7 @@ ${footerBlock('')}
 }
 
 function rssFeed(data) {
-  const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const posts = publishedPosts(data).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
   const items = posts.map((p) => `    <item>
       <title>${esc(p.title)}</title>
       <link>${data.baseUrl}/blog/${p.slug}.html</link>
@@ -211,7 +268,7 @@ function rssFeed(data) {
   <channel>
     <title>Upper Room DFW Blog</title>
     <link>${data.baseUrl}/blog.html</link>
-    <description>DFW church insights, local faith guides, and directory tips</description>
+    <description>DFW church insights, churches near me guides, and local directory tips for Texas</description>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${data.baseUrl}/feed.xml" rel="self" type="application/rss+xml"/>
@@ -325,8 +382,9 @@ function patchHomeInsights(data) {
   let html = fs.readFileSync(INDEX_HTML, 'utf8');
   html = stripLegacyHeroBlog(html);
 
-  const posts = [...data.posts].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-  const section = buildHomeInsightsSection(posts, data.posts.length);
+  const live = publishedPosts(data);
+  const posts = [...live].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const section = buildHomeInsightsSection(posts, live.length);
 
   if (html.includes(HOME_INSIGHTS_START)) {
     html = html.replace(
@@ -350,10 +408,16 @@ function main() {
   const data = JSON.parse(fs.readFileSync(DATA, 'utf8'));
   fs.mkdirSync(BLOG_DIR, { recursive: true });
 
+  const now = new Date();
   let count = 0;
+  let liveCount = 0;
+  let scheduledCount = 0;
   for (const post of data.posts) {
+    const live = isPublished(post, now);
+    if (live) liveCount += 1;
+    else scheduledCount += 1;
     const file = path.join(BLOG_DIR, `${post.slug}.html`);
-    fs.writeFileSync(file, postPage(post, data.baseUrl));
+    fs.writeFileSync(file, postPage(post, data.baseUrl, { live }));
     count += 1;
   }
 
@@ -361,7 +425,7 @@ function main() {
   fs.writeFileSync(path.join(ROOT, 'feed.xml'), rssFeed(data));
   if (patchHomeInsights(data)) console.log('Patched index.html home insights section');
 
-  console.log(`Generated ${count} blog posts, blog.html, and feed.xml`);
+  console.log(`Generated ${count} blog HTML files (${liveCount} published, ${scheduledCount} scheduled/noindex), blog.html, and feed.xml`);
 }
 
 main();

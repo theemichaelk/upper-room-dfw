@@ -7,6 +7,9 @@ frontend:
         - npm ci --omit=dev
     build:
       commands:
+        # Regenerate blog drip (publishedAt gate) + sitemap before bundling static
+        - node scripts/generate-blog.js
+        - node scripts/generate-sitemap.js
         - node scripts/add-powered-by-footer.js
         - node scripts/build-amplify-bundle.js
   artifacts:

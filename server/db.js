@@ -274,9 +274,21 @@ function initDb() {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS push_devices (
+      id TEXT PRIMARY KEY,
+      token TEXT UNIQUE NOT NULL,
+      platform TEXT,
+      device_name TEXT,
+      app_version TEXT,
+      enabled INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS idx_sites_client ON sites(client_id);
     CREATE INDEX IF NOT EXISTS idx_sites_domain ON sites(domain);
     CREATE INDEX IF NOT EXISTS idx_dns_site ON dns_records(site_id);
+    CREATE INDEX IF NOT EXISTS idx_push_token ON push_devices(token);
 
     CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
     CREATE INDEX IF NOT EXISTS idx_leads_church ON leads(church_email);
