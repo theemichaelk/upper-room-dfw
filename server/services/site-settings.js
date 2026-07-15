@@ -13,6 +13,8 @@ const SETTINGS_KEY = 'site_settings';
 const DEFAULT_SITE_SETTINGS = {
   version: '1.0.0',
   customHeadHtml: '',
+  /** HTML injected immediately after the opening <body> tag (public pages). */
+  customBodyHtml: '',
   headInjectionScripts: [],
   footerScripts: [],
   ga4Id: '',
@@ -66,6 +68,7 @@ function ensureSiteSettingsSeeded(db, rootDir) {
     (stored.gtmId ||
       stored.ga4Id ||
       stored.customHeadHtml ||
+      stored.customBodyHtml ||
       stored.searchConsole?.google ||
       stored.searchConsole?.bing ||
       stored.updatedAt);
@@ -76,6 +79,7 @@ function ensureSiteSettingsSeeded(db, rootDir) {
     fromFile.gtmId ||
     fromFile.ga4Id ||
     fromFile.customHeadHtml ||
+    fromFile.customBodyHtml ||
     fromFile.searchConsole?.google ||
     fromFile.searchConsole?.bing;
   if (!usefulFile) return { seeded: false, settings: mergeSettings(stored) };
@@ -120,6 +124,7 @@ function getPublicSiteSettings(db) {
     gtmId: s.gtmId || '',
     searchConsole: { ...s.searchConsole },
     customHeadHtml: s.customHeadHtml || '',
+    customBodyHtml: s.customBodyHtml || '',
     headInjectionScripts: (s.headInjectionScripts || []).map((x) => ({
       id: x.id,
       src: x.src || '',

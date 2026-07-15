@@ -10,7 +10,14 @@ const ROOT = path.join(__dirname, '..');
 const CONFIG_PATH = path.join(ROOT, 'data', 'injection-config.json');
 const SITE_SETTINGS_PATH = path.join(ROOT, 'data', 'site-settings.json');
 const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-const { buildTelemetryHeadBlock, buildTelemetryBodyBlock, MARKER, MARKER_CLOSE } = require('../server/services/telemetry');
+const {
+  buildTelemetryHeadBlock,
+  buildTelemetryBodyBlock,
+  MARKER,
+  MARKER_CLOSE,
+  BODY_MARKER,
+  BODY_MARKER_CLOSE,
+} = require('../server/services/telemetry');
 const { loadStaticSiteSettings } = require('../server/services/site-settings');
 const { injectFaviconMeta, applyNavLogo } = require('./brand-assets');
 
@@ -92,16 +99,19 @@ function ensureViewport(html) {
   return html.replace(/<head[^>]*>/i, (m) => m + '\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">');
 }
 
-/** Remove prior baked telemetry block (marker-delimited) before re-injecting. */
+function escapeRe(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Remove prior baked telemetry / body blocks (marker-delimited) before re-injecting. */
 function stripOldTelemetry(html) {
-  const closed = new RegExp(
-    `${MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${MARKER_CLOSE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
-    'gi'
-  );
+  const closed = new RegExp(`${escapeRe(MARKER)}[\\s\\S]*?${escapeRe(MARKER_CLOSE)}`, 'gi');
   if (closed.test(html)) html = html.replace(closed, '');
   else if (html.includes(MARKER)) {
     html = html.replace(/<!-- urdfw-telemetry:v1 -->[\s\S]*?(?=<meta|<link|<script|<\/head>)/i, '');
   }
+  const bodyClosed = new RegExp(`${escapeRe(BODY_MARKER)}[\\s\\S]*?${escapeRe(BODY_MARKER_CLOSE)}`, 'gi');
+  html = html.replace(bodyClosed, '');
   /* Orphan GTM/GA from bad deploys (e.g. GTM-REBUILD) left outside markers */
   html = html.replace(/<script[^>]*>[\s\S]*?googletagmanager\.com\/gtm\.js[\s\S]*?<\/script>\s*/gi, '');
   html = html.replace(/<noscript>\s*<iframe[^>]*googletagmanager\.com\/ns\.html[^>]*>[\s\S]*?<\/noscript>\s*/gi, '');
@@ -120,6 +130,7 @@ function injectTelemetry(html) {
     html = html.replace(/<head[^>]*>/i, (m) => m + '\n' + headBlock);
   }
 
+  /* Always inject body block after <body> so custom body HTML can be added/cleared */
   const bodyBlock = buildTelemetryBodyBlock(siteSettings);
   if (bodyBlock) {
     html = html.replace(/<body([^>]*)>/i, (m) => m + '\n' + bodyBlock);

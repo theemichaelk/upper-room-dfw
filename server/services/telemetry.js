@@ -8,6 +8,8 @@ const { normalizeVerificationToken, normalizeSearchConsole } = require('./verifi
 
 const MARKER = '<!-- urdfw-telemetry:v1 -->';
 const MARKER_CLOSE = '<!-- /urdfw-telemetry:v1 -->';
+const BODY_MARKER = '<!-- urdfw-body:v1 -->';
+const BODY_MARKER_CLOSE = '<!-- /urdfw-body:v1 -->';
 
 function escapeAttr(val) {
   return String(val || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -100,9 +102,21 @@ function buildTelemetryHeadBlock(settings) {
   return block;
 }
 
+/**
+ * HTML inserted right after <body> — custom body code + GTM noscript + footer scripts.
+ * Custom body is wrapped in BODY_MARKER so inject can replace it cleanly.
+ */
+function buildCustomBodyBlock(settings) {
+  const s = mergeSettings(settings);
+  const html = String(s.customBodyHtml || '').trim();
+  if (!html) return BODY_MARKER + '\n' + BODY_MARKER_CLOSE + '\n';
+  return BODY_MARKER + '\n' + html + '\n' + BODY_MARKER_CLOSE + '\n';
+}
+
 function buildTelemetryBodyBlock(settings) {
   const s = mergeSettings(settings);
-  let block = '';
+  if (!isValidGtmId(s.gtmId)) s.gtmId = '';
+  let block = buildCustomBodyBlock(s);
   if (s.gtmId) block += buildGtmBody(s.gtmId);
   if (Array.isArray(s.footerScripts)) {
     for (const sct of s.footerScripts) {
@@ -252,11 +266,14 @@ function buildDashboardStatus(db, dnsService) {
 module.exports = {
   MARKER,
   MARKER_CLOSE,
+  BODY_MARKER,
+  BODY_MARKER_CLOSE,
   normalizeVerificationToken,
   normalizeSearchConsole,
   isValidGtmId,
   isValidGa4Id,
   buildTelemetryHeadBlock,
+  buildCustomBodyBlock,
   buildTelemetryBodyBlock,
   buildVerificationMetas,
   analyzeHtml,

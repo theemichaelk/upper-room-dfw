@@ -64,6 +64,41 @@
     document.head.appendChild(s);
   }
 
+  function injectHtmlFragment(html, target, opts) {
+    opts = opts || {};
+    const wrap = document.createElement('div');
+    wrap.innerHTML = html;
+    let safety = 0;
+    const nodes = [];
+    while (wrap.firstChild && safety++ < 200) {
+      const node = wrap.firstChild;
+      wrap.removeChild(node);
+      if (node.nodeType === 3 && !String(node.textContent || '').trim()) continue;
+      if (node.nodeType === 1 && (node.tagName || '').toUpperCase() === 'SCRIPT') {
+        const s = document.createElement('script');
+        if (node.src) {
+          s.src = node.src;
+          if (node.async) s.async = true;
+          if (node.defer) s.defer = true;
+          const co = node.getAttribute('crossorigin');
+          if (co != null) s.setAttribute('crossorigin', co);
+        } else {
+          s.textContent = node.textContent || '';
+        }
+        nodes.push(s);
+      } else {
+        nodes.push(node);
+      }
+    }
+    if (opts.prepend) {
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        target.insertBefore(nodes[i], target.firstChild);
+      }
+    } else {
+      nodes.forEach((n) => target.appendChild(n));
+    }
+  }
+
   function injectCustomHead(html) {
     if (!html || document.getElementById(MARKER_ID + '-custom')) return;
     /* Marker must exist before node moves so re-entry guards work */
@@ -99,6 +134,34 @@
         /* Other nodes (e.g. stray div) — skip to avoid polluting head */
       }
     }
+  }
+
+  /** Inject customBodyHtml right after <body> (runtime, when not already baked). */
+  function injectCustomBody(html) {
+    if (!html || !document.body) return;
+    if (document.getElementById(MARKER_ID + '-body')) return;
+    /* Skip if static inject already placed the body marker */
+    if (document.documentElement.innerHTML.includes('urdfw-body:v1') &&
+        document.body.querySelector && document.body.innerHTML.includes('urdfw-body:v1')) {
+      /* baked markers are comments — still allow runtime if empty bake */
+    }
+    const existing = Array.from(document.body.childNodes).some(
+      (n) => n.nodeType === 8 && String(n.nodeValue || '').includes('urdfw-body:v1')
+    );
+    if (existing) return;
+
+    const start = document.createComment(' urdfw-body:v1 ');
+    const end = document.createComment(' /urdfw-body:v1 ');
+    const holder = document.createElement('div');
+    holder.id = MARKER_ID + '-body';
+    holder.setAttribute('data-urdfw', 'custom-body');
+    holder.style.display = 'contents';
+
+    document.body.insertBefore(end, document.body.firstChild);
+    document.body.insertBefore(holder, end);
+    document.body.insertBefore(start, holder);
+
+    injectHtmlFragment(html, holder, { prepend: false });
   }
 
   function normalizeVerificationToken(raw) {
@@ -137,9 +200,10 @@
       else if (ga4Ok) injectGa4(settings.ga4Id);
     }
 
-    /* Never inject AdSense / heavy custom head on admin or member portals */
+    /* Never inject AdSense / heavy custom head/body on admin or member portals */
     if (!portal) {
       injectCustomHead(settings.customHeadHtml);
+      if (settings.customBodyHtml) injectCustomBody(settings.customBodyHtml);
       (settings.headInjectionScripts || []).forEach(injectHeadScript);
       (settings.footerScripts || []).forEach((entry) => {
         if (!entry) return;

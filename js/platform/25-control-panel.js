@@ -197,7 +197,24 @@
     });
   };
 
-  P.renderSiteSettingsPanel = function (el) {
+  P.renderSiteSettingsPanel = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading site settings…</div>';
+    /* Prefer live API so customBodyHtml / head fields match production DB */
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        if (P.api?.siteSettings?.get) {
+          const res = await P.api.siteSettings.get();
+          if (res?.settings) P.set('site_settings', res.settings);
+        } else {
+          const token = localStorage.getItem('urdfw_api_token');
+          const r = await fetch('/api/platform/site-settings', { headers: { Authorization: 'Bearer ' + token } });
+          if (r.ok) {
+            const j = await r.json();
+            if (j.settings) P.set('site_settings', j.settings);
+          }
+        }
+      } catch { /* use cached */ }
+    }
     const siteSettings = P.get('site_settings', {});
     const sc = siteSettings.searchConsole || {};
     const nl = siteSettings.newsletterPopup || {};
@@ -230,9 +247,28 @@
           <div class="grid md:grid-cols-2 gap-4 text-xs">
             <label class="block">GTM Container ID<input name="gtmId" value="${esc(siteSettings.gtmId)}" placeholder="GTM-XXXX" class="w-full border rounded px-2 py-1.5 mt-1 font-mono"></label>
             <label class="block">GA4 Measurement ID<input name="ga4Id" value="${esc(siteSettings.ga4Id)}" placeholder="G-XXXX" class="w-full border rounded px-2 py-1.5 mt-1 font-mono"></label>
-            <label class="block md:col-span-2">Custom Head HTML<textarea name="customHeadHtml" rows="3" class="w-full border rounded px-2 py-1.5 mt-1 font-mono text-[11px]">${esc(siteSettings.customHeadHtml)}</textarea></label>
+            <label class="block md:col-span-2">Custom Head HTML<span class="block text-[10px] text-slate-500 font-normal mb-0.5">Injected inside <code>&lt;head&gt;</code> (meta tags, scripts, etc.)</span><textarea name="customHeadHtml" rows="3" class="w-full border rounded px-2 py-1.5 mt-1 font-mono text-[11px]" placeholder="&lt;meta …&gt; or &lt;script …&gt;">${esc(siteSettings.customHeadHtml)}</textarea></label>
             <label class="flex items-center gap-2"><input type="checkbox" name="nlEnabled" ${nl.enabled !== false ? 'checked' : ''}> Newsletter popup enabled</label>
           </div>
+        </section>
+
+        <section class="bg-amber-50 border border-amber-200 rounded-3xl p-5">
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+            <div>
+              <h3 class="font-semibold text-amber-950"><i class="fa-solid fa-code mr-1 text-amber-700"></i> Custom Body HTML</h3>
+              <p class="text-xs text-amber-900/80 mt-1">HTML inserted immediately after the opening <code class="bg-white/70 px-1 rounded">&lt;body&gt;</code> tag on public pages. Use for noscript tags, pixels, chat widgets, or markup that must run at the top of the body.</p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 text-[11px]">
+              <button type="button" id="cp-body-clear" class="px-2.5 py-1 border border-amber-300 bg-white rounded-lg text-amber-900">Clear / Delete</button>
+              <button type="button" id="cp-body-snippet-gtm" class="px-2.5 py-1 border border-amber-300 bg-white rounded-lg">+ GTM noscript</button>
+              <button type="button" id="cp-body-snippet-comment" class="px-2.5 py-1 border border-amber-300 bg-white rounded-lg">+ Comment</button>
+            </div>
+          </div>
+          <label class="block text-xs">
+            <span class="font-semibold text-slate-800">After <code>&lt;body&gt;</code></span>
+            <textarea id="cp-custom-body-html" name="customBodyHtml" rows="8" class="w-full border rounded-xl px-3 py-2 mt-1 font-mono text-[11px] leading-relaxed bg-white" placeholder="<!-- e.g. pixel, chat, or markup -->&#10;&lt;div id=&quot;my-widget&quot;&gt;&lt;/div&gt;">${esc(siteSettings.customBodyHtml)}</textarea>
+          </label>
+          <p class="text-[10px] text-slate-500 mt-2">Saved to the database immediately with <strong>Save Settings</strong>. Use <strong>Save &amp; Rebuild</strong> to bake into static HTML on deploy-capable hosts (on Amplify, live pages also pick this up via API/runtime when applicable).</p>
         </section>
 
         <div class="flex flex-wrap gap-2">
@@ -250,6 +286,7 @@
         gtmId: fd.get('gtmId'),
         ga4Id: fd.get('ga4Id'),
         customHeadHtml: fd.get('customHeadHtml'),
+        customBodyHtml: fd.get('customBodyHtml'),
         searchConsole: {
           google: normalizeVerificationToken(fd.get('scGoogle')),
           bing: normalizeVerificationToken(fd.get('scBing')),
@@ -258,6 +295,27 @@
         newsletterPopup: { enabled: fd.get('nlEnabled') === 'on' },
       };
     }
+
+    const bodyTa = el.querySelector('#cp-custom-body-html');
+    el.querySelector('#cp-body-clear')?.addEventListener('click', () => {
+      if (!bodyTa) return;
+      if (bodyTa.value.trim() && !confirm('Clear all custom body HTML? Save Settings afterward to persist.')) return;
+      bodyTa.value = '';
+      bodyTa.focus();
+      P.portalToast?.('Body HTML cleared — click Save Settings to store');
+    });
+    el.querySelector('#cp-body-snippet-gtm')?.addEventListener('click', () => {
+      if (!bodyTa) return;
+      const gtm = (el.querySelector('[name="gtmId"]')?.value || 'GTM-XXXX').trim() || 'GTM-XXXX';
+      const snip = `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtm}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
+      bodyTa.value = (bodyTa.value ? bodyTa.value.replace(/\s*$/, '') + '\n\n' : '') + snip + '\n';
+      bodyTa.focus();
+    });
+    el.querySelector('#cp-body-snippet-comment')?.addEventListener('click', () => {
+      if (!bodyTa) return;
+      bodyTa.value = (bodyTa.value ? bodyTa.value.replace(/\s*$/, '') + '\n' : '') + '<!-- custom body inject -->\n';
+      bodyTa.focus();
+    });
 
     async function saveSiteSettingsFromForm(form, statusEl) {
       const patch = collectSiteSettingsPatch(form);
