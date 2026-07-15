@@ -22,7 +22,8 @@
     "frequencyDays": 14,
     "dismissDays": 7,
     "title": "Join the Upper Room list",
-    "subtitle": "Welcome email, weekly DFW faith digest, news, directory updates, and occasional discounts—free, anytime unsubscribe."
+    "subtitle": "Welcome email, weekly DFW faith digest, news, directory updates, and occasional discounts—free, anytime unsubscribe.",
+    "logoUrl": "/images/logo-upper-room-dfw.png"
   },
   "updatedAt": "2026-07-15T20:00:00.000Z"
 }

@@ -86,7 +86,8 @@
             "frequencyDays": "number",
             "dismissDays": "number",
             "title": "string",
-            "subtitle": "string"
+            "subtitle": "string",
+            "logoUrl": "string"
           },
           "runtime": true
         }

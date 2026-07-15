@@ -1,7 +1,8 @@
 /**
  * Header banner, sidebar widget HTML, smart newsletter popup.
- * Popup reveal: requestIdleCallback + Intersection Observer (non-blocking).
- * Auto-close: 5s fade unless user engages (mousemove, keydown, touchstart, click).
+ * Popup: brand logo, benefits list, email form.
+ * Reveal: requestIdleCallback + Intersection Observer (non-blocking).
+ * Auto-close: fades unless user engages (mousemove, keydown, touchstart, click).
  */
 (function (global) {
   const P = global.URDFWPlatform;
@@ -9,6 +10,7 @@
 
   const LS_DISMISS = 'urdfw_nl_dismissed_at';
   const LS_SUBSCRIBED = 'urdfw_nl_subscribed';
+  const LOGO_PATH = 'images/logo-upper-room-dfw.png';
 
   function isPortalPage() {
     const path = (location.pathname || '').toLowerCase();
@@ -20,6 +22,30 @@
       global.requestIdleCallback(fn, { timeout: 2000 });
     } else {
       global.setTimeout(fn, 0);
+    }
+  }
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /** Prefer logo already in the nav (works on /blog/ nested pages); else root-absolute path. */
+  function resolveBrandLogoSrc(cfg) {
+    if (cfg && cfg.logoUrl) return String(cfg.logoUrl);
+    const fromDom = document.querySelector('img.urdfw-brand-logo, nav img[src*="logo-upper-room"]');
+    if (fromDom) {
+      const src = fromDom.getAttribute('src');
+      if (src) return src;
+    }
+    try {
+      return new URL('/' + LOGO_PATH, location.origin).pathname;
+    } catch (e) {
+      return '/' + LOGO_PATH;
     }
   }
 
@@ -56,7 +82,11 @@
         document.body.appendChild(host);
       }
     }
-    host.innerHTML = '<div class="urdfw-widget-card">' + html + '</div>';
+    // Append remote widgets; never wipe existing blog sidebar cards
+    const card = document.createElement('div');
+    card.className = 'urdfw-widget-card urdfw-sidebar-injected';
+    card.innerHTML = html;
+    host.appendChild(card);
   };
 
   function daysSince(ts) {
@@ -200,6 +230,13 @@
     function revealPopup() {
       if (!shouldShowPopup(cfg) || popup) return;
 
+      const logoSrc = resolveBrandLogoSrc(cfg);
+      const title = escHtml(cfg.title || 'Join the Upper Room list');
+      const subtitle = escHtml(
+        cfg.subtitle ||
+          'Welcome email, weekly DFW faith digest, news, directory updates, and occasional discounts—free, anytime unsubscribe.'
+      );
+
       popup = document.createElement('div');
       popup.id = 'urdfw-nl-popup';
       popup.className = 'urdfw-nl-popup';
@@ -208,27 +245,45 @@
       popup.setAttribute('aria-labelledby', 'urdfw-nl-title');
       popup.innerHTML = `
         <div class="urdfw-nl-popup__card">
-          <button type="button" class="urdfw-nl-popup__close" aria-label="Close">&times;</button>
-          <h2 id="urdfw-nl-title" class="urdfw-nl-popup__title">${cfg.title || 'Join the Upper Room list'}</h2>
-          <p class="urdfw-nl-popup__subtitle">${cfg.subtitle || 'Welcome email, weekly digest, news, updates, and occasional discounts.'}</p>
-          <ul class="urdfw-nl-popup__perks" style="list-style:none;margin:0 0 0.75rem;padding:0;font-size:0.8rem;color:#334155;text-align:left">
-            <li style="margin:0.25rem 0">✓ Welcome email when you join</li>
-            <li style="margin:0.25rem 0">✓ Weekly DFW faith &amp; church digest</li>
-            <li style="margin:0.25rem 0">✓ News, updates &amp; directory tips</li>
-            <li style="margin:0.25rem 0">✓ Occasional discounts &amp; invites</li>
+          <button type="button" class="urdfw-nl-popup__close" aria-label="Close newsletter popup">&times;</button>
+          <div class="urdfw-nl-popup__brand">
+            <img class="urdfw-nl-popup__logo" src="${escHtml(logoSrc)}" alt="Upper Room DFW" width="72" height="72" decoding="async">
+            <p class="urdfw-nl-popup__brand-name">Upper Room DFW</p>
+          </div>
+          <h2 id="urdfw-nl-title" class="urdfw-nl-popup__title">${title}</h2>
+          <p class="urdfw-nl-popup__subtitle">${subtitle}</p>
+          <ul class="urdfw-nl-popup__perks">
+            <li><span class="urdfw-nl-popup__check" aria-hidden="true">✓</span> Welcome email when you join</li>
+            <li><span class="urdfw-nl-popup__check" aria-hidden="true">✓</span> Weekly DFW faith &amp; church digest</li>
+            <li><span class="urdfw-nl-popup__check" aria-hidden="true">✓</span> News, updates &amp; directory tips</li>
+            <li><span class="urdfw-nl-popup__check" aria-hidden="true">✓</span> Occasional discounts &amp; invites</li>
           </ul>
           <form class="urdfw-nl-popup__form urdfw-nl-popup__form--row" id="urdfw-nl-popup-form">
-            <input type="email" name="email" required placeholder="you@email.com" autocomplete="email" aria-label="Email address">
+            <label class="urdfw-nl-popup__sr" for="urdfw-nl-email">Email address</label>
+            <input id="urdfw-nl-email" type="email" name="email" required placeholder="you@email.com" autocomplete="email" inputmode="email">
             <button type="submit">Subscribe free</button>
           </form>
           <button type="button" class="urdfw-nl-popup__dismiss">Not now</button>
         </div>`;
       document.body.appendChild(popup);
 
+      const logoImg = popup.querySelector('.urdfw-nl-popup__logo');
+      if (logoImg) {
+        logoImg.addEventListener('error', () => {
+          logoImg.style.display = 'none';
+        });
+      }
+
       popup.querySelector('.urdfw-nl-popup__close').addEventListener('click', () => hide(true));
       popup.querySelector('.urdfw-nl-popup__dismiss').addEventListener('click', () => hide(true));
       popup.addEventListener('click', (e) => {
         if (e.target === popup) hide(true);
+      });
+      popup.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          hide(true);
+        }
       });
 
       popup.querySelector('#urdfw-nl-popup-form').addEventListener('submit', async (e) => {
@@ -236,20 +291,31 @@
         markEngaged();
         const email = new FormData(e.target).get('email');
         const btn = e.target.querySelector('button[type="submit"]');
+        if (!email || !btn) return;
         btn.disabled = true;
         btn.textContent = 'Subscribing…';
         try {
           if (P.api?.integrations?.subscribe) await P.api.integrations.subscribe(email);
           else if (global.subscribeNewsletter) {
             await global.subscribeNewsletter({ preventDefault() {}, target: e.target });
+          } else {
+            const res = await fetch('/api/integrations/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email }),
+            });
+            if (!res.ok) throw new Error('Subscription failed');
           }
           localStorage.setItem(LS_SUBSCRIBED, '1');
           hide(false);
-          P.portalToast?.('Subscribed — thank you!');
+          if (P.portalToast) P.portalToast('Subscribed — thank you!');
+          else if (global.showToast) global.showToast('Subscribed — thank you!');
         } catch (err) {
           btn.disabled = false;
-          btn.textContent = 'Subscribe';
-          P.portalToast?.(err.message || 'Subscription failed');
+          btn.textContent = 'Subscribe free';
+          const msg = (err && err.message) || 'Subscription failed';
+          if (P.portalToast) P.portalToast(msg);
+          else alert(msg);
         }
       });
 
@@ -258,6 +324,10 @@
         P.set('nl_popup_shown_at', Date.now());
         teardownEngagement = bindEngagementListeners(popup);
         startAutoCloseTimer();
+        const emailInput = popup.querySelector('#urdfw-nl-email');
+        if (emailInput) {
+          try { emailInput.focus({ preventScroll: true }); } catch (e) { emailInput.focus(); }
+        }
       });
     }
 
