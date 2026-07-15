@@ -117,6 +117,13 @@ function setSiteSettings(db, patch) {
       .replace(/id=GTM-XXXX/gi, 'id=' + next.gtmId)
       .replace(/id=["']GTM-XXXX["']/gi, 'id="' + next.gtmId + '"');
   }
+  /* If gtmId is set, strip GTM body noscript from customBody — platform injects it via buildGtmBody */
+  if (next.gtmId && next.customBodyHtml && /googletagmanager\.com\/ns\.html/i.test(next.customBodyHtml)) {
+    next.customBodyHtml = String(next.customBodyHtml)
+      .replace(/<!--\s*Google Tag Manager\s*\(noscript\)\s*-->[\s\S]*?<!--\s*End Google Tag Manager\s*\(noscript\)\s*-->/gi, '')
+      .replace(/<noscript>\s*<iframe[^>]*googletagmanager\.com\/ns\.html[^>]*>\s*<\/iframe>\s*<\/noscript>\s*/gi, '')
+      .trim();
+  }
   /* If gtmId is set, strip duplicate full GTM bootstrap from customHead (platform injects it) */
   if (next.gtmId && next.customHeadHtml && /googletagmanager\.com\/gtm\.js/i.test(next.customHeadHtml)) {
     next.customHeadHtml = String(next.customHeadHtml)

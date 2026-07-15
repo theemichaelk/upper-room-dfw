@@ -9,7 +9,7 @@
     "yahoo": ""
   },
   "customHeadHtml": "<script async src=\"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5150713093785557\" crossorigin=\"anonymous\"></script>\n",
-  "customBodyHtml": "<noscript><iframe src=\"https://www.googletagmanager.com/ns.html?id=GTM-5LDRMLLJ\" height=\"0\" width=\"0\" style=\"display:none;visibility:hidden\"></iframe></noscript>\n",
+  "customBodyHtml": "",
   "headInjectionScripts": [],
   "footerScripts": [],
   "headerBannerHtml": "",
