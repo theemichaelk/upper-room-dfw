@@ -1,8 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <title>Admin Portal | Upper Room DFW</title>
   <meta name="description" content="Secure admin portal for Upper Room DFW — manage church listings, billing, leads, integrations, email campaigns, and platform analytics.">
   <link rel="canonical" href="https://upperroomdfw.com/admin.html">
@@ -13,6 +26,8 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/platform.css">
   <link rel="stylesheet" href="css/portal.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
 </head>
 <body class="tail-container bg-slate-50">
   <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -122,6 +137,7 @@
         <button type="button" class="portal-nav-item" data-admin-tab="support"><i class="fa-solid fa-life-ring w-4"></i> Support</button>
         <button type="button" class="portal-nav-item" data-admin-tab="analytics"><i class="fa-solid fa-chart-line w-4"></i> Analytics</button>
         <button type="button" class="portal-nav-item" data-admin-tab="api"><i class="fa-solid fa-server w-4"></i> API &amp; Webhooks</button>
+        <button type="button" class="portal-nav-item" data-admin-tab="dns"><i class="fa-solid fa-globe w-4"></i> DNS</button>
       </nav>
       <div class="mt-auto pt-4 border-t border-slate-700 text-xs space-y-2">
         <a href="member-dashboard.html" class="portal-nav-item"><i class="fa-solid fa-user w-4"></i> View as Member</a>
@@ -152,13 +168,13 @@
   </footer>
 
   <script src="js/main.js"></script>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/admin-loader.js" defer></script>
   <script>
     function adminLogout() {
       if (window.URDFWPlatform?.adminLogout) {
         window.URDFWPlatform.adminLogout();
       } else {
-        localStorage.removeItem('urdfw_admin_mode');
+        localStorage.removeItem('urdfw_api_token');
         document.getElementById('admin-app')?.classList.add('hidden');
         document.getElementById('login-screen')?.classList.remove('hidden');
       }
@@ -189,7 +205,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', bootAdmin);
-    document.addEventListener('URDFWPlatformReady', bootAdmin);
+    document.addEventListener('urdfw:ready', bootAdmin);
   </script>
 </body>
 </html>

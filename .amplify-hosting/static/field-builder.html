@@ -1,6 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <meta charset="UTF-8">
   <title>Field Builder | Upper Room DFW</title>
   <meta name="description" content="Build custom listing fields for DFW churches and ministries on Upper Room DFW.">
@@ -8,6 +23,9 @@
   <meta property="og:url" content="https://upperroomdfw.com/field-builder.html">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body class="max-w-3xl mx-auto p-6">
   <h1 class="text-2xl font-bold">Drag & Drop Field Builder</h1>
@@ -17,7 +35,7 @@
     <div><h3 class="font-semibold text-sm">Active Fields</h3><div id="field-dropzone" class="dd-dropzone mt-2"></div></div>
   </div>
   <button onclick="saveFields()" class="mt-4 px-4 py-2 bg-[#0369a1] text-white rounded">Save Fields</button>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
   <script>
     const types = ['text','textarea','number','select','checkbox','youtube','icon','image'];
     document.addEventListener('DOMContentLoaded', async () => {

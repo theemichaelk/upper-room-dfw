@@ -1,14 +1,14 @@
 {
   "ok": true,
   "version": "1.0.0",
-  "ga4Id": "",
+  "ga4Id": "G-204RJE9QSF",
   "gtmId": "",
   "searchConsole": {
-    "google": "",
+    "google": "gStUxdXBMZR_ImlwUScDVFroLj-lHYrESNxjBsj25xc",
     "bing": "",
     "yahoo": ""
   },
-  "customHeadHtml": "",
+  "customHeadHtml": "<meta name=\"google-site-verification\" content=\"gStUxdXBMZR_ImlwUScDVFroLj-lHYrESNxjBsj25xc\" />\n\n<script async src=\"https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5150713093785557\"\n     crossorigin=\"anonymous\"></script>\n",
   "headInjectionScripts": [],
   "footerScripts": [],
   "headerBannerHtml": "",
@@ -23,5 +23,5 @@
     "title": "Stay connected with DFW faith",
     "subtitle": "Get the weekly church digest in your inbox."
   },
-  "updatedAt": null
+  "updatedAt": "2026-07-15T01:10:00.000Z"
 }

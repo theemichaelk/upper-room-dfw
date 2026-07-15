@@ -1,12 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <meta charset="UTF-8">
   <title>Redirecting...</title>
   <meta name="description" content="Short-link redirect for Upper Room DFW directory listings, events, and campaigns.">
   <link rel="canonical" href="https://upperroomdfw.com/go.html">
   <meta property="og:url" content="https://upperroomdfw.com/go.html">
   <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body>
   <p id="status">Redirecting...</p>
@@ -20,12 +39,24 @@
       if (id === 'go' && parts.length > 1) id = parts[parts.length - 2];
       if (id === 'go' || id === 'go.html') id = null;
     }
-    const masks = JSON.parse(localStorage.getItem('urdfw_url_masks') || '{}');
-    const url = masks[id] || 'https://upperroomdfw.com';
-    document.getElementById('status').textContent = 'Redirecting to affiliate link...';
-    setTimeout(() => { window.location.href = url; }, 800);
+    async function resolveAndGo() {
+      const masks = JSON.parse(localStorage.getItem('urdfw_url_masks') || '{}');
+      let url = masks[id] || null;
+      if (id && !url) {
+        try {
+          const res = await fetch('/api/links/' + encodeURIComponent(id));
+          if (res.ok) {
+            const data = await res.json();
+            url = data.tinyUrl || data.url;
+          }
+        } catch { /* offline */ }
+      }
+      window.location.href = url || 'https://upperroomdfw.com';
+    }
+    document.getElementById('status').textContent = 'Redirecting...';
+    resolveAndGo();
   </script>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
 
   <footer class="bg-slate-900 text-slate-400 text-xs text-center py-4 urdfw-powered-by-footer">
     <div class="urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>

@@ -1,12 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <meta charset="UTF-8">
   <title>Support | Upper Room DFW</title>
   <meta name="description" content="Get help with your Upper Room DFW listing, billing, or member portal — contact support.">
   <link rel="canonical" href="https://upperroomdfw.com/support.html">
   <meta property="og:url" content="https://upperroomdfw.com/support.html">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body class="max-w-lg mx-auto p-6">
   <h1 class="text-2xl font-bold">Support Request</h1>
@@ -21,7 +41,7 @@
     <button type="submit" class="w-full py-2 bg-[#0369a1] text-white rounded">Submit Ticket</button>
   </form>
   <script src="js/site-forms.js"></script>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
   <script>
     setTimeout(() => {
       URDFWPlatform.initRecaptcha(document.getElementById('recaptcha'));
@@ -29,6 +49,7 @@
         e.preventDefault();
         if (!URDFWPlatform.verifyRecaptcha()) return alert('Complete reCAPTCHA');
         const payload = Object.fromEntries(new FormData(e.target).entries());
+        payload.recaptchaToken = URDFWPlatform.getRecaptchaToken?.() || null;
         const btn = e.target.querySelector('button[type="submit"]');
         const btnHtml = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.innerHTML = 'Submitting…'; }

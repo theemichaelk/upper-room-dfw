@@ -54,6 +54,44 @@ function getSiteSettings(db) {
   return mergeSettings(getSetting(db, SETTINGS_KEY, null));
 }
 
+/**
+ * If SQLite has no site_settings (or empty telemetry), seed from static JSON.
+ * Prevents Amplify cold starts with empty DB wiping CDN settings on save.
+ */
+function ensureSiteSettingsSeeded(db, rootDir) {
+  const stored = getSetting(db, SETTINGS_KEY, null);
+  const hasUseful =
+    stored &&
+    typeof stored === 'object' &&
+    (stored.gtmId ||
+      stored.ga4Id ||
+      stored.customHeadHtml ||
+      stored.searchConsole?.google ||
+      stored.searchConsole?.bing ||
+      stored.updatedAt);
+  if (hasUseful) return { seeded: false, settings: mergeSettings(stored) };
+
+  const fromFile = loadStaticSiteSettings(rootDir);
+  const usefulFile =
+    fromFile.gtmId ||
+    fromFile.ga4Id ||
+    fromFile.customHeadHtml ||
+    fromFile.searchConsole?.google ||
+    fromFile.searchConsole?.bing;
+  if (!usefulFile) return { seeded: false, settings: mergeSettings(stored) };
+
+  /* Don't seed placeholder test IDs */
+  if (/GTM-(TEST|REBUILD)/i.test(fromFile.gtmId || '')) fromFile.gtmId = '';
+  if (/G-(TEST|REBUILD)/i.test(fromFile.ga4Id || '')) fromFile.ga4Id = '';
+
+  const next = setSiteSettings(db, {
+    ...fromFile,
+    updatedAt: fromFile.updatedAt || new Date().toISOString(),
+  });
+  console.log('[site-settings] Seeded from static JSON (DB was empty)');
+  return { seeded: true, settings: next };
+}
+
 function setSiteSettings(db, patch) {
   const current = getSiteSettings(db);
   const mergedSc = patch.searchConsole
@@ -205,6 +243,7 @@ module.exports = {
   DEFAULT_SITE_SETTINGS,
   getSiteSettings,
   setSiteSettings,
+  ensureSiteSettingsSeeded,
   getPublicSiteSettings,
   exportSiteSettingsJson,
   exportSiteSettingsJsonSync,

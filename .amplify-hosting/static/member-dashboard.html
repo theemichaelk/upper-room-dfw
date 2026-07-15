@@ -1,8 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <title>Church Member Dashboard | Upper Room DFW</title>
   <meta name="description" content="Manage your DFW church listing, leads, training, and billing in one member portal.">
   <link rel="canonical" href="https://upperroomdfw.com/member-dashboard.html">
@@ -17,6 +29,9 @@
   <link rel="stylesheet" href="css/platform.css">
   <link rel="stylesheet" href="css/portal.css">
   <link rel="stylesheet" href="css/member-portal.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body class="member-app">
 
@@ -99,6 +114,7 @@
         <button type="button" class="member-drawer-link" data-member-tab="media" onclick="switchMemberTab(7,'media')"><i class="fa-solid fa-photo-film"></i> Media</button>
         <button type="button" class="member-drawer-link" data-member-tab="saved" onclick="switchMemberTab(8,'saved')"><i class="fa-solid fa-bookmark"></i> Saved</button>
         <button type="button" class="member-drawer-link" data-member-tab="support" onclick="switchMemberTab(9,'support')"><i class="fa-solid fa-life-ring"></i> Support</button>
+        <button type="button" class="member-drawer-link" data-member-tab="dns" onclick="switchMemberTab(14,'dns')"><i class="fa-solid fa-globe"></i> DNS</button>
       </nav>
       <button type="button" class="member-drawer-link member-drawer-signout" onclick="logoutClient()"><i class="fa-solid fa-right-from-bracket"></i> Sign out</button>
     </aside>
@@ -266,6 +282,7 @@
       <div id="member-tab-11" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-reviews"></article></div>
       <div id="member-tab-12" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-claims"></article></div>
       <div id="member-tab-13" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-analytics"></article></div>
+      <div id="member-tab-14" class="member-pane hidden"><article class="member-card member-card--page" id="member-platform-dns"></article></div>
     </div>
   </div>
 
@@ -278,7 +295,7 @@
   <svg width="0" height="0" aria-hidden="true"><defs><linearGradient id="trainingGradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0369a1"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs></svg>
 
   <script src="js/main.js"></script>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
   <script src="js/member-dashboard.js"></script>
 </body>
 </html>

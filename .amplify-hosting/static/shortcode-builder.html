@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <meta charset="UTF-8">
   <title>Shortcode Builder | Upper Room DFW</title>
   <meta name="description" content="Generate directory shortcodes for listings, maps, and search widgets on Upper Room DFW.">
@@ -8,6 +24,9 @@
   <meta property="og:url" content="https://upperroomdfw.com/shortcode-builder.html">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body class="max-w-2xl mx-auto p-6">
   <h1 class="text-2xl font-bold">Shortcode Generator (30+ params)</h1>
@@ -22,7 +41,7 @@
     <h3 class="font-semibold mt-4">Embed Code</h3>
     <pre id="embed-output" class="shortcode-output"></pre>
   </div>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
   <script>
     const fields = ['count','category','area','layout','height','zoom','sort','featured','radius','columns','color','template'];
     document.getElementById('sc-params').innerHTML = fields.map(f =>

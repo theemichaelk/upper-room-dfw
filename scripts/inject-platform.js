@@ -94,15 +94,25 @@ function ensureViewport(html) {
 
 /** Remove prior baked telemetry block (marker-delimited) before re-injecting. */
 function stripOldTelemetry(html) {
-  if (!html.includes(MARKER)) return html;
-  const closed = new RegExp(`${MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${MARKER_CLOSE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'i');
-  if (closed.test(html)) return html.replace(closed, '');
-  return html.replace(/<!-- urdfw-telemetry:v1 -->[\s\S]*?(?=<meta|<link|<script|<\/head>)/i, '');
+  const closed = new RegExp(
+    `${MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${MARKER_CLOSE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+    'gi'
+  );
+  if (closed.test(html)) html = html.replace(closed, '');
+  else if (html.includes(MARKER)) {
+    html = html.replace(/<!-- urdfw-telemetry:v1 -->[\s\S]*?(?=<meta|<link|<script|<\/head>)/i, '');
+  }
+  /* Orphan GTM/GA from bad deploys (e.g. GTM-REBUILD) left outside markers */
+  html = html.replace(/<script[^>]*>[\s\S]*?googletagmanager\.com\/gtm\.js[\s\S]*?<\/script>\s*/gi, '');
+  html = html.replace(/<noscript>\s*<iframe[^>]*googletagmanager\.com\/ns\.html[^>]*>[\s\S]*?<\/noscript>\s*/gi, '');
+  html = html.replace(/<script[^>]*src=["'][^"']*gtag\/js\?id=G-[^"']+["'][^>]*>\s*<\/script>\s*/gi, '');
+  html = html.replace(/<script>\s*window\.dataLayer\s*=\s*window\.dataLayer[\s\S]*?gtag\('config'[\s\S]*?<\/script>\s*/gi, '');
+  return html;
 }
 
 function injectTelemetry(html) {
   html = stripOldTelemetry(html);
-  const headBlock = buildTelemetryHeadBlock(siteSettings) || (MARKER + '\n');
+  const headBlock = buildTelemetryHeadBlock(siteSettings) || (MARKER + '\n' + MARKER_CLOSE + '\n');
 
   if (/<meta[^>]+name=["']viewport["']/i.test(html)) {
     html = html.replace(/<meta[^>]+name=["']viewport["'][^>]*>/i, (match) => match + '\n' + headBlock);
@@ -111,7 +121,7 @@ function injectTelemetry(html) {
   }
 
   const bodyBlock = buildTelemetryBodyBlock(siteSettings);
-  if (bodyBlock && !html.includes('googletagmanager.com/ns.html')) {
+  if (bodyBlock) {
     html = html.replace(/<body([^>]*)>/i, (m) => m + '\n' + bodyBlock);
   }
   return html;

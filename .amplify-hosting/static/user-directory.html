@@ -1,18 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://upperroomdfw.com">
+  <link rel="dns-prefetch" href="https://d4lzb9pq4mfuf.cloudfront.net">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- urdfw-telemetry:v1 -->
+<!-- /urdfw-telemetry:v1 -->
+
+
+
+
+
+<meta name="theme-color" content="#0369a1">
+  <meta name="format-detection" content="telephone=no">
+
   <meta charset="UTF-8">
   <title>User Directory | Upper Room DFW</title>
   <meta name="description" content="Browse registered church members and partners in the Upper Room DFW platform directory.">
   <link rel="canonical" href="https://upperroomdfw.com/user-directory.html">
   <meta property="og:url" content="https://upperroomdfw.com/user-directory.html">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/platform.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <link rel="stylesheet" href="css/404.css">
 </head>
 <body class="max-w-3xl mx-auto p-6">
   <h1 class="text-2xl font-bold">User Directory</h1>
   <p class="text-sm text-slate-600">Roles assigned by membership package.</p>
   <div id="users" class="mt-4 space-y-2"></div>
-  <script src="js/platform/loader.js"></script>
+  <script src="js/platform/loader.js" defer></script>
   <script>
     setTimeout(() => {
       const P = window.URDFWPlatform;

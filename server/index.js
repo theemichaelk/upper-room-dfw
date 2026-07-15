@@ -8,6 +8,8 @@ const { ensureAdmins } = require('./ensure-admins');
 const { ensureIntegrations } = require('./ensure-integrations');
 const { ensureDnsSites } = require('./ensure-dns');
 const { createRouter } = require('./routes');
+const { createRedirectMiddleware } = require('./middleware/redirects');
+const { getRedirects } = require('./services/duplicate-pages');
 const { handleStripeWebhook } = require('./webhooks');
 const { restoreDbIfNeeded, scheduleBackup, wrapDbForAutoBackup } = require('./db-persist');
 const { securityHeaders, assertProductionSecrets } = require('./middleware/security');
@@ -28,6 +30,12 @@ async function bootstrap() {
   syncListingsFromJson(db);
   ensureAdmins(db);
   ensureIntegrations(db);
+  try {
+    const { ensureSiteSettingsSeeded } = require('./services/site-settings');
+    ensureSiteSettingsSeeded(db, ROOT);
+  } catch (err) {
+    console.warn('[site-settings] seed skipped:', err.message);
+  }
   ensureDnsSites(db).catch((err) => console.warn('DNS seed:', err.message));
   scheduleBackup(DB_PATH);
   initEvents(db);
@@ -74,6 +82,8 @@ async function bootstrap() {
   const api = createRouter(db, { authLimiter, formLimiter });
   app.use('/api', api);
 
+  app.use(createRedirectMiddleware(() => getRedirects(db, ROOT)));
+
   app.use(express.static(ROOT, {
     index: 'index.html',
     extensions: ['html'],
@@ -87,6 +97,17 @@ async function bootstrap() {
       if (require('fs').existsSync(tryPath)) return res.sendFile(tryPath);
     }
     next();
+  });
+
+  app.use((req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ ok: false, error: 'Not found' });
+    }
+    const notFoundPage = path.join(ROOT, '404.html');
+    if (require('fs').existsSync(notFoundPage)) {
+      return res.status(404).sendFile(notFoundPage);
+    }
+    res.status(404).send('Not found');
   });
 
   const server = app.listen(PORT, () => {

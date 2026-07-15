@@ -28,20 +28,35 @@ function buildVerificationMetas(settings) {
   return block;
 }
 
+/** Reject placeholder / test container IDs that break pages (ORB / 404). */
+function isValidGtmId(id) {
+  const s = String(id || '').trim();
+  if (!/^GTM-[A-Z0-9]+$/i.test(s)) return false;
+  if (/GTM-(TEST|REBUILD|XXX|EXAMPLE)/i.test(s)) return false;
+  return true;
+}
+
+function isValidGa4Id(id) {
+  const s = String(id || '').trim();
+  if (!/^G-[A-Z0-9]+$/i.test(s)) return false;
+  if (/G-(TEST|REBUILD|XXX|EXAMPLE)/i.test(s)) return false;
+  return true;
+}
+
 function buildGtmHead(gtmId) {
-  if (!gtmId) return '';
+  if (!isValidGtmId(gtmId)) return '';
   const id = escapeAttr(gtmId.trim());
   return `  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${id}');</script>\n`;
 }
 
 function buildGtmBody(gtmId) {
-  if (!gtmId) return '';
+  if (!isValidGtmId(gtmId)) return '';
   const id = escapeAttr(gtmId.trim());
   return `  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${id}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>\n`;
 }
 
 function buildGa4Head(ga4Id) {
-  if (!ga4Id) return '';
+  if (!isValidGa4Id(ga4Id)) return '';
   const id = escapeAttr(ga4Id.trim());
   return `  <script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>\n` +
     `  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}');</script>\n`;
@@ -67,6 +82,9 @@ function buildHeadScripts(scripts) {
 function buildTelemetryHeadBlock(settings) {
   const s = mergeSettings(settings);
   s.searchConsole = normalizeSearchConsole(s.searchConsole);
+  /* Drop invalid test IDs so inject/rebuild never bake GTM-REBUILD etc. */
+  if (!isValidGtmId(s.gtmId)) s.gtmId = '';
+  if (!isValidGa4Id(s.ga4Id)) s.ga4Id = '';
   let block = MARKER + '\n';
   block += buildVerificationMetas(s);
   if (s.gtmId) {
@@ -236,6 +254,8 @@ module.exports = {
   MARKER_CLOSE,
   normalizeVerificationToken,
   normalizeSearchConsole,
+  isValidGtmId,
+  isValidGa4Id,
   buildTelemetryHeadBlock,
   buildTelemetryBodyBlock,
   buildVerificationMetas,
