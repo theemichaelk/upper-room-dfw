@@ -50,6 +50,9 @@ async function main() {
   check('health endpoint', health.status === 200 && health.body?.ok);
   check('listings seeded', (await request('GET', '/api/listings')).body?.length > 0);
 
+  const sitePublic = await request('GET', '/api/platform/site-settings/public');
+  check('site-settings public', sitePublic.status === 200 && sitePublic.body?.version);
+
   const reg = await request('POST', '/api/auth/register', {
     name: 'API Test Church',
     email: `test-${Date.now()}@example.com`,

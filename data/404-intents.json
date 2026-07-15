@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "destinations": [
+    { "id": "directory", "label": "Church Directory", "href": "directory.html", "icon": "fa-list", "keywords": ["directory", "churches", "church", "find", "search", "browse", "listings", "listing", "dfw", "dallas", "fort-worth", "fortworth", "arlington", "plano", "frisco", "mckinney", "irving", "garland", "mesquite", "denton"] },
+    { "id": "register", "label": "Register Your Church", "href": "register.html", "icon": "fa-plus-circle", "keywords": ["register", "signup", "sign-up", "join", "add", "submit", "listing"] },
+    { "id": "pricing", "label": "Plans & Pricing", "href": "pricing.html", "icon": "fa-tags", "keywords": ["pricing", "price", "plan", "plans", "billing", "premium", "standard", "cost"] },
+    { "id": "contact", "label": "Contact Us", "href": "contact.html", "icon": "fa-envelope", "keywords": ["contact", "help", "support", "email", "reach"] },
+    { "id": "events", "label": "Faith Events", "href": "events.html", "icon": "fa-calendar", "keywords": ["events", "event", "calendar", "conference", "retreat"] },
+    { "id": "blog", "label": "Blog & Updates", "href": "blog.html", "icon": "fa-newspaper", "keywords": ["blog", "news", "article", "posts", "updates", "digest"] },
+    { "id": "about", "label": "About Upper Room", "href": "about.html", "icon": "fa-circle-info", "keywords": ["about", "mission", "team", "story"] },
+    { "id": "training", "label": "Training Hub", "href": "training.html", "icon": "fa-graduation-cap", "keywords": ["training", "learn", "tutorial", "guide", "onboard"] },
+    { "id": "member", "label": "Member Portal", "href": "member-dashboard.html", "icon": "fa-user", "keywords": ["member", "dashboard", "portal", "account", "login", "billing-hub"] },
+    { "id": "claim", "label": "Claim a Listing", "href": "claim-listing.html", "icon": "fa-hand", "keywords": ["claim", "verify", "ownership", "owner"] }
+  ],
+  "tagIntents": [
+    { "tag": "youth", "label": "Youth ministries", "href": "directory.html?q=youth" },
+    { "tag": "family", "label": "Family-friendly churches", "href": "directory.html?q=family" },
+    { "tag": "worship", "label": "Contemporary worship", "href": "directory.html?q=worship" },
+    { "tag": "outreach", "label": "Community outreach", "href": "directory.html?q=outreach" }
+  ],
+  "areas": ["Dallas", "Fort Worth", "Arlington", "Plano", "Frisco", "McKinney", "Irving", "Garland", "Mesquite", "Denton", "Carrollton", "Richardson"],
+  "coreCategories": [
+    { "id": "tech", "label": "Tech", "icon": "fa-microchip", "href": "training.html", "desc": "Platform tools, guides & church tech training", "keywords": ["tech", "technology", "software", "platform", "tools", "training", "digital"] },
+    { "id": "ai", "label": "AI", "icon": "fa-robot", "href": "features.html", "desc": "AI-powered search & smart directory features", "keywords": ["ai", "artificial", "intelligence", "smart", "machine", "search", "automated"] },
+    { "id": "startups", "label": "Startups", "icon": "fa-rocket", "href": "register.html", "desc": "Launch a new church or ministry listing", "keywords": ["startup", "startups", "launch", "new", "plant", "register", "founder"] },
+    { "id": "fashion", "label": "Fashion", "icon": "fa-shirt", "href": "blog.html", "desc": "Culture, creativity & community spotlights", "keywords": ["fashion", "style", "culture", "creative", "design", "lifestyle"] },
+    { "id": "travel", "label": "Travel", "icon": "fa-plane", "href": "directory.html?q=outreach", "desc": "Mission-minded churches & outreach hubs", "keywords": ["travel", "mission", "trip", "outreach", "missions", "global"] },
+    { "id": "events", "label": "Global Events", "icon": "fa-earth-americas", "href": "events.html", "desc": "Conferences, gatherings & DFW faith calendar", "keywords": ["events", "global", "conference", "gathering", "festival", "calendar", "summit"] }
+  ],
+  "humanCopy": {
+    "title": "You are not lost — we just could not find that page",
+    "subtitle": "Take a breath. The link may have moved, but Upper Room DFW is still here to help you discover churches, events, and communities across Dallas–Fort Worth.",
+    "searchHint": "Type to filter destinations below — results update as you search."
+  }
+}

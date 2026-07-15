@@ -125,24 +125,41 @@
     }
   };
 
+  P.bindAdminTabNavigation = function () {
+    if (document.documentElement.dataset.adminTabNavBound === '1') return;
+    document.documentElement.dataset.adminTabNavBound = '1';
+
+    /* Event delegation — survives re-renders and covers sidebar + mobile strip */
+    document.addEventListener('click', (e) => {
+      const btn = e.target?.closest?.('[data-admin-tab]');
+      if (!btn) return;
+      /* Only handle nav controls inside the admin app (or mobile strip) */
+      const inAdmin = btn.closest('#admin-app, #admin-mobile-tabs, #admin-sidebar');
+      if (!inAdmin && !btn.classList.contains('admin-mobile-tab')) return;
+      e.preventDefault();
+      const tab = btn.dataset.adminTab;
+      if (!tab) return;
+      if (typeof P.showAdminTab === 'function') {
+        P.showAdminTab(tab);
+      } else {
+        console.error('[URDFW] showAdminTab not loaded');
+      }
+      /* Close mobile sidebar drawer if open */
+      document.getElementById('admin-sidebar')?.classList.remove('mobile-open');
+    });
+
+    /* Mobile: open sidebar drawer */
+    document.getElementById('admin-nav-toggle')?.addEventListener('click', () => {
+      document.getElementById('admin-sidebar')?.classList.toggle('mobile-open');
+    });
+  };
+
   P.renderAdminShell = function (rootId) {
     const app = document.getElementById('admin-app');
     const root = document.getElementById(rootId);
     if (!app || !root) return;
 
-    const sidebar = app.querySelector('#admin-sidebar-nav');
-    if (sidebar && !sidebar.dataset.bound) {
-      sidebar.dataset.bound = '1';
-      sidebar.querySelectorAll('.portal-nav-item[data-admin-tab]').forEach((btn) => {
-        btn.onclick = () => {
-          sidebar.querySelectorAll('.portal-nav-item').forEach((b) => b.classList.remove('active'));
-          btn.classList.add('active');
-          const tab = btn.dataset.adminTab;
-          if (tab) P.showAdminTab(tab);
-        };
-      });
-    }
-
+    P.bindAdminTabNavigation();
     P.initAdminDashboard(rootId);
     P.renderAdminQuickStats();
     P.renderApiStatusPanel('admin-api-status');

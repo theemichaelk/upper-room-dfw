@@ -2,6 +2,16 @@
 
 A full church directory SaaS for the Dallas–Fort Worth metroplex: public directory, church registration, member portal, admin dashboard, and **real subscription billing** via Stripe.
 
+## Mobile app (Android & iOS)
+
+Fresh Expo app (white + blue UI) lives next to this project:
+
+```
+E:\OneDrive\Documents\Factory AI.02.20.26\upperroom-dfw-mobile
+```
+
+See that folder’s `README.md` and `DEPLOY.md`.
+
 ## Run locally (production mode)
 
 ```powershell

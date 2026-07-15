@@ -8,7 +8,9 @@
   },
   "stylesheets": [
     { "id": "platform", "href": "css/platform.css", "required": true },
-    { "id": "responsive", "href": "css/responsive.css", "required": true }
+    { "id": "responsive", "href": "css/responsive.css", "required": true },
+    { "id": "widgets", "href": "css/widgets.css", "required": true },
+    { "id": "404", "href": "css/404.css", "required": false, "pages": ["404.html"] }
   ],
   "preconnect": [
     "https://cdnjs.cloudflare.com",

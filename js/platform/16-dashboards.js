@@ -470,42 +470,197 @@
     { id: 'dns', label: 'DNS' },
   ];
 
-  P._adminDashState = { root: null, panels: null, show: null };
+  P._adminDashState = { root: null, panels: null, activeTab: null, gen: 0 };
+  P._adminTabGen = 0;
+
+  /** Always resolve the live panel node (never a detached closure). */
+  P.getAdminPanelEl = function () {
+    const root = document.getElementById('admin-platform-root');
+    if (!root) return null;
+    let panels = root.querySelector('#admin-tab-panels');
+    if (!panels) {
+      root.innerHTML = '<div id="admin-tab-panels" class="admin-tab-panels" style="min-height:12rem"></div>';
+      panels = root.querySelector('#admin-tab-panels');
+    }
+    return panels;
+  };
+
+  P.syncAdminNavActive = function (tabId) {
+    document.querySelectorAll('[data-admin-tab]').forEach((btn) => {
+      const on = btn.dataset.adminTab === tabId;
+      btn.classList.toggle('active', on);
+      if (btn.setAttribute) btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  };
 
   P.initAdminDashboard = function (rootId) {
     const root = document.getElementById(rootId || 'admin-platform-root');
     if (!root) return;
 
-    root.innerHTML = `<div id="admin-tab-panels"></div>`;
+    if (!root.querySelector('#admin-tab-panels')) {
+      root.innerHTML = '<div id="admin-tab-panels" class="admin-tab-panels" style="min-height:12rem"></div>';
+    }
 
-    const panels = root.querySelector('#admin-tab-panels');
-    const show = (id) => P.renderAdminTab(panels, id);
-    P._adminDashState = { root, panels, show };
-    show('overview');
+    /* Horizontal tab strip for mobile / secondary nav (sidebar hides &lt;1024px) */
+    let strip = document.getElementById('admin-mobile-tabs');
+    if (!strip) {
+      strip = document.createElement('div');
+      strip.id = 'admin-mobile-tabs';
+      strip.className = 'admin-mobile-tabs';
+      strip.setAttribute('role', 'tablist');
+      strip.innerHTML = (P.adminTabs || []).map((t) =>
+        `<button type="button" role="tab" class="admin-mobile-tab" data-admin-tab="${t.id}">${P.esc(t.label)}</button>`
+      ).join('');
+      root.parentElement?.insertBefore(strip, root);
+    }
+
+    P._adminDashState = {
+      root,
+      panels: root.querySelector('#admin-tab-panels'),
+      activeTab: P._adminDashState?.activeTab || 'overview',
+      gen: P._adminTabGen,
+    };
+    P.showAdminTab(P._adminDashState.activeTab || 'overview');
   };
 
+  /**
+   * Switch admin main panel. Uses a generation token + staging commit so
+   * late async renders from a previous tab cannot wipe the current tab
+   * (or leave a blank panel).
+   */
   P.showAdminTab = function (tabId) {
-    if (P._adminDashState?.show) return P._adminDashState.show(tabId);
-    const root = document.getElementById('admin-platform-root');
-    if (root) P.initAdminDashboard('admin-platform-root');
-    setTimeout(() => P._adminDashState?.show?.(tabId), 80);
+    const id = tabId || 'overview';
+    const gen = ++P._adminTabGen;
+    P._adminDashState = P._adminDashState || {};
+    P._adminDashState.activeTab = id;
+    P._adminDashState.gen = gen;
+    P.syncAdminNavActive(id);
+
+    const el = P.getAdminPanelEl();
+    if (!el) {
+      console.warn('[URDFW] admin-platform-root missing — cannot show tab', id);
+      return Promise.resolve();
+    }
+    P._adminDashState.panels = el;
+    P._adminDashState.root = document.getElementById('admin-platform-root');
+
+    el.dataset.activeTab = id;
+    el.innerHTML = `<div class="text-sm text-slate-500 py-10 text-center" data-admin-loading="1">
+      <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading ${P.esc(id)}…
+    </div>`;
+
+    return P.renderAdminTab(el, id, gen);
   };
 
-  P.renderAdminTab = async function (el, tabId) {
-    if (!el) return;
-    if (tabId === 'overview') return P.renderAdminOverview(el);
-    if (tabId === 'listings') return P.renderAdminListings(el);
-    if (tabId === 'users') return P.renderAdminUsers(el);
-    if (tabId === 'claims') return P.renderAdminClaims(el);
-    if (tabId === 'billing') return P.renderAdminBilling(el);
-    if (tabId === 'email') return P.renderAdminEmail(el);
-    if (tabId === 'seo') return P.renderAdminSeo(el);
-    if (tabId === 'integrations') return P.renderAdminIntegrations(el);
-    if (tabId === 'reviews') return P.renderAdminReviews(el);
-    if (tabId === 'support') return P.renderAdminSupport(el);
-    if (tabId === 'analytics') return P.renderAdminAnalytics(el);
-    if (tabId === 'api') return P.renderAdminApi(el);
-    if (tabId === 'dns') return P.renderAdminDns(el);
+  /**
+   * Live panel surface that drops DOM writes when this tab generation is stale.
+   * Prevents late async responses from wiping the currently visible tab (or
+   * leaving a blank panel). Refresh handlers still target the live node.
+   */
+  P._adminPanelSurface = function (panel, gen) {
+    const current = () => gen === P._adminTabGen;
+    const surface = {
+      get innerHTML() { return panel.innerHTML; },
+      set innerHTML(v) { if (current()) panel.innerHTML = v; },
+      get textContent() { return panel.textContent; },
+      set textContent(v) { if (current()) panel.textContent = v; },
+      get className() { return panel.className; },
+      set className(v) { if (current()) panel.className = v; },
+      get classList() { return panel.classList; },
+      get dataset() { return panel.dataset; },
+      get style() { return panel.style; },
+      get children() { return panel.children; },
+      get childNodes() { return panel.childNodes; },
+      get firstChild() { return panel.firstChild; },
+      get lastChild() { return panel.lastChild; },
+      get parentElement() { return panel.parentElement; },
+      get isConnected() { return panel.isConnected; },
+      get id() { return panel.id; },
+      querySelector: (...a) => panel.querySelector(...a),
+      querySelectorAll: (...a) => panel.querySelectorAll(...a),
+      getElementById: (id) => panel.querySelector('[id="' + String(id).replace(/"/g, '') + '"]'),
+      appendChild(n) { return current() ? panel.appendChild(n) : n; },
+      removeChild(n) { return current() ? panel.removeChild(n) : n; },
+      replaceChildren(...nodes) { if (current()) panel.replaceChildren(...nodes); },
+      insertAdjacentHTML(...a) { if (current()) panel.insertAdjacentHTML(...a); },
+      insertAdjacentElement(...a) { if (current()) return panel.insertAdjacentElement(...a); return null; },
+      addEventListener: (...a) => panel.addEventListener(...a),
+      removeEventListener: (...a) => panel.removeEventListener(...a),
+      closest: (...a) => panel.closest(...a),
+      matches: (...a) => panel.matches(...a),
+      contains: (...a) => panel.contains(...a),
+      focus: (...a) => panel.focus?.(...a),
+      scrollIntoView: (...a) => panel.scrollIntoView?.(...a),
+      _urdfwPanel: panel,
+      _urdfwGen: gen,
+    };
+    return surface;
+  };
+
+  P.renderAdminTab = async function (el, tabId, gen) {
+    if (gen == null) gen = P._adminTabGen;
+    const stillCurrent = () => gen === P._adminTabGen;
+    const live = () => P.getAdminPanelEl() || el;
+
+    const handlers = {
+      overview: P.renderAdminOverview,
+      listings: P.renderAdminListings,
+      users: P.renderAdminUsers,
+      claims: P.renderAdminClaims,
+      billing: P.renderAdminBilling,
+      email: P.renderAdminEmail,
+      seo: P.renderAdminSeo,
+      integrations: P.renderAdminIntegrations,
+      reviews: P.renderAdminReviews,
+      support: P.renderAdminSupport,
+      analytics: P.renderAdminAnalytics,
+      api: P.renderAdminApi,
+      dns: P.renderAdminDns,
+    };
+
+    const fn = handlers[tabId];
+    if (typeof fn !== 'function') {
+      if (!stillCurrent()) return;
+      const panel = live();
+      if (panel) {
+        panel.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-900">
+          <strong><i class="fa-solid fa-puzzle-piece mr-1"></i> Tab “${P.esc(tabId)}” is unavailable</strong>
+          <p class="mt-2 text-xs">The renderer module did not load. Hard-refresh the page (Ctrl+F5). If it persists, check that platform scripts are deployed.</p>
+          <button type="button" class="mt-3 px-3 py-1.5 text-xs border rounded-xl bg-white" data-retry-tab="${P.esc(tabId)}">Retry</button>
+        </div>`;
+        panel.querySelector('[data-retry-tab]')?.addEventListener('click', () => P.showAdminTab(tabId));
+      }
+      return;
+    }
+
+    const panel = live();
+    if (!panel) return;
+    const surface = P._adminPanelSurface(panel, gen);
+
+    try {
+      await fn.call(P, surface);
+      if (!stillCurrent()) return;
+      /* Renderer returned without painting anything useful */
+      const onlyLoading = !!panel.querySelector('[data-admin-loading]') && (panel.textContent || '').trim().startsWith('Loading');
+      if (!panel.innerHTML.trim() || onlyLoading) {
+        panel.innerHTML = `<div class="bg-white border rounded-2xl p-8 text-center text-sm text-slate-500">
+          <i class="fa-solid fa-inbox text-2xl text-slate-300 mb-2 block"></i>
+          No content for <strong>${P.esc(tabId)}</strong> yet.
+          <div class="mt-3"><button type="button" class="px-3 py-1.5 text-xs border rounded-xl" data-retry-tab="${P.esc(tabId)}">Retry</button></div>
+        </div>`;
+        panel.querySelector('[data-retry-tab]')?.addEventListener('click', () => P.showAdminTab(tabId));
+      }
+      panel.dataset.renderedTab = tabId;
+    } catch (err) {
+      console.error('[URDFW] Admin tab render failed:', tabId, err);
+      if (!stillCurrent()) return;
+      panel.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-2xl p-5 text-sm text-red-800">
+        <strong><i class="fa-solid fa-circle-exclamation mr-1"></i> Could not load ${P.esc(tabId)}</strong>
+        <p class="mt-2 text-xs font-mono break-all">${P.esc(err?.message || String(err))}</p>
+        <button type="button" class="mt-3 px-3 py-1.5 text-xs border border-red-200 rounded-xl bg-white text-red-800" data-retry-tab="${P.esc(tabId)}">Retry</button>
+      </div>`;
+      panel.querySelector('[data-retry-tab]')?.addEventListener('click', () => P.showAdminTab(tabId));
+    }
   };
 
   P.renderAdminOverview = async function (el) {
@@ -541,10 +696,7 @@
         });
         actions.querySelector('#admin-refresh-stats')?.addEventListener('click', () => P.renderAdminOverview(el));
         actions.querySelectorAll('[data-jump]').forEach((b) => {
-          b.onclick = () => {
-            document.querySelector(`.portal-nav-item[data-admin-tab="${b.dataset.jump}"]`)?.click();
-            P.showAdminTab(b.dataset.jump);
-          };
+          b.onclick = () => P.showAdminTab(b.dataset.jump);
         });
         return;
       }

@@ -52,6 +52,9 @@ function auditFile(filePath) {
   if (!/<meta[^>]+name=["']viewport["']/i.test(html)) {
     issues.push('MISSING_VIEWPORT');
   }
+  if (!html.includes('urdfw-telemetry:v1')) {
+    warnings.push('MISSING_TELEMETRY_MARKER');
+  }
   if (!/name=["']theme-color["']/i.test(html)) {
     warnings.push('MISSING_THEME_COLOR');
   }

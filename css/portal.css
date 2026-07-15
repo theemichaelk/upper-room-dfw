@@ -351,6 +351,58 @@
   padding: 1.5rem;
   background: #f1f5f9;
   overflow-x: auto;
+  min-width: 0; /* grid child must shrink so panel content stays visible */
+}
+
+/* Admin tab panels — always reserve space so empty/loading states are obvious */
+.admin-platform-root,
+#admin-platform-root,
+.admin-tab-panels,
+#admin-tab-panels {
+  min-height: 12rem;
+  display: block;
+  width: 100%;
+}
+
+/* Horizontal tab strip (mobile / secondary) — sidebar is display:none under 1024px */
+.admin-mobile-tabs {
+  display: none;
+  gap: 0.4rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.35rem 0 0.85rem;
+  margin-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.admin-mobile-tab {
+  flex: 0 0 auto;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-mobile-tab:hover {
+  border-color: #7dd3fc;
+  color: #0369a1;
+}
+
+.admin-mobile-tab.active {
+  background: #0369a1;
+  border-color: #0369a1;
+  color: #fff;
+}
+
+@media (max-width: 1024px) {
+  .admin-mobile-tabs {
+    display: flex;
+  }
 }
 
 .portal-topbar {

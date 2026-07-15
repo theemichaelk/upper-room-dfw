@@ -42,15 +42,15 @@
     "Items": [
       {
         "ErrorCode": 403,
-        "ResponsePagePath": "/index.html",
-        "ResponseCode": "200",
-        "ErrorCachingMinTTL": 300
+        "ResponsePagePath": "/404.html",
+        "ResponseCode": "404",
+        "ErrorCachingMinTTL": 60
       },
       {
         "ErrorCode": 404,
-        "ResponsePagePath": "/index.html",
-        "ResponseCode": "200",
-        "ErrorCachingMinTTL": 300
+        "ResponsePagePath": "/404.html",
+        "ResponseCode": "404",
+        "ErrorCachingMinTTL": 60
       }
     ]
   },

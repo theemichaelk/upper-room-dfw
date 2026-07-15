@@ -1,0 +1,279 @@
+/* Sidebar widgets, header banner, newsletter popup — fluid multi-viewport */
+
+.urdfw-header-banner {
+  container-type: inline-size;
+  container-name: urdfw-banner;
+  width: 100%;
+  background: linear-gradient(90deg, #0369a1 0%, #0c4a6e 100%);
+  color: #f8fafc;
+  font-size: clamp(0.75rem, 2.2vw, 0.875rem);
+  line-height: 1.4;
+}
+
+.urdfw-header-banner__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 2vw, 1rem);
+  padding: clamp(0.5rem, 2vw, 0.75rem) var(--urdfw-gutter, 1rem);
+  max-width: 1536px;
+  margin: 0 auto;
+}
+
+.urdfw-header-banner__inner > * {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+@container urdfw-banner (max-width: 480px) {
+  .urdfw-header-banner__inner {
+    flex-direction: column;
+    text-align: center;
+  }
+  .urdfw-header-banner__inner a,
+  .urdfw-header-banner__inner button {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+.urdfw-sidebar-widgets {
+  container-type: inline-size;
+  container-name: urdfw-sidebar;
+  display: grid;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+  grid-template-columns: 1fr;
+  min-width: 0;
+}
+
+.urdfw-sidebar-widgets .urdfw-widget-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: clamp(0.75rem, 2.5vw, 1rem);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@container urdfw-sidebar (min-width: 200px) {
+  .urdfw-sidebar-widgets--multi {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  }
+}
+
+.urdfw-page-with-sidebar {
+  display: grid;
+  gap: clamp(1rem, 3vw, 2rem);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .urdfw-page-with-sidebar {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .urdfw-page-with-sidebar {
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  }
+}
+
+@media (max-width: 767px) {
+  .urdfw-sidebar-widgets {
+    order: 2;
+  }
+  .urdfw-page-with-sidebar > :not(.urdfw-sidebar-widgets) {
+    order: 1;
+  }
+}
+
+/* IO sentinel — off-screen, no layout impact */
+.urdfw-nl-io-sentinel {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  visibility: hidden;
+  overflow: hidden;
+}
+
+/* Newsletter popup — container-relative fluid layout */
+.urdfw-nl-popup {
+  container-type: size;
+  container-name: nl-overlay;
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: max(0.75rem, env(safe-area-inset-top))
+    max(0.75rem, env(safe-area-inset-right))
+    max(0.75rem, env(safe-area-inset-bottom))
+    max(0.75rem, env(safe-area-inset-left));
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.urdfw-nl-popup.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.urdfw-nl-popup.is-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.urdfw-nl-popup__card {
+  container-type: inline-size;
+  container-name: nl-popup;
+  position: relative;
+  width: min(92cqw, 26rem, 100%);
+  max-height: min(88cqh, 85dvh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #fff;
+  border-radius: clamp(0.875rem, 3cqw, 1.25rem);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: clamp(1rem, 5cqi, 1.75rem);
+  padding-top: clamp(1.25rem, 6cqi, 2rem);
+  transform: translateY(1rem);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  box-sizing: border-box;
+}
+
+.urdfw-nl-popup.is-visible .urdfw-nl-popup__card {
+  transform: translateY(0);
+}
+
+.urdfw-nl-popup.is-fading .urdfw-nl-popup__card {
+  transform: translateY(0.5rem);
+  opacity: 0.85;
+}
+
+.urdfw-nl-popup__title {
+  font-size: clamp(1.05rem, 4.5cqi + 0.5rem, 1.375rem);
+  line-height: 1.25;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 clamp(0.25rem, 1.5cqi, 0.5rem);
+  padding-right: 2.5rem;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.urdfw-nl-popup__subtitle {
+  font-size: clamp(0.8rem, 3.2cqi + 0.35rem, 0.9375rem);
+  line-height: 1.45;
+  color: #64748b;
+  margin: 0 0 clamp(0.75rem, 3cqi, 1rem);
+  overflow-wrap: anywhere;
+}
+
+.urdfw-nl-popup__form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.4rem, 2cqi, 0.65rem);
+}
+
+@container nl-popup (min-width: 20rem) {
+  .urdfw-nl-popup__form--row {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .urdfw-nl-popup__form--row input {
+    flex: 1 1 55%;
+    min-width: 0;
+  }
+  .urdfw-nl-popup__form--row button[type="submit"] {
+    flex: 0 1 auto;
+  }
+}
+
+.urdfw-nl-popup__form input[type="email"] {
+  border: 1px solid #cbd5e1;
+  border-radius: clamp(0.5rem, 2cqi, 0.75rem);
+  padding: clamp(0.55rem, 2.5cqi, 0.7rem) clamp(0.65rem, 3cqi, 0.85rem);
+  font-size: clamp(0.875rem, 3.5cqi, 1rem);
+  min-height: 2.75rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.urdfw-nl-popup__form button[type="submit"] {
+  min-height: 2.75rem;
+  border-radius: clamp(0.5rem, 2cqi, 0.75rem);
+  background: #0369a1;
+  color: #fff;
+  font-weight: 600;
+  font-size: clamp(0.8125rem, 3.2cqi, 0.9375rem);
+  padding: clamp(0.55rem, 2.5cqi, 0.7rem) clamp(0.85rem, 4cqi, 1.1rem);
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.urdfw-nl-popup__dismiss {
+  margin-top: clamp(0.5rem, 2.5cqi, 0.85rem);
+  font-size: clamp(0.7rem, 2.8cqi, 0.8125rem);
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  width: 100%;
+  text-align: center;
+  min-height: 2.25rem;
+}
+
+.urdfw-nl-popup__close {
+  position: absolute;
+  top: clamp(0.5rem, 2cqi, 0.75rem);
+  right: clamp(0.5rem, 2cqi, 0.75rem);
+  width: clamp(2rem, 8cqi, 2.25rem);
+  height: clamp(2rem, 8cqi, 2.25rem);
+  border: none;
+  background: #f1f5f9;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: clamp(1rem, 4cqi, 1.125rem);
+  line-height: 1;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+@container nl-overlay (min-height: 28rem) {
+  .urdfw-nl-popup {
+    align-items: center;
+  }
+}
+
+@media (min-width: 640px) {
+  .urdfw-nl-popup {
+    align-items: center;
+  }
+}
+
+@media (max-width: 359px) {
+  .urdfw-nl-popup__card {
+    width: 100%;
+    max-height: 90dvh;
+    border-radius: 1rem 1rem 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .urdfw-nl-popup,
+  .urdfw-nl-popup__card {
+    transition: none;
+  }
+}
