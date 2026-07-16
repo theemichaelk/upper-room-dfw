@@ -5,20 +5,20 @@
 const fs = require('fs');
 const path = require('path');
 
-let S3Client;
 let GetObjectCommand;
 let PutObjectCommand;
 let HeadObjectCommand;
+const { createS3Client, isLocalS3 } = require('./services/s3-client');
 
 function s3Ready() {
   return !!(process.env.DB_BACKUP_BUCKET && process.env.DB_BACKUP_KEY);
 }
 
 function getClient() {
-  if (!S3Client) {
-    ({ S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3'));
+  if (!GetObjectCommand) {
+    ({ GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3'));
   }
-  return new S3Client({ region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-2' });
+  return createS3Client();
 }
 
 function bucketConfig() {
@@ -68,8 +68,8 @@ async function backupNow(dbPath) {
       Body: body,
       ContentType: 'application/x-sqlite3',
     }));
-    console.log('[db-persist] Backed up to s3://' + bucket + '/' + key);
-    return { ok: true, bytes: body.length };
+    console.log('[db-persist] Backed up to s3://' + bucket + '/' + key + (isLocalS3() ? ' (Floci/local)' : ''));
+    return { ok: true, bytes: body.length, local: isLocalS3() };
   } catch (err) {
     console.warn('[db-persist] Backup failed:', err.message);
     return { ok: false, error: err.message };

@@ -1,0 +1,51 @@
+# Local Floci stack for Upper Room DFW development.
+# Replaces real AWS S3 during dev — do NOT use for go-live (keep Amplify/S3/CloudFront).
+#
+#   docker compose -f docker-compose.floci.yml up -d
+#   Open UI:  http://localhost:4500
+#   S3 API:   http://localhost:4566
+#
+# Then set in .env.local / shell:
+#   AWS_ENDPOINT_URL=http://localhost:4566
+#   AWS_ACCESS_KEY_ID=test
+#   AWS_SECRET_ACCESS_KEY=test
+#   AWS_REGION=us-east-1
+#   AWS_S3_FORCE_PATH_STYLE=true
+#   DB_BACKUP_BUCKET=upperroomdfw-local
+#   MEDIA_BUCKET=upperroomdfw-local
+
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: urdfw-floci
+    ports:
+      - "4566:4566"
+    environment:
+      FLOCI_DEFAULT_REGION: us-east-1
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - urdfw-floci-data:/tmp/floci
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_floci/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  floci-ui:
+    image: floci/floci-ui:latest
+    container_name: urdfw-floci-ui
+    ports:
+      - "4500:4500"
+    environment:
+      FLOCI_ENDPOINT: http://floci:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    depends_on:
+      - floci
+    profiles:
+      - ui
+
+volumes:
+  urdfw-floci-data:

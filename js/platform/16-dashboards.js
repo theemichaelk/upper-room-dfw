@@ -1525,13 +1525,20 @@
           </div>`;
         return;
       }
-    } catch { /* fallback */ }
+    } catch (err) {
+      console.warn('[URDFW] Admin analytics failed', err);
+    }
     el.innerHTML = `
-      <div class="bg-white border rounded-3xl p-6">
+      <div class="bg-white border rounded-3xl p-6 mb-4">
         <h3 class="font-semibold mb-4">Click Statistics (local)</h3>
         <div class="text-3xl font-bold text-[#0369a1]">${stats.total}</div>
         <div class="text-sm text-slate-500 mt-1">total tracked interactions</div>
-      </div>`;
+      </div>
+      <div id="admin-analytics-traffic-local"></div>`;
+    A?.renderGoogleTraffic?.(el.querySelector('#admin-analytics-traffic-local'), {
+      configured: false,
+      reason: 'Connect the production API (remote mode) to load GA4 & Search Console traffic.',
+    });
   };
 
   P.renderAdminApi = async function (el) {

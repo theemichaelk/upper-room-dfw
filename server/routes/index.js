@@ -13,6 +13,7 @@ const { integrationConfig, verifyAll, verifyMailchimp, verifyVbout, verifyAcumba
 const { verifyRecaptcha, recaptchaSiteKey } = require('../services/recaptcha');
 const { backupNow } = require('../db-persist');
 const { buildAdminAnalytics, buildMemberAnalytics, buildPublicStats } = require('../services/analytics');
+const { fetchGoogleTraffic, configStatus: googleTrafficConfig } = require('../services/google-traffic');
 const { syncEmailToProviders, syncToMailchimp, syncToVbout, syncToAcumbamail } = require('../services/newsletter-sync');
 const {
   getIntegrationSettings, setIntegrationSettings, getSocialLinks, setSocialLinks,
@@ -116,8 +117,26 @@ function createRouter(db, limiters = {}) {
     res.json({ ok: true, count: row?.c || 0 });
   });
 
-  router.get('/analytics/admin', adminRequired, (req, res) => {
-    res.json(buildAdminAnalytics(db));
+  router.get('/analytics/admin', adminRequired, async (req, res) => {
+    const base = buildAdminAnalytics(db);
+    let traffic = null;
+    try {
+      const days = Math.min(90, Math.max(7, parseInt(req.query.days, 10) || 28));
+      traffic = await fetchGoogleTraffic({ days });
+    } catch (e) {
+      traffic = { ok: false, configured: false, error: e.message, config: googleTrafficConfig() };
+    }
+    res.json({ ...base, traffic });
+  });
+
+  router.get('/analytics/traffic', adminRequired, async (req, res) => {
+    try {
+      const days = Math.min(90, Math.max(7, parseInt(req.query.days, 10) || 28));
+      const traffic = await fetchGoogleTraffic({ days });
+      res.json(traffic);
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message, config: googleTrafficConfig() });
+    }
   });
 
   router.get('/analytics/member', authRequired, (req, res) => {

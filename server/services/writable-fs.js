@@ -131,8 +131,9 @@ async function uploadPublicAsset(key, body, contentType) {
     if (!S3Client) {
       ({ S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'));
     }
+    const { s3ClientConfig } = require('./s3-client');
     const client = new S3Client({
-      region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-2',
+      ...s3ClientConfig(),
     });
     const Key = String(key || '').replace(/^\/+/, '');
     await client.send(new PutObjectCommand({

@@ -157,6 +157,159 @@
             <span class="text-slate-400 shrink-0">${i.at ? new Date(i.at).toLocaleDateString() : ''}</span></div>`).join('')
         : '<span class="text-slate-500">No activity yet — forms and registrations will appear here.</span>';
     }
+
+    /* Google traffic (GA4 + GSC) — appended below platform charts */
+    const trafficHost = document.createElement('div');
+    trafficHost.id = uid + '-traffic';
+    trafficHost.className = 'mt-6';
+    el.appendChild(trafficHost);
+    A.renderGoogleTraffic(trafficHost, data.traffic || null);
+  };
+
+  A.renderGoogleTraffic = function (el, traffic) {
+    if (!el) return;
+    destroyCharts(el);
+    if (!traffic || traffic.configured === false) {
+      el.innerHTML = `
+        <div class="portal-panel border border-dashed border-sky-200 bg-sky-50/50">
+          <h3 class="font-semibold text-sm mb-2 flex items-center gap-2"><i class="fa-brands fa-google text-sky-600"></i> Google Search Console &amp; GA4</h3>
+          <p class="text-xs text-slate-600 mb-3">Connect a Google Cloud service account to pull live Search Console queries and GA4 sessions into this dashboard.</p>
+          <ol class="text-xs text-slate-600 list-decimal pl-5 space-y-1 mb-3">
+            <li>Create a GCP service account with <strong>Analytics Data API</strong> + <strong>Search Console API</strong> enabled.</li>
+            <li>Add the SA email as GA4 <em>Viewer</em> and as a Search Console user for your property.</li>
+            <li>Set env: <code class="bg-white px-1 rounded">GOOGLE_SERVICE_ACCOUNT_EMAIL</code>, <code class="bg-white px-1 rounded">GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY</code>, <code class="bg-white px-1 rounded">GA4_PROPERTY_ID</code>, <code class="bg-white px-1 rounded">GSC_SITE_URL</code>.</li>
+          </ol>
+          <p class="text-[11px] text-slate-500">${escText(traffic?.reason || traffic?.error || 'Not configured yet — platform KPIs above still work from your database.')}</p>
+        </div>`;
+      return;
+    }
+
+    const ga4 = traffic.ga4 || {};
+    const gsc = traffic.gsc || {};
+    const gaErr = ga4.error ? `<p class="text-xs text-amber-700 mt-1">GA4: ${escText(ga4.error)}</p>` : '';
+    const gscErr = gsc.error ? `<p class="text-xs text-amber-700 mt-1">GSC: ${escText(gsc.error)}</p>` : '';
+    const t = ga4.totals || {};
+    const gt = gsc.totals || {};
+    const uid = 'gt' + Date.now().toString(36);
+    const idSessions = uid + '-sess';
+    const idGsc = uid + '-gsc';
+
+    el.innerHTML = `
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-semibold text-sm flex items-center gap-2"><i class="fa-brands fa-google text-sky-600"></i> Traffic · GA4 &amp; Search Console</h3>
+        <span class="text-[10px] text-slate-400">Last ${escText(String(ga4.rangeDays || gsc.rangeDays || 28))} days · updated ${traffic.generatedAt ? new Date(traffic.generatedAt).toLocaleString() : '—'}</span>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+        <div class="rounded-2xl p-3 bg-gradient-to-br from-sky-600 to-cyan-500 text-white">
+          <div class="text-[10px] uppercase opacity-80">GA4 Sessions</div>
+          <div class="text-2xl font-bold">${(t.sessions || 0).toLocaleString()}</div>
+        </div>
+        <div class="rounded-2xl p-3 bg-gradient-to-br from-indigo-600 to-violet-500 text-white">
+          <div class="text-[10px] uppercase opacity-80">Users</div>
+          <div class="text-2xl font-bold">${(t.users || 0).toLocaleString()}</div>
+        </div>
+        <div class="rounded-2xl p-3 bg-gradient-to-br from-slate-700 to-slate-900 text-white">
+          <div class="text-[10px] uppercase opacity-80">Page views</div>
+          <div class="text-2xl font-bold">${(t.pageViews || 0).toLocaleString()}</div>
+        </div>
+        <div class="rounded-2xl p-3 bg-gradient-to-br from-emerald-600 to-teal-500 text-white">
+          <div class="text-[10px] uppercase opacity-80">GSC Clicks</div>
+          <div class="text-2xl font-bold">${(gt.clicks || 0).toLocaleString()}</div>
+        </div>
+        <div class="rounded-2xl p-3 bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+          <div class="text-[10px] uppercase opacity-80">Impressions</div>
+          <div class="text-2xl font-bold">${(gt.impressions || 0).toLocaleString()}</div>
+        </div>
+      </div>
+      ${gaErr}${gscErr}
+      <div class="grid lg:grid-cols-2 gap-4 mb-4">
+        <div class="portal-panel bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+          <h4 class="font-semibold text-sm mb-3">GA4 sessions by day</h4>
+          <canvas id="${idSessions}" height="180"></canvas>
+        </div>
+        <div class="portal-panel bg-gradient-to-br from-slate-900 to-slate-800 text-white border-0">
+          <h4 class="font-semibold text-sm mb-3">Search Console clicks</h4>
+          <canvas id="${idGsc}" height="180"></canvas>
+        </div>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-4">
+        <div class="portal-panel">
+          <h4 class="font-semibold text-sm mb-2">Top search queries (GSC)</h4>
+          <div class="text-xs max-h-48 overflow-auto space-y-1">
+            ${(gsc.topQueries || []).length
+              ? (gsc.topQueries || []).map((q) => `
+                <div class="flex justify-between gap-2 border-b border-slate-100 py-1">
+                  <span class="truncate" title="${escText(q.query)}">${escText(q.query)}</span>
+                  <span class="text-slate-500 shrink-0">${q.clicks} clk · ${q.impressions} imp · pos ${Number(q.position || 0).toFixed(1)}</span>
+                </div>`).join('')
+              : '<span class="text-slate-500">No query data (or GSC not linked).</span>'}
+          </div>
+        </div>
+        <div class="portal-panel">
+          <h4 class="font-semibold text-sm mb-2">Top pages (GA4)</h4>
+          <div class="text-xs max-h-48 overflow-auto space-y-1">
+            ${(ga4.topPages || []).length
+              ? (ga4.topPages || []).map((p) => `
+                <div class="flex justify-between gap-2 border-b border-slate-100 py-1">
+                  <span class="truncate font-mono" title="${escText(p.path)}">${escText(p.path)}</span>
+                  <span class="text-slate-500 shrink-0">${(p.pageViews || 0).toLocaleString()} views</span>
+                </div>`).join('')
+              : '<span class="text-slate-500">No page data yet.</span>'}
+          </div>
+        </div>
+      </div>`;
+
+    const byDay = ga4.byDay || [];
+    if (byDay.length && global.Chart) {
+      const c = el.querySelector('#' + idSessions);
+      if (c) {
+        trackChart(el, new Chart(c, {
+          type: 'line',
+          data: {
+            labels: byDay.map((d) => (d.date || '').slice(5)),
+            datasets: [{
+              data: byDay.map((d) => d.sessions),
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.15)',
+              fill: true,
+              tension: 0.35,
+            }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: '#94a3b8', maxTicksLimit: 8 } },
+              y: { ticks: { color: '#94a3b8' }, beginAtZero: true },
+            },
+          },
+        }));
+      }
+    }
+
+    const gscDays = gsc.byDay || [];
+    if (gscDays.length && global.Chart) {
+      const c = el.querySelector('#' + idGsc);
+      if (c) {
+        trackChart(el, new Chart(c, {
+          type: 'bar',
+          data: {
+            labels: gscDays.map((d) => (d.date || '').slice(5)),
+            datasets: [{
+              data: gscDays.map((d) => d.clicks),
+              backgroundColor: '#34d399',
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: '#94a3b8', maxTicksLimit: 8 } },
+              y: { ticks: { color: '#94a3b8' }, beginAtZero: true },
+            },
+          },
+        }));
+      }
+    }
   };
 
   A.renderMemberCharts = function (el, data) {

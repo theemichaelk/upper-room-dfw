@@ -1,9 +1,9 @@
 const crypto = require('crypto');
 const path = require('path');
 
-let S3Client;
 let PutObjectCommand;
 let DeleteObjectCommand;
+const { createS3Client } = require('./s3-client');
 
 function bucket() {
   return process.env.MEDIA_BUCKET || process.env.DB_BACKUP_BUCKET || 'upperroomdfw.com';
@@ -15,10 +15,10 @@ function publicBase() {
 }
 
 function getClient() {
-  if (!S3Client) {
-    ({ S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3'));
+  if (!PutObjectCommand) {
+    ({ PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3'));
   }
-  return new S3Client({ region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-2' });
+  return createS3Client();
 }
 
 function parseDataUrl(dataUrl) {
