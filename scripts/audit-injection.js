@@ -67,6 +67,13 @@ function auditFile(filePath) {
   }
 
   for (const sheet of CONFIG.stylesheets || []) {
+    // Page-scoped optional sheets (e.g. 404.css only on 404.html)
+    if (Array.isArray(sheet.pages) && sheet.pages.length) {
+      const base = path.basename(rel);
+      if (!sheet.pages.includes(base) && !sheet.pages.includes(rel)) continue;
+    } else if (sheet.required === false) {
+      continue;
+    }
     const expected = prefix + sheet.href;
     const hasExpected = html.includes(`href="${expected}"`) || html.includes(`href='${expected}'`);
     const hasWrongRoot = depth > 0 && (html.includes(`href="${sheet.href}"`) || html.includes(`href='${sheet.href}'`));

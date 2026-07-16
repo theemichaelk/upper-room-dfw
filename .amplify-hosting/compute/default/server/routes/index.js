@@ -1,13 +1,58 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { signToken, authRequired, adminRequired } = require('../middleware/auth');
-const { uuid, uniqueSlug, clientToApi, listingToApi } = require('../utils');
-const { sendWelcome, sendPasswordReset, sendLeadNotification, sendPaymentReceipt } = require('../services/email');
+const { uuid, uniqueSlug, clientToApi, listingToApi, leadToApi, claimToApi, reviewToApi } = require('../utils');
+const { sendPasswordReset } = require('../services/email');
+const { listCampaigns, sendCampaign } = require('../services/campaigns');
+const { shortenUrl } = require('../services/tinyurl');
+const { getEvents } = require('../services/events');
+const { registerWebhook, listWebhooks, deactivateWebhook } = require('../services/webhook-dispatcher');
+const { isProduction } = require('../middleware/security');
 const { isStripeEnabled, stripeMode, resolveStripePublishableKey, createCheckoutSession, createPortalSession } = require('../services/stripe');
-const { integrationConfig, verifyAll } = require('../services/integrations');
+const { integrationConfig, verifyAll, verifyMailchimp, verifyVbout, verifyAcumbamail } = require('../services/integrations');
+const { verifyRecaptcha, recaptchaSiteKey } = require('../services/recaptcha');
+const { backupNow } = require('../db-persist');
+const { buildAdminAnalytics, buildMemberAnalytics, buildPublicStats } = require('../services/analytics');
+const { syncEmailToProviders, syncToMailchimp, syncToVbout, syncToAcumbamail } = require('../services/newsletter-sync');
+const {
+  getIntegrationSettings, setIntegrationSettings, getSocialLinks, setSocialLinks,
+} = require('../services/platform-settings');
+const { sendEmail } = require('../services/email');
+const dnsService = require('../services/dns');
+const { uploadMedia, deleteMediaKey, assetToApi } = require('../services/media-storage');
+const { getSeoPages, getSeoPage, setSeoPage } = require('../services/seo-settings');
+const {
+  getSiteSettings, setSiteSettings, getPublicSiteSettings, exportSiteSettingsJson,
+} = require('../services/site-settings');
+const { verifyLiveSite, buildDashboardStatus } = require('../services/telemetry');
+const { runRebuild } = require('../services/rebuild');
+const {
+  scanDuplicates, getRedirects, setRedirects, mergeRedirectsFromAudit, loadRedirectsFile,
+} = require('../services/duplicate-pages');
+const { invalidateAll } = require('../services/cache-invalidation');
+const {
+  listPages, getPage, createPage, updatePage, deletePage, loadControlSchema,
+} = require('../services/page-lifecycle');
+const { probeEdgeDns } = require('../services/edge-dns');
+const { getBlogPosts, setBlogPosts, getBlogPost } = require('../services/blog');
+const { buildAuditReport } = require('../services/site-audit');
+const {
+  getAdminPlatformIntegrations,
+  getMemberIntegrations,
+  setMemberIntegration,
+  updateAdminProviderSettings,
+  PROVIDERS,
+} = require('../services/platform-integrations');
 
-function createRouter(db) {
+function allowDevBilling() {
+  return !isStripeEnabled() && !isProduction();
+}
+
+function createRouter(db, limiters = {}) {
   const router = express.Router();
+  const events = getEvents(db);
+  const authLimiter = limiters.authLimiter || ((req, res, next) => next());
+  const formLimiter = limiters.formLimiter || ((req, res, next) => next());
 
   router.get('/health', (req, res) => {
     res.json({
@@ -18,26 +63,265 @@ function createRouter(db) {
       stripeMode: stripeMode(),
       dbBackup: !!(process.env.DB_BACKUP_BUCKET && process.env.DB_BACKUP_KEY),
       mode: process.env.NODE_ENV || 'development',
+      envReady: {
+        stripe: !!(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE),
+        smtp: !!(process.env.SMTP_HOST && process.env.SMTP_USER),
+        smtpProvider: process.env.SMTP_PROVIDER
+          || (process.env.SMTP_HOST?.includes('acumbamail') ? 'acumbamail' : 'smtp'),
+        acumbamail: !!process.env.ACUMBAMAIL_API_KEY,
+        mailchimp: !!process.env.MAILCHIMP_API_KEY,
+        vbout: !!process.env.VBOUT_API_KEY,
+        appUrl: process.env.APP_URL || '',
+      },
     });
   });
 
   router.get('/stats/public', (req, res) => {
-    const churches = db.prepare("SELECT COUNT(*) AS c FROM listings WHERE status = 'live'").get().c;
-    const events = db.prepare("SELECT COUNT(*) AS c FROM listings WHERE status = 'live' AND (category LIKE '%Event%' OR category LIKE '%Gathering%')").get().c;
-    const subscribers = db.prepare('SELECT COUNT(*) AS c FROM subscribers').get().c;
-    const clients = db.prepare('SELECT COUNT(*) AS c FROM clients').get().c;
-    const leads = db.prepare('SELECT COUNT(*) AS c FROM leads').get().c;
-    const familiesConnected = Math.max(12840, subscribers * 48 + clients * 22 + leads * 3 + churches * 42);
-    const reviewCount = Math.max(1240, churches * 9 + clients * 4);
+    res.json(buildPublicStats(db));
+  });
+
+  router.get('/analytics/admin', adminRequired, (req, res) => {
+    res.json(buildAdminAnalytics(db));
+  });
+
+  router.get('/analytics/member', authRequired, (req, res) => {
+    res.json(buildMemberAnalytics(db, req.user.email));
+  });
+
+  router.get('/platform/social', (req, res) => {
+    res.json({ ok: true, links: getSocialLinks(db) });
+  });
+
+  router.patch('/platform/social', adminRequired, (req, res) => {
+    const links = setSocialLinks(db, req.body || {});
+    res.json({ ok: true, links });
+  });
+
+  router.get('/platform/connections', adminRequired, async (req, res) => {
+    const checks = await verifyAll();
+    const dnsStatus = await dnsService.verifyDns();
+    const telemetryStatus = buildDashboardStatus(db, dnsService);
+    const liveVerify = await verifyLiveSite(getSiteSettings(db));
     res.json({
       ok: true,
-      churches,
-      familiesConnected,
-      eventsThisMonth: Math.max(events, Math.ceil(churches * 0.35)),
-      averageRating: 4.8,
-      reviewCount,
-      subscribers,
+      appUrl: process.env.APP_URL || '',
+      dbBackup: !!(process.env.DB_BACKUP_BUCKET && process.env.DB_BACKUP_KEY),
+      recaptcha: !!process.env.RECAPTCHA_SITE_KEY,
+      results: checks.results,
+      config: checks.config,
+      dns: { ready: dnsService.route53Ready(), route53: dnsStatus },
+      telemetry: {
+        ...telemetryStatus,
+        live: { ok: liveVerify.ok, reason: liveVerify.reason, detected: liveVerify.detected },
+      },
     });
+  });
+
+  router.get('/platform/site-settings/public', (req, res) => {
+    res.json(getPublicSiteSettings(db));
+  });
+
+  router.get('/platform/site-settings', adminRequired, (req, res) => {
+    res.json({ ok: true, settings: getSiteSettings(db) });
+  });
+
+  router.put('/platform/site-settings', adminRequired, (req, res) => {
+    const settings = setSiteSettings(db, req.body || {});
+    let exported = null;
+    try {
+      exported = exportSiteSettingsJson(db);
+    } catch (err) {
+      exported = { ok: false, error: err.message };
+    }
+    res.json({ ok: true, settings, exported });
+  });
+
+  router.post('/platform/telemetry/verify', adminRequired, async (req, res) => {
+    const settings = getSiteSettings(db);
+    const url = req.body?.url || process.env.APP_URL || 'https://upperroomdfw.com';
+    const result = await verifyLiveSite(settings, url);
+    res.json({ ok: result.ok, ...result });
+  });
+
+  router.get('/platform/duplicates', adminRequired, (req, res) => {
+    const audit = scanDuplicates();
+    const redirects = getRedirects(db);
+    res.json({ ok: true, audit, redirects });
+  });
+
+  router.post('/platform/duplicates/apply', adminRequired, (req, res) => {
+    const audit = scanDuplicates();
+    const merged = mergeRedirectsFromAudit(audit, loadRedirectsFile());
+    const saved = setRedirects(db, merged);
+    res.json({
+      ok: true,
+      duplicateSetCount: audit.duplicateSetCount,
+      redirectCount: saved.redirects?.length || 0,
+      redirects: saved,
+    });
+  });
+
+  router.get('/platform/redirects', (req, res) => {
+    res.json({ ok: true, ...getRedirects(db) });
+  });
+
+  router.post('/platform/rebuild', adminRequired, async (req, res) => {
+    try {
+      const patch = req.body?.settings;
+      const report = await runRebuild(db, {
+        saveSettings: !!patch,
+        settingsPatch: patch,
+        invalidateCache: req.body?.invalidateCache !== false,
+        deployS3: !!req.body?.deployS3,
+      });
+      res.json({ ok: report.ok, ...report });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.post('/platform/404-log', (req, res) => {
+    const body = req.body || {};
+    const pathHit = String(body.path || '').slice(0, 500);
+    if (!pathHit) return res.status(400).json({ ok: false, error: 'path required' });
+    try {
+      db.prepare('INSERT INTO event_log (event, payload_json, at) VALUES (?, ?, ?)').run(
+        '404.rescue',
+        JSON.stringify({
+          path: pathHit,
+          referrer: body.referrer || null,
+          topIntent: body.topIntent || null,
+          area: body.area || null,
+          ua: (req.headers['user-agent'] || '').slice(0, 200),
+        }),
+        new Date().toISOString()
+      );
+    } catch { /* best effort */ }
+    res.json({ ok: true });
+  });
+
+  router.get('/platform/blog', (req, res) => {
+    res.json({ ok: true, ...getBlogPosts(db) });
+  });
+
+  router.get('/platform/blog/:slug', (req, res) => {
+    const post = getBlogPost(db, decodeURIComponent(req.params.slug || ''));
+    if (!post) return res.status(404).json({ ok: false, error: 'Post not found' });
+    res.json({ ok: true, post });
+  });
+
+  router.put('/platform/blog', adminRequired, (req, res) => {
+    try {
+      const data = setBlogPosts(db, req.body || {});
+      res.json({ ok: true, ...data });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/platform/site-audit', adminRequired, (req, res) => {
+    res.json(buildAuditReport(db));
+  });
+
+  router.get('/platform/edge-dns', adminRequired, async (req, res) => {
+    try {
+      const domain = req.query.domain || process.env.APP_URL || 'https://upperroomdfw.com';
+      const report = await probeEdgeDns(domain);
+      res.json({ ok: true, ...report });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/platform/control-schema', adminRequired, (req, res) => {
+    res.json({ ok: true, schema: loadControlSchema() });
+  });
+
+  router.get('/platform/pages', adminRequired, (req, res) => {
+    const filters = {
+      q: req.query.q,
+      status: req.query.status,
+      type: req.query.type,
+      shell: req.query.shell,
+      noindex: req.query.noindex,
+    };
+    res.json(listPages(db, filters));
+  });
+
+  router.get('/platform/pages/:pageId', adminRequired, (req, res) => {
+    const pageId = decodeURIComponent(req.params.pageId || '');
+    const page = getPage(db, pageId);
+    if (!page) return res.status(404).json({ ok: false, error: 'Page not found' });
+    res.json({ ok: true, page });
+  });
+
+  router.post('/platform/pages', adminRequired, (req, res) => {
+    try {
+      const page = createPage(db, req.body || {});
+      res.status(201).json({ ok: true, page });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.patch('/platform/pages/:pageId', adminRequired, (req, res) => {
+    try {
+      const pageId = decodeURIComponent(req.params.pageId || '');
+      const page = updatePage(db, pageId, req.body || {});
+      res.json({ ok: true, page });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.delete('/platform/pages/:pageId', adminRequired, (req, res) => {
+    try {
+      const pageId = decodeURIComponent(req.params.pageId || '');
+      const result = deletePage(db, pageId, { hard: req.query.hard === 'true' });
+      res.json({ ok: true, ...result });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/platform/404-stats', adminRequired, (req, res) => {
+    const rows = db.prepare(
+      "SELECT payload_json, at FROM event_log WHERE event = '404.rescue' ORDER BY at DESC LIMIT 100"
+    ).all();
+    const hits = rows.map((r) => {
+      try { return { ...JSON.parse(r.payload_json), at: r.at }; } catch { return { at: r.at }; }
+    });
+    const byPath = {};
+    hits.forEach((h) => { byPath[h.path] = (byPath[h.path] || 0) + 1; });
+    const topPaths = Object.entries(byPath).sort((a, b) => b[1] - a[1]).slice(0, 20);
+    res.json({ ok: true, total: hits.length, recent: hits.slice(0, 25), topPaths });
+  });
+
+  router.post('/platform/cache/invalidate', adminRequired, async (req, res) => {
+    const result = await invalidateAll({ paths: req.body?.paths || ['/*'] });
+    res.json({ ok: result.ok, ...result });
+  });
+
+  router.post('/platform/telemetry/webhook', async (req, res) => {
+    const secret = process.env.TELEMETRY_WEBHOOK_SECRET || process.env.ADMIN_PASSWORD;
+    const provided = req.headers['x-urdfw-webhook-secret'] || req.body?.secret;
+    if (!secret || provided !== secret) {
+      return res.status(401).json({ ok: false, error: 'Invalid webhook secret' });
+    }
+    const patch = req.body?.settings || req.body || {};
+    delete patch.secret;
+    const settings = setSiteSettings(db, patch);
+    const exported = exportSiteSettingsJson(db);
+    res.json({
+      ok: true,
+      settings,
+      exported,
+      message: 'Site settings synced — run npm run build:static && deploy:s3 to bake tags into HTML for scrapers',
+    });
+  });
+
+  router.get('/platform/integrations', adminRequired, (req, res) => {
+    res.json({ ok: true, ...getAdminPlatformIntegrations(db) });
   });
 
   router.get('/billing/stripe-status', (req, res) => {
@@ -72,12 +356,53 @@ function createRouter(db) {
     res.json(db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 100').all());
   });
 
+  router.post('/admin/backup-db', adminRequired, async (req, res) => {
+    const dbPath = process.env.DATABASE_PATH || require('path').join(__dirname, '..', 'data', 'urdfw.db');
+    const result = await backupNow(dbPath);
+    res.json({ ok: !!result.ok, ...result, bucket: process.env.DB_BACKUP_BUCKET, key: process.env.DB_BACKUP_KEY });
+  });
+
+  router.get('/admin/campaigns', adminRequired, (req, res) => {
+    res.json({ ok: true, campaigns: listCampaigns() });
+  });
+
+  router.post('/admin/test-email', adminRequired, async (req, res) => {
+    const to = (req.body?.email || req.user.email || '').trim();
+    const template = req.body?.template || 'contact_auto_reply';
+    if (!to) return res.status(400).json({ ok: false, error: 'Email required' });
+    try {
+      if (template === 'smtp_ping') {
+        const relay = process.env.SMTP_PROVIDER || process.env.SMTP_HOST || 'SMTP';
+        await sendEmail({
+          to,
+          subject: 'Upper Room DFW — SMTP Test',
+          html: '<p>' + relay + ' is working. Sent at ' + new Date().toISOString() + '</p>',
+          text: relay + ' is working.',
+        });
+        return res.json({ ok: true, to, template: 'smtp_ping' });
+      }
+      const result = await sendCampaign(template, {
+        email: to,
+        name: req.body?.name || 'Admin Test',
+        message: 'This is a test message from the admin panel.',
+        amount: 29,
+        plan: 'Standard',
+        gateway: 'stripe',
+        token: 'test-reset-token',
+      });
+      res.json({ ok: true, ...result });
+    } catch (err) {
+      res.status(500).json({ ok: false, error: err.message });
+    }
+  });
+
   router.get('/config', (req, res) => {
     res.json({
       mode: 'remote',
       stripeEnabled: isStripeEnabled(),
       stripeMode: stripeMode(),
       stripePublishableKey: resolveStripePublishableKey() || '',
+      recaptchaSiteKey: recaptchaSiteKey(),
       appUrl: process.env.APP_URL || '',
       trialDays: 14,
       integrations: integrationConfig(),
@@ -88,8 +413,17 @@ function createRouter(db) {
     });
   });
 
+  async function requireRecaptcha(req, res) {
+    const check = await verifyRecaptcha(req.body?.recaptchaToken);
+    if (!check.ok) {
+      res.status(400).json({ ok: false, error: check.error || 'reCAPTCHA failed' });
+      return false;
+    }
+    return true;
+  }
+
   /* ─── AUTH ─── */
-  router.post('/auth/register', (req, res) => {
+  router.post('/auth/register', authLimiter, (req, res) => {
     const body = req.body || {};
     const email = (body.email || '').trim().toLowerCase();
     const password = body.password || uuid().slice(0, 12);
@@ -132,14 +466,18 @@ function createRouter(db) {
     });
     tx();
 
-    sendWelcome(email, name).catch(() => {});
+    events.emit('user.registered', { email, name, area: body.area, clientId }).catch(() => {});
+
+    if (body.website) {
+      dnsService.ensureClientSite(db, { id: clientId, name, website: body.website }).catch(() => {});
+    }
 
     const client = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(clientId));
     const token = signToken({ sub: userId, email, role: 'church-owner', clientId });
     res.json({ ok: true, client, user: { id: userId, email, name, role: 'church-owner' }, token });
   });
 
-  router.post('/auth/member', (req, res) => {
+  router.post('/auth/member', authLimiter, (req, res) => {
     const email = (req.body?.email || '').trim().toLowerCase();
     const password = req.body?.password || '';
 
@@ -165,10 +503,10 @@ function createRouter(db) {
     res.json({ ok: true, client: clientToApi(client), user: { id: user.id, email, name: user.name, role: user.role }, token });
   });
 
-  router.post('/auth/admin', (req, res) => {
+  router.post('/auth/admin', authLimiter, (req, res) => {
     const password = req.body?.password || '';
     const email = (req.body?.email || '').trim().toLowerCase();
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminPass = isProduction() ? null : (process.env.ADMIN_PASSWORD || 'admin123');
 
     if (email) {
       const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, 'admin');
@@ -186,7 +524,7 @@ function createRouter(db) {
       return res.json({ ok: true, role: 'admin', email: matched.email, token });
     }
 
-    if (password === adminPass && admins.length > 0) {
+    if (adminPass && password === adminPass && admins.length > 0) {
       const user = admins[0];
       const token = signToken({ sub: user.id, email: user.email, role: 'admin' });
       return res.json({ ok: true, role: 'admin', email: user.email, token });
@@ -195,14 +533,14 @@ function createRouter(db) {
     return res.status(401).json({ ok: false, error: 'Invalid credentials' });
   });
 
-  router.post('/auth/forgot', async (req, res) => {
+  router.post('/auth/forgot', authLimiter, async (req, res) => {
     const email = (req.body?.email || '').trim().toLowerCase();
     const user = db.prepare('SELECT email FROM users WHERE email = ?').get(email);
     if (user) {
       const token = uuid();
       const expires = new Date(Date.now() + 3600000).toISOString();
       db.prepare('INSERT OR REPLACE INTO password_resets (token, email, expires_at) VALUES (?, ?, ?)').run(token, email, expires);
-      await sendPasswordReset(email, token);
+      await sendCampaign('forgot_password', { email, token, name: email.split('@')[0] }).catch(() => sendPasswordReset(email, token));
     }
     res.json({ ok: true, message: 'If that email exists, a reset link has been sent.' });
   });
@@ -260,7 +598,14 @@ function createRouter(db) {
     if (patch.status === 'approved' && row.listing_id) {
       db.prepare('UPDATE listings SET status = ? WHERE id = ?').run('live', row.listing_id);
     }
-    res.json(clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id)));
+    const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(req.params.id));
+    if (patch.status === 'approved' && row.status !== 'approved') {
+      events.emit('client.approved', { email: updated.email, name: updated.name, clientId: updated.id }).catch(() => {});
+    }
+    if (patch.website) {
+      dnsService.ensureClientSite(db, { id: updated.id, name: updated.name, website: updated.website }).catch(() => {});
+    }
+    res.json(updated);
   });
 
   /* ─── LISTINGS ─── */
@@ -307,6 +652,10 @@ function createRouter(db) {
     }
 
     const listing = db.prepare('SELECT * FROM listings WHERE id = ?').get(listingId);
+    const website = d.website || client.website;
+    if (website) {
+      dnsService.ensureClientSite(db, { id: cid, name: d.name || client.name, website }).catch(() => {});
+    }
     res.json(listingToApi(listing));
   });
 
@@ -338,6 +687,9 @@ function createRouter(db) {
       }
     }
 
+    if (!allowDevBilling()) {
+      return res.status(503).json({ ok: false, error: 'Billing unavailable — configure Stripe for production.' });
+    }
     const amount = plan === 'premium' ? 79 : 29;
     const orderId = uuid();
     const now = new Date().toISOString();
@@ -356,7 +708,7 @@ function createRouter(db) {
         1, plan === 'premium' ? 1 : 0, plan, client.listingId
       );
     }
-    sendPaymentReceipt(client.email, amount, plan).catch(() => {});
+    events.emit('payment.completed', { email: client.email, amount, plan, clientId: client.id, gateway: 'dev' }).catch(() => {});
     const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id));
     res.json({ ok: true, order: { ref, amount, plan }, client: updated, devMode: true });
   });
@@ -404,6 +756,9 @@ function createRouter(db) {
         return res.status(500).json({ ok: false, error: e.message });
       }
     }
+    if (!allowDevBilling()) {
+      return res.status(503).json({ ok: false, error: 'Billing unavailable — configure Stripe for production.' });
+    }
     const amount = plan === 'premium' ? 79 : 29;
     const orderId = uuid();
     const now = new Date().toISOString();
@@ -417,30 +772,42 @@ function createRouter(db) {
     db.prepare('UPDATE clients SET is_paid = 1, package = ?, subscription_status = ? WHERE id = ?').run(
       plan.charAt(0).toUpperCase() + plan.slice(1), 'active', client.id
     );
+    events.emit('payment.completed', { email: client.email, amount, plan, clientId: client.id, gateway: 'dev' }).catch(() => {});
     const updated = clientToApi(db.prepare('SELECT * FROM clients WHERE id = ?').get(client.id));
     res.json({ ok: true, order: { ref, amount, plan }, client: updated });
   });
 
   /* ─── LEADS ─── */
-  router.post('/leads', (req, res) => {
+  router.post('/leads', formLimiter, (req, res) => {
     const body = req.body || {};
     const id = uuid();
     const now = new Date().toISOString();
     const listing = body.listingId
       ? db.prepare('SELECT email FROM listings WHERE id = ? OR slug = ?').get(body.listingId, body.listingId)
       : null;
-    const churchEmail = body.churchEmail || listing?.email || body.targetEmail || '';
+    const churchEmail = body.churchEmail || body.church_email || listing?.email || body.targetEmail || '';
     db.prepare('INSERT INTO leads (id, listing_id, church_email, name, email, phone, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
       id, body.listingId || null, churchEmail, body.name || '', body.email || '', body.phone || '', body.message || '', 'new', now
     );
-    if (churchEmail) sendLeadNotification(churchEmail, body).catch(() => {});
+    events.emit('lead.created', { id, listingId: body.listingId, churchEmail, ...body }).catch(() => {});
     res.json({ ok: true, id });
   });
 
   router.get('/leads', authRequired, (req, res) => {
     const email = req.user.email;
     const rows = db.prepare('SELECT * FROM leads WHERE church_email = ? ORDER BY created_at DESC').all(email);
-    res.json(rows);
+    res.json(rows.map(leadToApi));
+  });
+
+  router.patch('/leads/:id', authRequired, (req, res) => {
+    const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(req.params.id);
+    if (!lead) return res.status(404).json({ ok: false, error: 'Lead not found' });
+    if (lead.church_email !== req.user.email && req.user.role !== 'admin') {
+      return res.status(403).json({ ok: false, error: 'Forbidden' });
+    }
+    const status = req.body?.status || 'contacted';
+    db.prepare('UPDATE leads SET status = ? WHERE id = ?').run(status, req.params.id);
+    res.json({ ok: true, id: req.params.id, status });
   });
 
   /* ─── MESSAGES ─── */
@@ -468,12 +835,14 @@ function createRouter(db) {
   });
 
   /* ─── SUPPORT ─── */
-  router.post('/support', (req, res) => {
+  router.post('/support', formLimiter, (req, res) => {
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      id, body.email || '', body.name || '', body.topic || 'General', body.message || body.topic || '', 'open', new Date().toISOString()
+      id, body.email || '', body.name || '', body.topic || 'General', body.message || body.topic || '', 'open', now
     );
+    events.emit('support.created', { id, ...body }).catch(() => {});
     res.json({ ok: true, id });
   });
 
@@ -481,13 +850,165 @@ function createRouter(db) {
     res.json(db.prepare('SELECT * FROM support_tickets ORDER BY created_at DESC').all());
   });
 
-  /* ─── INTEGRATIONS (stubs wired for frontend) ─── */
+  router.patch('/support/:id', adminRequired, (req, res) => {
+    const row = db.prepare('SELECT id FROM support_tickets WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Ticket not found' });
+    const status = req.body?.status || 'closed';
+    db.prepare('UPDATE support_tickets SET status = ? WHERE id = ?').run(status, req.params.id);
+    res.json({ ok: true, id: req.params.id, status });
+  });
+
+  /* ─── CLAIMS ─── */
+  router.get('/claims', authRequired, (req, res) => {
+    const rows = req.user.role === 'admin'
+      ? db.prepare('SELECT * FROM claims ORDER BY created_at DESC').all()
+      : db.prepare('SELECT * FROM claims WHERE email = ? ORDER BY created_at DESC').all(req.user.email);
+    res.json(rows.map(claimToApi));
+  });
+
+  router.post('/claims', authRequired, (req, res) => {
+    const body = req.body || {};
+    const id = uuid();
+    const now = new Date().toISOString();
+    const email = (body.email || req.user.email || '').trim().toLowerCase();
+    db.prepare(`
+      INSERT INTO claims (id, email, name, listing_id, proof, paid, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, email, body.name || req.user.email, body.listingId || body.listing_id || '',
+      body.proof || '', body.paid ? 1 : 0, 'pending', now
+    );
+    res.json({ ok: true, claim: claimToApi(db.prepare('SELECT * FROM claims WHERE id = ?').get(id)) });
+  });
+
+  router.patch('/claims/:id', adminRequired, (req, res) => {
+    const claim = db.prepare('SELECT * FROM claims WHERE id = ?').get(req.params.id);
+    if (!claim) return res.status(404).json({ ok: false, error: 'Claim not found' });
+    const status = req.body?.status || 'approved';
+    db.prepare('UPDATE claims SET status = ? WHERE id = ?').run(status, req.params.id);
+    if (status === 'approved' && claim.listing_id) {
+      const client = db.prepare('SELECT * FROM clients WHERE email = ?').get(claim.email);
+      const listing = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(claim.listing_id, claim.listing_id);
+      if (client && listing) {
+        db.prepare('UPDATE clients SET listing_id = ? WHERE id = ?').run(listing.id, client.id);
+        db.prepare('UPDATE listings SET client_id = ?, status = ? WHERE id = ?').run(client.id, 'live', listing.id);
+      }
+    }
+    res.json({ ok: true, claim: claimToApi(db.prepare('SELECT * FROM claims WHERE id = ?').get(req.params.id)) });
+  });
+
+  /* ─── REVIEWS ─── */
+  router.get('/reviews', (req, res) => {
+    const listingId = req.query.listingId || req.query.listing_id;
+    if (!listingId) return res.status(400).json({ ok: false, error: 'listingId required' });
+    const rows = db.prepare('SELECT * FROM reviews WHERE listing_id = ? AND status = ? ORDER BY created_at DESC').all(listingId, 'published');
+    res.json(rows.map(reviewToApi));
+  });
+
+  router.get('/admin/reviews', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM reviews ORDER BY created_at DESC LIMIT 200').all();
+    res.json(rows.map(reviewToApi));
+  });
+
+  router.post('/reviews', authRequired, (req, res) => {
+    const body = req.body || {};
+    const listingId = body.listingId || body.listing_id;
+    if (!listingId) return res.status(400).json({ ok: false, error: 'listingId required' });
+    const id = uuid();
+    const now = new Date().toISOString();
+    db.prepare(`
+      INSERT INTO reviews (id, listing_id, author, email, stars, text, criteria_json, status, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, listingId, body.author || req.user.email, body.email || req.user.email,
+      parseInt(body.stars || '5', 10), body.text || '', JSON.stringify(body.criteria || {}),
+      body.status || 'published', now
+    );
+    res.json({ ok: true, review: reviewToApi(db.prepare('SELECT * FROM reviews WHERE id = ?').get(id)) });
+  });
+
+  router.get('/admin/leads', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM leads ORDER BY created_at DESC LIMIT 200').all();
+    res.json(rows.map(leadToApi));
+  });
+
+  router.patch('/listings/:id', authRequired, (req, res) => {
+    const row = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(req.params.id, req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Listing not found' });
+    if (req.user.role !== 'admin' && row.client_id !== req.user.clientId) {
+      return res.status(403).json({ ok: false, error: 'Forbidden' });
+    }
+    const patch = req.body || {};
+    const fields = [];
+    const vals = [];
+    const allowed = ['name', 'area', 'description', 'phone', 'website', 'times', 'status', 'featured'];
+    for (const k of allowed) {
+      if (patch[k] !== undefined) {
+        const col = k === 'description' ? 'description' : k === 'featured' ? 'featured' : k;
+        if (k === 'description') {
+          fields.push('description = ?', 'full_description = ?');
+          vals.push(patch[k], patch[k]);
+        } else if (k === 'featured') {
+          fields.push('featured = ?');
+          vals.push(patch[k] ? 1 : 0);
+        } else {
+          fields.push(`${col} = ?`);
+          vals.push(patch[k]);
+        }
+      }
+    }
+    if (fields.length) {
+      fields.push('updated_at = ?');
+      vals.push(new Date().toISOString(), row.id);
+      db.prepare(`UPDATE listings SET ${fields.join(', ')} WHERE id = ?`).run(...vals);
+    }
+    const updated = db.prepare('SELECT * FROM listings WHERE id = ?').get(row.id);
+    res.json(listingToApi(updated));
+  });
+
+  /* ─── INTEGRATIONS ─── */
   router.get('/integrations', adminRequired, (req, res) => {
+    const platform = getAdminPlatformIntegrations(db);
     res.json({
-      providers: ['mailchimp', 'vbout', 'acumbamail'],
+      ok: true,
+      source: 'env',
+      providers: PROVIDERS,
       config: integrationConfig(),
+      providerConfig: platform.providers,
+      platform: platform.platform,
       subscribers: db.prepare('SELECT COUNT(*) AS c FROM subscribers').get().c,
+      subscriberEmails: db.prepare('SELECT email FROM subscribers ORDER BY created_at DESC LIMIT 100').all().map((r) => r.email),
     });
+  });
+
+  function memberIntegrationsGuard(req, res) {
+    if (req.user.role === 'admin') {
+      res.status(403).json({ ok: false, error: 'Admins use /api/platform/integrations (server .env credentials)' });
+      return false;
+    }
+    if (!req.user.clientId) {
+      res.status(400).json({ ok: false, error: 'Client account required' });
+      return false;
+    }
+    return true;
+  }
+
+  router.get('/client/integrations', authRequired, (req, res) => {
+    if (!memberIntegrationsGuard(req, res)) return;
+    res.json(getMemberIntegrations(db, req.user.clientId));
+  });
+
+  router.patch('/client/integrations/:provider', authRequired, (req, res) => {
+    if (!memberIntegrationsGuard(req, res)) return;
+    const body = req.body || {};
+    const result = setMemberIntegration(db, req.user.clientId, req.params.provider, {
+      listId: body.listId,
+      apiKey: body.apiKey,
+      enabled: body.enabled,
+      clearApiKey: body.clearApiKey,
+    });
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
   });
 
   router.get('/integrations/status', adminRequired, async (req, res) => {
@@ -499,39 +1020,107 @@ function createRouter(db) {
     }
   });
 
-  router.post('/integrations/subscribe', (req, res) => {
+  router.post('/integrations/subscribe', formLimiter, async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const email = (req.body?.email || '').trim().toLowerCase();
     if (!email) return res.status(400).json({ ok: false, error: 'Email required' });
-    db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, new Date().toISOString());
-    db.prepare('INSERT INTO integration_log (action, provider, status, email, at) VALUES (?, ?, ?, ?, ?)').run(
-      'subscribe', 'all', 'ok', email, new Date().toISOString()
-    );
-    res.json({ ok: true, synced: 3, email });
+    const now = new Date().toISOString();
+    const inserted = db.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').run(email, now);
+    if (inserted.changes > 0) {
+      await events.emit('subscriber.added', { email });
+    }
+    const sync = await syncEmailToProviders(email, db);
+    res.json({ ok: true, synced: sync.synced, email, results: sync.results });
   });
 
-  router.post('/integrations/contact', (req, res) => {
+  router.get('/integrations/log', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM integration_log ORDER BY at DESC LIMIT 50').all();
+    res.json({ ok: true, entries: rows });
+  });
+
+  router.get('/integrations/:provider', adminRequired, (req, res) => {
+    const provider = req.params.provider;
+    if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    const platform = getAdminPlatformIntegrations(db);
+    const cfg = platform.providers[provider] || {};
+    const synced = db.prepare('SELECT COUNT(*) AS c FROM integration_log WHERE provider = ? AND status = ?').get(provider, 'ok').c;
+    res.json({ ok: true, provider, config: cfg, syncedCount: synced, source: 'env' });
+  });
+
+  router.post('/integrations/:provider/config', adminRequired, (req, res) => {
+    const provider = req.params.provider;
+    if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    const body = req.body?.config || req.body || {};
+    const result = updateAdminProviderSettings(db, provider, {
+      listId: body.listId,
+      enabled: body.enabled !== false,
+    });
+    if (!result.ok) return res.status(400).json(result);
+    res.json(result);
+  });
+
+  router.post('/integrations/:provider/test', adminRequired, async (req, res) => {
+    const provider = req.params.provider;
+    const t0 = Date.now();
+    let result;
+    if (provider === 'mailchimp') result = await verifyMailchimp();
+    else if (provider === 'vbout') result = await verifyVbout();
+    else if (provider === 'acumbamail') result = await verifyAcumbamail();
+    else return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    result.latencyMs = Date.now() - t0;
+    res.json(result);
+  });
+
+  router.post('/integrations/:provider/sync-all', adminRequired, async (req, res) => {
+    const provider = req.params.provider;
+    if (!PROVIDERS.includes(provider)) return res.status(404).json({ ok: false, error: 'Unknown provider' });
+    const emails = db.prepare('SELECT email FROM subscribers').all().map((r) => r.email);
+    if (!emails.length) return res.json({ ok: false, error: 'No subscribers to sync' });
+    const cfg = getIntegrationSettings(db, provider);
+    let synced = 0;
+    for (const email of emails) {
+      let r;
+      if (provider === 'mailchimp') r = await syncToMailchimp(email, cfg.listId);
+      else if (provider === 'vbout') r = await syncToVbout(email, cfg.listId);
+      else r = await syncToAcumbamail(email, cfg.listId);
+      if (r.ok) synced++;
+      db.prepare('INSERT INTO integration_log (action, provider, status, email, at) VALUES (?, ?, ?, ?, ?)').run(
+        'sync-all', provider, r.ok ? 'ok' : 'error', email, new Date().toISOString()
+      );
+    }
+    res.json({ ok: synced > 0, provider, synced, total: emails.length });
+  });
+
+  router.post('/integrations/contact', formLimiter, (req, res) => {
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     const listing = db.prepare('SELECT * FROM listings WHERE id = ? OR slug = ?').get(body.listingId, body.listingId);
+    const churchEmail = body.churchEmail || body.church_email || listing?.email || '';
     db.prepare('INSERT INTO leads (id, listing_id, church_email, name, email, phone, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').run(
-      id, listing?.id || body.listingId, listing?.email || '', body.name || '', body.email || '', body.phone || '', body.message || '', 'new', new Date().toISOString()
+      id, listing?.id || body.listingId, churchEmail, body.name || '', body.email || '', body.phone || '', body.message || '', 'new', now
     );
-    if (listing?.email) sendLeadNotification(listing.email, body).catch(() => {});
+    events.emit('lead.created', { id, listingId: listing?.id || body.listingId, churchEmail, ...body }).catch(() => {});
     res.json({ ok: true, lead: { id } });
   });
 
-  router.post('/integrations/support', (req, res) => {
+  router.post('/integrations/support', formLimiter, async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     db.prepare('INSERT INTO support_tickets (id, email, name, topic, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-      id, body.email || '', body.name || '', body.topic || 'Support', body.message || '', 'open', new Date().toISOString()
+      id, body.email || '', body.name || '', body.topic || 'Support', body.message || '', 'open', now
     );
+    events.emit('support.created', { id, ...body }).catch(() => {});
     res.json({ ok: true, ticket: { id } });
   });
 
-  router.post('/integrations/site-contact', (req, res) => {
+  router.post('/integrations/site-contact', formLimiter, async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     const message = [
       body.message || '',
       body.phone ? 'Phone: ' + body.phone : '',
@@ -543,14 +1132,17 @@ function createRouter(db) {
       'Site Contact',
       message,
       'open',
-      new Date().toISOString()
+      now
     );
+    events.emit('support.created', { id, email: body.email, name: body.name, topic: 'Site Contact', message }).catch(() => {});
     res.json({ ok: true, ticket: { id } });
   });
 
-  router.post('/integrations/listing-intake', (req, res) => {
+  router.post('/integrations/listing-intake', formLimiter, async (req, res) => {
+    if (!(await requireRecaptcha(req, res))) return;
     const body = req.body || {};
     const id = uuid();
+    const now = new Date().toISOString();
     const summary = [
       'Listing intake submission',
       'Name: ' + (body.name || ''),
@@ -568,9 +1160,298 @@ function createRouter(db) {
       'Listing Submission',
       summary,
       'open',
-      new Date().toISOString()
+      now
     );
+    events.emit('support.created', { id, email: body.email, name: body.name, topic: 'Listing Submission', message: summary }).catch(() => {});
     res.json({ ok: true, ticket: { id }, message: 'Submission received. Our team will review within 1–2 business days.' });
+  });
+
+  /* ─── OUTBOUND WEBHOOKS ─── */
+  router.get('/webhooks', adminRequired, (req, res) => {
+    res.json({ ok: true, webhooks: listWebhooks(db) });
+  });
+
+  router.post('/webhooks', adminRequired, (req, res) => {
+    const url = (req.body?.url || '').trim();
+    if (!url || !/^https?:\/\//i.test(url)) {
+      return res.status(400).json({ ok: false, error: 'Valid webhook URL required' });
+    }
+    const hook = registerWebhook(db, {
+      url,
+      events: req.body?.events,
+      label: req.body?.label,
+    });
+    res.json({ ok: true, webhook: hook });
+  });
+
+  router.delete('/webhooks/:id', adminRequired, (req, res) => {
+    const ok = deactivateWebhook(db, req.params.id);
+    if (!ok) return res.status(404).json({ ok: false, error: 'Webhook not found' });
+    res.json({ ok: true });
+  });
+
+  router.get('/webhooks/log', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM webhook_log ORDER BY at DESC LIMIT 50').all();
+    res.json({ ok: true, entries: rows });
+  });
+
+  router.get('/events/log', adminRequired, (req, res) => {
+    const rows = db.prepare('SELECT * FROM event_log ORDER BY at DESC LIMIT 50').all();
+    res.json({ ok: true, entries: rows });
+  });
+
+  /* ─── SHORT LINKS (TinyURL) ─── */
+  router.post('/links/shorten', async (req, res) => {
+    const url = (req.body?.url || '').trim();
+    if (!url) return res.status(400).json({ ok: false, error: 'URL required' });
+    const result = await shortenUrl(url, { alias: req.body?.alias, tags: req.body?.tags });
+    if (!result.ok) return res.status(502).json(result);
+
+    const id = require('crypto').randomUUID().slice(0, 8);
+    const now = new Date().toISOString();
+    try {
+      db.prepare('INSERT INTO short_links (id, target_url, tiny_url, alias, created_at) VALUES (?, ?, ?, ?, ?)').run(
+        id, url, result.tinyUrl, result.alias || null, now
+      );
+    } catch { /* table optional */ }
+
+    res.json({
+      ok: true,
+      id,
+      url,
+      tinyUrl: result.tinyUrl,
+      goUrl: (process.env.APP_URL || '') + '/go.html?id=' + id,
+    });
+  });
+
+  router.get('/links/:id', (req, res) => {
+    const row = db.prepare('SELECT * FROM short_links WHERE id = ? OR alias = ?').get(req.params.id, req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Link not found' });
+    res.json({ ok: true, id: row.id, url: row.target_url, tinyUrl: row.tiny_url });
+  });
+
+  /* ─── TRAINING PROGRESS ─── */
+  router.get('/training', authRequired, (req, res) => {
+    const row = db.prepare('SELECT * FROM training_progress WHERE user_id = ?').get(req.user.sub);
+    let completed = [];
+    try { completed = JSON.parse(row?.completed_json || '[]'); } catch { /* ignore */ }
+    res.json({ ok: true, completed, updatedAt: row?.updated_at || null });
+  });
+
+  router.patch('/training', authRequired, (req, res) => {
+    const body = req.body || {};
+    const now = new Date().toISOString();
+    let row = db.prepare('SELECT * FROM training_progress WHERE user_id = ?').get(req.user.sub);
+    let completed = [];
+    if (row) {
+      try { completed = JSON.parse(row.completed_json || '[]'); } catch { /* ignore */ }
+    }
+    if (Array.isArray(body.completed)) {
+      completed = body.completed.map((n) => Number(n)).filter((n) => !Number.isNaN(n));
+    } else if (body.moduleId != null) {
+      const mid = Number(body.moduleId);
+      if (!Number.isNaN(mid)) {
+        if (body.complete === false) completed = completed.filter((x) => x !== mid);
+        else if (!completed.includes(mid)) completed.push(mid);
+      }
+    }
+    db.prepare(`
+      INSERT INTO training_progress (user_id, client_id, completed_json, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(user_id) DO UPDATE SET completed_json = excluded.completed_json, client_id = excluded.client_id, updated_at = excluded.updated_at
+    `).run(req.user.sub, req.user.clientId || null, JSON.stringify(completed), now);
+    res.json({ ok: true, completed, updatedAt: now });
+  });
+
+  /* ─── MEDIA (S3) ─── */
+  router.get('/media', authRequired, (req, res) => {
+    const listingId = (req.query.listingId || '').trim();
+    const clientId = req.user.role === 'admin' ? (req.query.clientId || null) : req.user.clientId;
+    let rows;
+    if (listingId) {
+      rows = db.prepare('SELECT * FROM media_assets WHERE listing_id = ? ORDER BY created_at DESC').all(listingId);
+    } else if (clientId) {
+      rows = db.prepare('SELECT * FROM media_assets WHERE client_id = ? ORDER BY created_at DESC').all(clientId);
+    } else {
+      rows = req.user.role === 'admin'
+        ? db.prepare('SELECT * FROM media_assets ORDER BY created_at DESC LIMIT 200').all()
+        : [];
+    }
+    if (req.user.role !== 'admin') {
+      rows = rows.filter((r) => r.client_id === req.user.clientId);
+    }
+    res.json({ ok: true, assets: rows.map(assetToApi) });
+  });
+
+  router.post('/media', authRequired, async (req, res) => {
+    const body = req.body || {};
+    const listingId = (body.listingId || body.listing_id || '').trim();
+    const clientId = req.user.role === 'admin' ? (body.clientId || body.client_id) : req.user.clientId;
+    if (!clientId) return res.status(400).json({ ok: false, error: 'Client account required' });
+    if (!body.dataUrl && !body.buffer) return res.status(400).json({ ok: false, error: 'Image data required' });
+    try {
+      const uploaded = await uploadMedia({
+        clientId,
+        listingId: listingId || 'general',
+        name: body.name,
+        dataUrl: body.dataUrl,
+        mimeType: body.mimeType,
+      });
+      const id = uploaded.id;
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO media_assets (id, client_id, listing_id, name, mime_type, s3_key, url, kind, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id, clientId, listingId || 'general', body.name || 'upload', uploaded.mime,
+        uploaded.key, uploaded.url, body.kind || 'image', now
+      );
+      const row = db.prepare('SELECT * FROM media_assets WHERE id = ?').get(id);
+      res.json({ ok: true, asset: assetToApi(row) });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.delete('/media/:id', authRequired, async (req, res) => {
+    const row = db.prepare('SELECT * FROM media_assets WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Asset not found' });
+    if (req.user.role !== 'admin' && row.client_id !== req.user.clientId) {
+      return res.status(403).json({ ok: false, error: 'Forbidden' });
+    }
+    try {
+      await deleteMediaKey(row.s3_key);
+      db.prepare('DELETE FROM media_assets WHERE id = ?').run(req.params.id);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  /* ─── SEO (server storage) ─── */
+  router.get('/seo/pages', adminRequired, (req, res) => {
+    res.json({ ok: true, ...getSeoPages(db) });
+  });
+
+  router.get('/seo/page/:pageId', (req, res) => {
+    const pageId = decodeURIComponent(req.params.pageId || '');
+    if (!pageId) return res.status(400).json({ ok: false, error: 'Page id required' });
+    res.json({ ok: true, ...getSeoPage(db, pageId) });
+  });
+
+  router.patch('/seo/pages/:pageId', adminRequired, (req, res) => {
+    const pageId = decodeURIComponent(req.params.pageId || '');
+    if (!pageId) return res.status(400).json({ ok: false, error: 'Page id required' });
+    const patch = req.body || {};
+    const updated = setSeoPage(db, pageId, {
+      title: patch.title,
+      description: patch.description,
+      noindex: !!patch.noindex,
+    });
+    res.json({ ok: true, page: updated });
+  });
+
+  /* ─── DNS (Route53 + multi-site) ─── */
+  function canAccessSite(req, site) {
+    if (!site) return false;
+    if (req.user?.role === 'admin') return true;
+    return site.clientId === req.user?.clientId;
+  }
+
+  router.get('/dns/status', authRequired, async (req, res) => {
+    const status = await dnsService.verifyDns();
+    res.json({ ok: true, route53: status, ready: dnsService.route53Ready() });
+  });
+
+  router.get('/dns/sites', authRequired, (req, res) => {
+    const sites = req.user.role === 'admin'
+      ? dnsService.listSites(db)
+      : dnsService.listSites(db, { clientId: req.user.clientId });
+    res.json({ ok: true, sites });
+  });
+
+  router.post('/dns/sites', authRequired, async (req, res) => {
+    const body = req.body || {};
+    const domain = dnsService.normalizeDomain(body.domain);
+    if (!domain) return res.status(400).json({ ok: false, error: 'Domain required' });
+
+    const isAdmin = req.user.role === 'admin';
+    const clientId = isAdmin ? (body.clientId || null) : req.user.clientId;
+    const type = isAdmin ? (body.type || (clientId ? 'client' : 'platform')) : 'client';
+
+    if (!isAdmin && type !== 'client') {
+      return res.status(403).json({ ok: false, error: 'Members can only add client sites' });
+    }
+    if (!isAdmin && !clientId) {
+      return res.status(400).json({ ok: false, error: 'Account not linked to a client profile. Sign in via the member portal first.' });
+    }
+
+    try {
+      const site = await dnsService.createSite(db, {
+        domain,
+        name: body.name || domain,
+        clientId,
+        type,
+        createZone: !!body.createZone && isAdmin,
+        autoDefaults: body.autoDefaults !== false,
+        source: body.source || 'portal',
+      });
+      res.json({ ok: true, site });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.get('/dns/sites/:id', authRequired, async (req, res) => {
+    const site = dnsService.getSite(db, req.params.id);
+    if (!site) return res.status(404).json({ ok: false, error: 'Site not found' });
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    const nameservers = site.hostedZoneId
+      ? await dnsService.getNameservers(site.hostedZoneId)
+      : [];
+    res.json({ ok: true, site, nameservers });
+  });
+
+  router.get('/dns/sites/:id/records', authRequired, (req, res) => {
+    const site = dnsService.getSite(db, req.params.id);
+    if (!site) return res.status(404).json({ ok: false, error: 'Site not found' });
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    res.json({ ok: true, records: dnsService.listRecords(db, site.id) });
+  });
+
+  router.post('/dns/sites/:id/records', authRequired, async (req, res) => {
+    const site = dnsService.getSite(db, req.params.id);
+    if (!site) return res.status(404).json({ ok: false, error: 'Site not found' });
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    try {
+      const record = await dnsService.addRecord(db, site.id, req.body || {});
+      res.json({ ok: true, record });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.delete('/dns/records/:id', authRequired, async (req, res) => {
+    const row = db.prepare('SELECT site_id FROM dns_records WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ ok: false, error: 'Record not found' });
+    const site = dnsService.getSite(db, row.site_id);
+    if (!canAccessSite(req, site)) return res.status(403).json({ ok: false, error: 'Forbidden' });
+    try {
+      await dnsService.removeRecord(db, req.params.id);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
+  });
+
+  router.post('/dns/sites/:id/sync', authRequired, async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ ok: false, error: 'Admin only' });
+    try {
+      const result = await dnsService.syncSiteFromRoute53(db, req.params.id);
+      res.json(result);
+    } catch (err) {
+      res.status(400).json({ ok: false, error: err.message });
+    }
   });
 
   return router;

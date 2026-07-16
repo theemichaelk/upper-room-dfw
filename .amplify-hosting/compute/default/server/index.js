@@ -5,14 +5,22 @@ const cors = require('cors');
 const { initDb, DB_PATH } = require('./db');
 const { seedIfNeeded, syncListingsFromJson } = require('./seed');
 const { ensureAdmins } = require('./ensure-admins');
+const { ensureIntegrations } = require('./ensure-integrations');
+const { ensureDnsSites } = require('./ensure-dns');
 const { createRouter } = require('./routes');
+const { createRedirectMiddleware } = require('./middleware/redirects');
+const { getRedirects } = require('./services/duplicate-pages');
 const { handleStripeWebhook } = require('./webhooks');
 const { restoreDbIfNeeded, scheduleBackup, wrapDbForAutoBackup } = require('./db-persist');
+const { securityHeaders, assertProductionSecrets } = require('./middleware/security');
+const { authLimiter, formLimiter, apiLimiter } = require('./middleware/rate-limit');
+const { initEvents } = require('./services/events');
 
 const PORT = parseInt(process.env.PORT || '8000', 10);
 const ROOT = path.join(__dirname, '..');
 
 async function bootstrap() {
+  assertProductionSecrets();
   await restoreDbIfNeeded(DB_PATH);
 
   let db = initDb();
@@ -21,25 +29,39 @@ async function bootstrap() {
   seedIfNeeded(db);
   syncListingsFromJson(db);
   ensureAdmins(db);
+  ensureIntegrations(db);
+  ensureDnsSites(db).catch((err) => console.warn('DNS seed:', err.message));
   scheduleBackup(DB_PATH);
+  initEvents(db);
 
   const app = express();
+  app.set('trust proxy', 1);
+  app.use(securityHeaders);
 
   const ALLOWED_ORIGINS = [
     process.env.APP_URL,
     'https://upperroomdfw.com',
     'https://www.upperroomdfw.com',
+    'https://quantumpages.ai',
+    'https://www.quantumpages.ai',
     'https://d4lzb9pq4mfuf.cloudfront.net',
     'https://main.dbtc2f3y8pyam.amplifyapp.com',
     'https://dbtc2f3y8pyam.amplifyapp.com',
     'http://localhost:8000',
     'http://127.0.0.1:8000',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
   ].filter(Boolean);
+
+  const isProd = process.env.NODE_ENV === 'production'
+    || (process.env.APP_URL || '').includes('upperroomdfw.com');
 
   app.use(cors({
     origin(origin, cb) {
-      if (!origin || ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o))) return cb(null, true);
-      return cb(null, true);
+      if (!origin) return cb(null, true);
+      if (ALLOWED_ORIGINS.some((o) => origin === o)) return cb(null, true);
+      if (!isProd && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
+      return cb(new Error('CORS blocked: ' + origin), false);
     },
     credentials: true,
   }));
@@ -49,9 +71,12 @@ async function bootstrap() {
   });
 
   app.use(express.json({ limit: '2mb' }));
+  app.use('/api', apiLimiter);
 
-  const api = createRouter(db);
+  const api = createRouter(db, { authLimiter, formLimiter });
   app.use('/api', api);
+
+  app.use(createRedirectMiddleware(() => getRedirects(db, ROOT)));
 
   app.use(express.static(ROOT, {
     index: 'index.html',
@@ -66,6 +91,17 @@ async function bootstrap() {
       if (require('fs').existsSync(tryPath)) return res.sendFile(tryPath);
     }
     next();
+  });
+
+  app.use((req, res) => {
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ ok: false, error: 'Not found' });
+    }
+    const notFoundPage = path.join(ROOT, '404.html');
+    if (require('fs').existsSync(notFoundPage)) {
+      return res.status(404).sendFile(notFoundPage);
+    }
+    res.status(404).send('Not found');
   });
 
   const server = app.listen(PORT, () => {

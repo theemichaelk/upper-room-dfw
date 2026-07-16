@@ -40,8 +40,16 @@ function isStripeEnabled() {
 
 function priceIdForPlan(plan) {
   const p = (plan || 'standard').toLowerCase();
-  if (p === 'premium' || p === '79') return process.env.STRIPE_PRICE_PREMIUM;
-  return process.env.STRIPE_PRICE_STANDARD;
+  const isPremium = p === 'premium' || p === '79';
+  const mode = stripeMode();
+  if (mode === 'live') {
+    return isPremium
+      ? (process.env.STRIPE_PRICE_PREMIUM_LIVE || process.env.STRIPE_PRICE_PREMIUM)
+      : (process.env.STRIPE_PRICE_STANDARD_LIVE || process.env.STRIPE_PRICE_STANDARD);
+  }
+  return isPremium
+    ? (process.env.STRIPE_PRICE_PREMIUM_TEST || process.env.STRIPE_PRICE_PREMIUM)
+    : (process.env.STRIPE_PRICE_STANDARD_TEST || process.env.STRIPE_PRICE_STANDARD);
 }
 
 async function createCheckoutSession({ client, plan, successUrl, cancelUrl, coupon }) {

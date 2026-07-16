@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
+const { isProduction } = require('./security');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'urdfw-dev-secret-change-in-production';
+
+if (isProduction() && (!process.env.JWT_SECRET || JWT_SECRET === 'urdfw-dev-secret-change-in-production')) {
+  console.error('\n  FATAL: JWT_SECRET must be set in production.\n');
+  process.exit(1);
+}
 
 function signToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });

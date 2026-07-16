@@ -30,20 +30,29 @@ function walkFiles(dir, ext, list = []) {
   return list;
 }
 
+function stripNonDomRegions(html) {
+  // Ignore markup inside scripts/styles so template literals don't break DOM balance
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '<script></script>')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '<style></style>')
+    .replace(/<!--[\s\S]*?-->/g, '');
+}
+
 function auditHtmlBalance(file, html) {
   const issues = [];
   const stack = [];
+  const cleaned = stripNonDomRegions(html);
   const tagRe = /<\/?([a-zA-Z][a-zA-Z0-9:-]*)[^>]*\/?>/g;
   let m;
-  while ((m = tagRe.exec(html))) {
+  while ((m = tagRe.exec(cleaned))) {
     const full = m[0];
     const name = m[1].toLowerCase();
     if (full.startsWith('<!--') || full.startsWith('<!')) continue;
     if (full.endsWith('/>') || VOID_TAGS.has(name)) continue;
     if (full.startsWith('</')) {
       const expected = stack.pop();
-      if (!expected) issues.push({ type: 'UNCLOSED_EXTRA', tag: name, line: lineOf(html, m.index) });
-      else if (expected !== name) issues.push({ type: 'MISMATCH', expected, got: name, line: lineOf(html, m.index) });
+      if (!expected) issues.push({ type: 'UNCLOSED_EXTRA', tag: name, line: lineOf(cleaned, m.index) });
+      else if (expected !== name) issues.push({ type: 'MISMATCH', expected, got: name, line: lineOf(cleaned, m.index) });
     } else {
       stack.push(name);
     }

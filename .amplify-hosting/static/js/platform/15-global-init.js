@@ -92,15 +92,10 @@
 
     let church = null;
     try {
-      const res = await fetch(path.includes('../') ? '../data/churches.json' : 'data/churches.json');
+      const res = await fetch(P.resolveAsset('data/churches.json'));
       const list = await res.json();
       church = list.find((c) => c.slug === slug);
-    } catch {
-      try {
-        const res = await fetch('../data/churches.json');
-        church = (await res.json()).find((c) => c.slug === slug);
-      } catch { /* ignore */ }
-    }
+    } catch { /* ignore */ }
     if (!church) return;
 
     church = P.enhanceListing(church);
@@ -208,6 +203,7 @@
     P.injectPoweredByFooter();
     P.useGeolocation();
     P.enhanceChurchPage();
+    P.loadPageSeoFromApi?.();
 
     const params = new URLSearchParams(location.search);
     if (params.get('lang')) P.setLanguage(params.get('lang'));

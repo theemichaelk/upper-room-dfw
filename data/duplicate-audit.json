@@ -1,727 +1,49 @@
 {
-  "scannedAt": "2026-07-11T04:55:15.483Z",
-  "pageCount": 158,
-  "duplicateSetCount": 17,
+  "scannedAt": "2026-07-16T20:21:32.046Z",
+  "pageCount": 161,
+  "duplicateSetCount": 1,
   "duplicateSets": [
     {
-      "type": "title",
-      "key": "bethel ministries dallas | dallas, tx | upper room dfw",
+      "type": "canonical",
+      "key": "https://upperroomdfw.com",
       "count": 2,
       "canonical": {
-        "rel": "churches/bethel-ministries-dallas-1781406081313.html",
-        "urlPath": "/churches/bethel-ministries-dallas-1781406081313.html",
-        "title": "Bethel Ministries Dallas | Dallas, TX | Upper Room DFW",
-        "canonical": ""
+        "rel": "index.html",
+        "urlPath": "/index.html",
+        "title": "Upper Room DFW | Discover Local Churches in Dallas-Fort Worth",
+        "canonical": "https://upperroomdfw.com"
       },
       "duplicates": [
         {
-          "rel": "churches/bethel-ministries-dallas-1781406081253.html",
-          "urlPath": "/churches/bethel-ministries-dallas-1781406081253.html",
-          "title": "Bethel Ministries Dallas | Dallas, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8596
+          "rel": "upper-room-dfw-complete.html",
+          "urlPath": "/upper-room-dfw-complete.html",
+          "title": "Upper Room DFW | Premium DFW Church Directory - Find Your Faith Community in Dallas, Fort Worth, Arlington, Plano &amp; Texas",
+          "canonical": "https://upperroomdfw.com",
+          "sizeBytes": 110196
         }
       ],
       "suggestedRedirects": [
         {
-          "from": "/churches/bethel-ministries-dallas-1781406081253.html",
-          "to": "/churches/bethel-ministries-dallas-1781406081313.html",
+          "from": "/upper-room-dfw-complete.html",
+          "to": "/",
           "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/bethel-ministries-dallas-1781406081313.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "calvary family church euless | euless, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/calvary-family-church-euless-1781406081326.html",
-        "urlPath": "/churches/calvary-family-church-euless-1781406081326.html",
-        "title": "Calvary Family Church Euless | Euless, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/calvary-family-church-euless-1781406081266.html",
-          "urlPath": "/churches/calvary-family-church-euless-1781406081266.html",
-          "title": "Calvary Family Church Euless | Euless, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8651
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/calvary-family-church-euless-1781406081266.html",
-          "to": "/churches/calvary-family-church-euless-1781406081326.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/calvary-family-church-euless-1781406081326.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "covenant bible church mesquite | mesquite, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/covenant-bible-church-mesquite-1781406081319.html",
-        "urlPath": "/churches/covenant-bible-church-mesquite-1781406081319.html",
-        "title": "Covenant Bible Church Mesquite | Mesquite, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/covenant-bible-church-mesquite-1781406081259.html",
-          "urlPath": "/churches/covenant-bible-church-mesquite-1781406081259.html",
-          "title": "Covenant Bible Church Mesquite | Mesquite, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8711
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/covenant-bible-church-mesquite-1781406081259.html",
-          "to": "/churches/covenant-bible-church-mesquite-1781406081319.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/covenant-bible-church-mesquite-1781406081319.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "crossroads assembly irving | irving, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/crossroads-assembly-irving-1781406081317.html",
-        "urlPath": "/churches/crossroads-assembly-irving-1781406081317.html",
-        "title": "Crossroads Assembly Irving | Irving, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/crossroads-assembly-irving-1781406081257.html",
-          "urlPath": "/churches/crossroads-assembly-irving-1781406081257.html",
-          "title": "Crossroads Assembly Irving | Irving, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8613
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/crossroads-assembly-irving-1781406081257.html",
-          "to": "/churches/crossroads-assembly-irving-1781406081317.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/crossroads-assembly-irving-1781406081317.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "emmanuel chapel richardson | richardson, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/emmanuel-chapel-richardson-1781406081320.html",
-        "urlPath": "/churches/emmanuel-chapel-richardson-1781406081320.html",
-        "title": "Emmanuel Chapel Richardson | Richardson, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/emmanuel-chapel-richardson-1781406081260.html",
-          "urlPath": "/churches/emmanuel-chapel-richardson-1781406081260.html",
-          "title": "Emmanuel Chapel Richardson | Richardson, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8671
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/emmanuel-chapel-richardson-1781406081260.html",
-          "to": "/churches/emmanuel-chapel-richardson-1781406081320.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/emmanuel-chapel-richardson-1781406081320.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "faith family church frisco | frisco, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/faith-family-church-frisco-1781406081256.html",
-        "urlPath": "/churches/faith-family-church-frisco-1781406081256.html",
-        "title": "Faith Family Church Frisco | Frisco, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/faith-family-church-frisco-1781406081316.html",
-          "urlPath": "/churches/faith-family-church-frisco-1781406081316.html",
-          "title": "Faith Family Church Frisco | Frisco, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8633
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/faith-family-church-frisco-1781406081316.html",
-          "to": "/churches/faith-family-church-frisco-1781406081256.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/faith-family-church-frisco-1781406081256.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "grace community church mckinney | mckinney, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/grace-community-church-mckinney-1781406081322.html",
-        "urlPath": "/churches/grace-community-church-mckinney-1781406081322.html",
-        "title": "Grace Community Church McKinney | McKinney, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/grace-community-church-mckinney-1781406081262.html",
-          "urlPath": "/churches/grace-community-church-mckinney-1781406081262.html",
-          "title": "Grace Community Church McKinney | McKinney, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8728
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/grace-community-church-mckinney-1781406081262.html",
-          "to": "/churches/grace-community-church-mckinney-1781406081322.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/grace-community-church-mckinney-1781406081322.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "harvest baptist church euless | euless, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/harvest-baptist-church-euless-1781406081251.html",
-        "urlPath": "/churches/harvest-baptist-church-euless-1781406081251.html",
-        "title": "Harvest Baptist Church Euless | Euless, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/harvest-baptist-church-euless-1781406081311.html",
-          "urlPath": "/churches/harvest-baptist-church-euless-1781406081311.html",
-          "title": "Harvest Baptist Church Euless | Euless, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8654
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/harvest-baptist-church-euless-1781406081311.html",
-          "to": "/churches/harvest-baptist-church-euless-1781406081251.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/harvest-baptist-church-euless-1781406081251.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "kingdom fellowship plano | plano, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/kingdom-fellowship-plano-1781406081315.html",
-        "urlPath": "/churches/kingdom-fellowship-plano-1781406081315.html",
-        "title": "Kingdom Fellowship Plano | Plano, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/kingdom-fellowship-plano-1781406081255.html",
-          "urlPath": "/churches/kingdom-fellowship-plano-1781406081255.html",
-          "title": "Kingdom Fellowship Plano | Plano, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8601
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/kingdom-fellowship-plano-1781406081255.html",
-          "to": "/churches/kingdom-fellowship-plano-1781406081315.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/kingdom-fellowship-plano-1781406081315.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "living word worship center garland | garland, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/living-word-worship-center-garland-1781406081258.html",
-        "urlPath": "/churches/living-word-worship-center-garland-1781406081258.html",
-        "title": "Living Word Worship Center Garland | Garland, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/living-word-worship-center-garland-1781406081318.html",
-          "urlPath": "/churches/living-word-worship-center-garland-1781406081318.html",
-          "title": "Living Word Worship Center Garland | Garland, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8743
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/living-word-worship-center-garland-1781406081318.html",
-          "to": "/churches/living-word-worship-center-garland-1781406081258.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/living-word-worship-center-garland-1781406081258.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "new life ministries denton | denton, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/new-life-ministries-denton-1781406081263.html",
-        "urlPath": "/churches/new-life-ministries-denton-1781406081263.html",
-        "title": "New Life Ministries Denton | Denton, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/new-life-ministries-denton-1781406081323.html",
-          "urlPath": "/churches/new-life-ministries-denton-1781406081323.html",
-          "title": "New Life Ministries Denton | Denton, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8620
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/new-life-ministries-denton-1781406081323.html",
-          "to": "/churches/new-life-ministries-denton-1781406081263.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/new-life-ministries-denton-1781406081263.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "restoration methodist church fort worth | fort worth, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/restoration-methodist-church-fort-worth-1781406081254.html",
-        "urlPath": "/churches/restoration-methodist-church-fort-worth-1781406081254.html",
-        "title": "Restoration Methodist Church Fort Worth | Fort Worth, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/restoration-methodist-church-fort-worth-1781406081314.html",
-          "urlPath": "/churches/restoration-methodist-church-fort-worth-1781406081314.html",
-          "title": "Restoration Methodist Church Fort Worth | Fort Worth, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8798
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/restoration-methodist-church-fort-worth-1781406081314.html",
-          "to": "/churches/restoration-methodist-church-fort-worth-1781406081254.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/restoration-methodist-church-fort-worth-1781406081254.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "riverside fellowship grand prairie | grand prairie, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/riverside-fellowship-grand-prairie-1781406081265.html",
-        "urlPath": "/churches/riverside-fellowship-grand-prairie-1781406081265.html",
-        "title": "Riverside Fellowship Grand Prairie | Grand Prairie, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/riverside-fellowship-grand-prairie-1781406081325.html",
-          "urlPath": "/churches/riverside-fellowship-grand-prairie-1781406081325.html",
-          "title": "Riverside Fellowship Grand Prairie | Grand Prairie, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8796
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/riverside-fellowship-grand-prairie-1781406081325.html",
-          "to": "/churches/riverside-fellowship-grand-prairie-1781406081265.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/riverside-fellowship-grand-prairie-1781406081265.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "summit methodist church lewisville | lewisville, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/summit-methodist-church-lewisville-1781406081324.html",
-        "urlPath": "/churches/summit-methodist-church-lewisville-1781406081324.html",
-        "title": "Summit Methodist Church Lewisville | Lewisville, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/summit-methodist-church-lewisville-1781406081264.html",
-          "urlPath": "/churches/summit-methodist-church-lewisville-1781406081264.html",
-          "title": "Summit Methodist Church Lewisville | Lewisville, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8740
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/summit-methodist-church-lewisville-1781406081264.html",
-          "to": "/churches/summit-methodist-church-lewisville-1781406081324.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/summit-methodist-church-lewisville-1781406081324.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "trinity community church arlington | arlington, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/trinity-community-church-arlington-1781406081312.html",
-        "urlPath": "/churches/trinity-community-church-arlington-1781406081312.html",
-        "title": "Trinity Community Church Arlington | Arlington, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/trinity-community-church-arlington-1781406081252.html",
-          "urlPath": "/churches/trinity-community-church-arlington-1781406081252.html",
-          "title": "Trinity Community Church Arlington | Arlington, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8765
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/trinity-community-church-arlington-1781406081252.html",
-          "to": "/churches/trinity-community-church-arlington-1781406081312.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/trinity-community-church-arlington-1781406081312.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "victory baptist church carrollton | carrollton, tx | upper room dfw",
-      "count": 2,
-      "canonical": {
-        "rel": "churches/victory-baptist-church-carrollton-1781406081261.html",
-        "urlPath": "/churches/victory-baptist-church-carrollton-1781406081261.html",
-        "title": "Victory Baptist Church Carrollton | Carrollton, TX | Upper Room DFW",
-        "canonical": ""
-      },
-      "duplicates": [
-        {
-          "rel": "churches/victory-baptist-church-carrollton-1781406081321.html",
-          "urlPath": "/churches/victory-baptist-church-carrollton-1781406081321.html",
-          "title": "Victory Baptist Church Carrollton | Carrollton, TX | Upper Room DFW",
-          "canonical": "",
-          "sizeBytes": 8726
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/churches/victory-baptist-church-carrollton-1781406081321.html",
-          "to": "/churches/victory-baptist-church-carrollton-1781406081261.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "churches/victory-baptist-church-carrollton-1781406081261.html"
-        }
-      ]
-    },
-    {
-      "type": "title",
-      "key": "listing | upper room dfw",
-      "count": 18,
-      "canonical": {
-        "rel": "templates/single/card.html",
-        "urlPath": "/templates/single/card.html",
-        "title": "Listing | Upper Room DFW",
-        "canonical": "https://upperroomdfw.com/templates/single/card.html"
-      },
-      "duplicates": [
-        {
-          "rel": "templates/multi/premium-multipage.html",
-          "urlPath": "/templates/multi/premium-multipage.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/multi/premium-multipage.html",
-          "sizeBytes": 3713
-        },
-        {
-          "rel": "templates/multi/standard-multipage.html",
-          "urlPath": "/templates/multi/standard-multipage.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/multi/standard-multipage.html",
-          "sizeBytes": 3719
-        },
-        {
-          "rel": "templates/single/catholic.html",
-          "urlPath": "/templates/single/catholic.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/catholic.html",
-          "sizeBytes": 3430
-        },
-        {
-          "rel": "templates/single/classic.html",
-          "urlPath": "/templates/single/classic.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/classic.html",
-          "sizeBytes": 3424
-        },
-        {
-          "rel": "templates/single/dark.html",
-          "urlPath": "/templates/single/dark.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/dark.html",
-          "sizeBytes": 3406
-        },
-        {
-          "rel": "templates/single/event.html",
-          "urlPath": "/templates/single/event.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/event.html",
-          "sizeBytes": 3412
-        },
-        {
-          "rel": "templates/single/fullwidth.html",
-          "urlPath": "/templates/single/fullwidth.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/fullwidth.html",
-          "sizeBytes": 3436
-        },
-        {
-          "rel": "templates/single/hero.html",
-          "urlPath": "/templates/single/hero.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/hero.html",
-          "sizeBytes": 3406
-        },
-        {
-          "rel": "templates/single/light.html",
-          "urlPath": "/templates/single/light.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/light.html",
-          "sizeBytes": 3412
-        },
-        {
-          "rel": "templates/single/magazine.html",
-          "urlPath": "/templates/single/magazine.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/magazine.html",
-          "sizeBytes": 3430
-        },
-        {
-          "rel": "templates/single/minimal.html",
-          "urlPath": "/templates/single/minimal.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/minimal.html",
-          "sizeBytes": 3424
-        },
-        {
-          "rel": "templates/single/ministry.html",
-          "urlPath": "/templates/single/ministry.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/ministry.html",
-          "sizeBytes": 3430
-        },
-        {
-          "rel": "templates/single/modern.html",
-          "urlPath": "/templates/single/modern.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/modern.html",
-          "sizeBytes": 3418
-        },
-        {
-          "rel": "templates/single/network.html",
-          "urlPath": "/templates/single/network.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/network.html",
-          "sizeBytes": 3424
-        },
-        {
-          "rel": "templates/single/outreach.html",
-          "urlPath": "/templates/single/outreach.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/outreach.html",
-          "sizeBytes": 3430
-        },
-        {
-          "rel": "templates/single/sidebar.html",
-          "urlPath": "/templates/single/sidebar.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/sidebar.html",
-          "sizeBytes": 3424
-        },
-        {
-          "rel": "templates/single/youth.html",
-          "urlPath": "/templates/single/youth.html",
-          "title": "Listing | Upper Room DFW",
-          "canonical": "https://upperroomdfw.com/templates/single/youth.html",
-          "sizeBytes": 3412
-        }
-      ],
-      "suggestedRedirects": [
-        {
-          "from": "/templates/multi/premium-multipage.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/multi/standard-multipage.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/catholic.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/classic.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/dark.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/event.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/fullwidth.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/hero.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/light.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/magazine.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/minimal.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/ministry.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/modern.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/network.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/outreach.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/sidebar.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
-        },
-        {
-          "from": "/templates/single/youth.html",
-          "to": "/templates/single/card.html",
-          "status": 301,
-          "reason": "title-duplicate",
-          "mergeTarget": "templates/single/card.html"
+          "reason": "canonical-duplicate",
+          "mergeTarget": "index.html"
         }
       ]
     }
   ],
   "pages": [
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\404.html",
+      "rel": "404.html",
+      "urlPath": "/404.html",
+      "title": "Page Not Found | Upper Room DFW Church Directory",
+      "description": "This page could not be found. Search the DFW church directory or explore Tech, AI, Startups, Fashion, Travel, and Global Events hubs.",
+      "canonical": "https://upperroomdfw.com/404.html",
+      "fingerprint": "2d77a809126002a35fbf6e52d6cb48d64ee205d9",
+      "sizeBytes": 12946
+    },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\about.html",
       "rel": "about.html",
@@ -729,8 +51,8 @@
       "title": "About Upper Room DFW | Local Church Directory for Dallas-Fort Worth",
       "description": "Learn about Upper Room DFW — the trusted, community-powered directory helping people find churches and ministries across Dallas, Fort Worth, Arlington, Plano, and the DFW metroplex since 2017.",
       "canonical": "https://upperroomdfw.com/about.html",
-      "fingerprint": "dbae000889e685704baf8cc236d2a38bd2e41741",
-      "sizeBytes": 9637
+      "fingerprint": "ed17e92a4982a5d46fa610ead778bbb49af89f56",
+      "sizeBytes": 10943
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\admin.html",
@@ -739,8 +61,8 @@
       "title": "Admin Portal | Upper Room DFW",
       "description": "Secure admin portal for Upper Room DFW — manage church listings, billing, leads, integrations, email campaigns, and platform analytics.",
       "canonical": "https://upperroomdfw.com/admin.html",
-      "fingerprint": "5bf69c66b72a10f0009058527a2e87fb445d73a1",
-      "sizeBytes": 12123
+      "fingerprint": "2b291ae063ac808d368426114e0e3b701d26e711",
+      "sizeBytes": 15270
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\billing-hub.html",
@@ -749,18 +71,368 @@
       "title": "Billing & Payments | Upper Room DFW",
       "description": "Billing and payment hub for Upper Room DFW church partners — Stripe, PayPal, subscriptions, invoices, and membership plans.",
       "canonical": "https://upperroomdfw.com/billing-hub.html",
-      "fingerprint": "b051b53773dbac84a6f034874511072737607e5f",
-      "sizeBytes": 4336
+      "fingerprint": "7267af416fb154ccdcb1e279be86a3b72f342e7e",
+      "sizeBytes": 6017
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog.html",
       "rel": "blog.html",
       "urlPath": "/blog.html",
-      "title": "Blog | Upper Room DFW — Faith Stories, Tips &amp; DFW Church Insights",
-      "description": "Faith stories, DFW church insights, directory tips, and community news from Upper Room DFW.",
+      "title": "Blog | Upper Room DFW — DFW Church Guides for Families",
+      "description": "Practical guides for finding churches near you, exploring the DFW church directory, and connecting with congregations across North Texas.",
       "canonical": "https://upperroomdfw.com/blog.html",
-      "fingerprint": "eefa6af412838e47abd7e94bb0cdd3af1fb6e98d",
-      "sizeBytes": 8971
+      "fingerprint": "48b23126711f01f0fe81b8d59fa89010d6d2fa91",
+      "sizeBytes": 20397
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\arlington-churches-directory-guide.html",
+      "rel": "blog/arlington-churches-directory-guide.html",
+      "urlPath": "/blog/arlington-churches-directory-guide.html",
+      "title": "Arlington Churches Guide: Directory Tips Between Dallas and Fort Worth | Upper Room DFW Blog",
+      "description": "Arlington sits in the DFW heart. Find churches near entertainment districts, universities, and family suburbs with Upper Room filters and practical shortlist tips.",
+      "canonical": "https://upperroomdfw.com/blog/arlington-churches-directory-guide.html",
+      "fingerprint": "cd2831098d25de02ffdf1058552e3b3679c5c56f",
+      "sizeBytes": 24407
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\baptist-churches-north-texas-directory.html",
+      "rel": "blog/baptist-churches-north-texas-directory.html",
+      "urlPath": "/blog/baptist-churches-north-texas-directory.html",
+      "title": "Baptist Churches Across North Texas: Using a Directory Wisely | Upper Room DFW Blog",
+      "description": "From historic First Baptist congregations to contemporary Baptist campuses—how seekers use a church directory for churches in DFW and Texas-wide context.",
+      "canonical": "https://upperroomdfw.com/blog/baptist-churches-north-texas-directory.html",
+      "fingerprint": "e1e878f292258e82e74fb4e1152d553b2b01dbb9",
+      "sizeBytes": 24268
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\best-church-directory-in-texas-dfw.html",
+      "rel": "blog/best-church-directory-in-texas-dfw.html",
+      "urlPath": "/blog/best-church-directory-in-texas-dfw.html",
+      "title": "Best Church Directory in Texas for DFW Families: What to Look For | Upper Room DFW Blog",
+      "description": "Not every directory is equal. Criteria for choosing the best church directory in Texas—coverage, verification, clear pages, and member tools—centered on Upper Room DFW.",
+      "canonical": "https://upperroomdfw.com/blog/best-church-directory-in-texas-dfw.html",
+      "fingerprint": "245b03db3f93a80be92b1a573fc92506eaae6889",
+      "sizeBytes": 24363
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\best-churches-in-plano-for-families.html",
+      "rel": "blog/best-churches-in-plano-for-families.html",
+      "urlPath": "/blog/best-churches-in-plano-for-families.html",
+      "title": "Best Churches in Plano for Families: What Locals Search For | Upper Room DFW Blog",
+      "description": "Plano and Collin County parents prioritize kids programs, safety, and community. A long-form local guide to family-friendly churches.",
+      "canonical": "https://upperroomdfw.com/blog/best-churches-in-plano-for-families.html",
+      "fingerprint": "21c67c20102113d725c433dc6b9e9be832217fe6",
+      "sizeBytes": 23589
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\bilingual-churches-dallas-fort-worth.html",
+      "rel": "blog/bilingual-churches-dallas-fort-worth.html",
+      "urlPath": "/blog/bilingual-churches-dallas-fort-worth.html",
+      "title": "Bilingual Churches in Dallas &amp; Fort Worth: Spanish &amp; Multicultural Worship | Upper Room DFW Blog",
+      "description": "A long-form guide to bilingual and multicultural congregations across DFW—Spanish services, multi-language campuses, and directory tactics for “iglesia cerca de mí” and churches near me.",
+      "canonical": "https://upperroomdfw.com/blog/bilingual-churches-dallas-fort-worth.html",
+      "fingerprint": "604366d3ef1303fb716aca018e5a509afe6ef4a9",
+      "sizeBytes": 23579
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\catholic-churches-dfw-visitor-tips.html",
+      "rel": "blog/catholic-churches-dfw-visitor-tips.html",
+      "urlPath": "/blog/catholic-churches-dfw-visitor-tips.html",
+      "title": "Catholic Parishes in DFW: Visitor Tips for Mass Times &amp; Community | Upper Room DFW Blog",
+      "description": "Helpful orientation for Catholics relocating to North Texas—Mass times, parish life, and how a church directory complements diocesan resources.",
+      "canonical": "https://upperroomdfw.com/blog/catholic-churches-dfw-visitor-tips.html",
+      "fingerprint": "79ed7353a9da219b0eac20dd58d7b6eefe5cd327",
+      "sizeBytes": 24401
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\church-parking-kids-checkin-dfw.html",
+      "rel": "blog/church-parking-kids-checkin-dfw.html",
+      "urlPath": "/blog/church-parking-kids-checkin-dfw.html",
+      "title": "Parking, Kids Check-In &amp; First Impressions at DFW Churches | Upper Room DFW Blog",
+      "description": "Operational details win trust. A practical guide covering first impressions seekers notice when searching churches near me.",
+      "canonical": "https://upperroomdfw.com/blog/church-parking-kids-checkin-dfw.html",
+      "fingerprint": "a0c2bc835ee7230d06e18ecfe7ba889f5509d26c",
+      "sizeBytes": 24203
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\church-reviews-reputation-dfw.html",
+      "rel": "blog/church-reviews-reputation-dfw.html",
+      "urlPath": "/blog/church-reviews-reputation-dfw.html",
+      "title": "Church Reviews &amp; Reputation in DFW: Reading Between the Stars | Upper Room DFW Blog",
+      "description": "How to interpret reviews ethically when choosing churches near me—and how pastors should respond without compromising integrity.",
+      "canonical": "https://upperroomdfw.com/blog/church-reviews-reputation-dfw.html",
+      "fingerprint": "d3ebaa63b4126455a7bbdbccf05b862d1df8f739",
+      "sizeBytes": 24380
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\churches-in-texas-vs-dfw-local.html",
+      "rel": "blog/churches-in-texas-vs-dfw-local.html",
+      "urlPath": "/blog/churches-in-texas-vs-dfw-local.html",
+      "title": "Churches in Texas vs. Churches in DFW: Why Local Context Wins | Upper Room DFW Blog",
+      "description": "Statewide brand searches differ from DFW neighborhood intent. How statewide searches differ from neighborhood choices—and how to use both wisely.",
+      "canonical": "https://upperroomdfw.com/blog/churches-in-texas-vs-dfw-local.html",
+      "fingerprint": "6260f04e2ca8c688cb11804c8c34698babbeae49",
+      "sizeBytes": 24211
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\churches-near-me-dfw-how-to-search.html",
+      "rel": "blog/churches-near-me-dfw-how-to-search.html",
+      "urlPath": "/blog/churches-near-me-dfw-how-to-search.html",
+      "title": "Churches Near Me in DFW: How to Search Smarter Than the Map Pack | Upper Room DFW Blog",
+      "description": "Map packs show distance; fit needs more. A practical guide to searching “churches near me” across Dallas–Fort Worth with Upper Room DFW filters and visit strategy.",
+      "canonical": "https://upperroomdfw.com/blog/churches-near-me-dfw-how-to-search.html",
+      "fingerprint": "2a010632988547add30548146055072298c05b55",
+      "sizeBytes": 23127
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\community-outreach-churches-dfw.html",
+      "rel": "blog/community-outreach-churches-dfw.html",
+      "urlPath": "/blog/community-outreach-churches-dfw.html",
+      "title": "Community Outreach Churches in DFW: Food Banks, Mentorship &amp; City Serve | Upper Room DFW Blog",
+      "description": "Mission-minded congregations serving South Dallas, East Fort Worth, and suburban needs—plus how outreach tags help seekers find serve opportunities through the church directory.",
+      "canonical": "https://upperroomdfw.com/blog/community-outreach-churches-dfw.html",
+      "fingerprint": "183b66dd9bd90f1ab01221e9322811b8d4a14514",
+      "sizeBytes": 24593
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\dallas-churches-near-me-neighborhood-guide.html",
+      "rel": "blog/dallas-churches-near-me-neighborhood-guide.html",
+      "urlPath": "/blog/dallas-churches-near-me-neighborhood-guide.html",
+      "title": "Dallas Churches Near Me: A Neighborhood-by-Neighborhood Guide | Upper Room DFW Blog",
+      "description": "Oak Cliff, Lake Highlands, Uptown, South Dallas, and more—how to interpret “churches near me” inside the City of Dallas with directory filters and visit tips.",
+      "canonical": "https://upperroomdfw.com/blog/dallas-churches-near-me-neighborhood-guide.html",
+      "fingerprint": "97e10a3af08b98f8cfdc3616b8f7664227b518af",
+      "sizeBytes": 24366
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\denton-churches-college-town.html",
+      "rel": "blog/denton-churches-college-town.html",
+      "urlPath": "/blog/denton-churches-college-town.html",
+      "title": "Denton Churches for Students and Long-Term Residents | Upper Room DFW Blog",
+      "description": "College-town energy meets established congregations. Search churches near me in Denton with filters for young adults, families, and bilingual ministry.",
+      "canonical": "https://upperroomdfw.com/blog/denton-churches-college-town.html",
+      "fingerprint": "81474fb90a8956ca437b654b8b8e2bdecb5253ea",
+      "sizeBytes": 24121
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\dfw-faith-events-summer-2026.html",
+      "rel": "blog/dfw-faith-events-summer-2026.html",
+      "urlPath": "/blog/dfw-faith-events-summer-2026.html",
+      "title": "DFW Faith Events Summer 2026: Festivals, Revivals &amp; Community Outreach | Upper Room DFW Blog",
+      "description": "Summer faith events across North Texas—conferences, outdoor worship, family festivals—plus how to stay updated on festivals, revivals, and outreach.",
+      "canonical": "https://upperroomdfw.com/blog/dfw-faith-events-summer-2026.html",
+      "fingerprint": "0b9d3a01a61a21a50871736f61af2d88f1d01d82",
+      "sizeBytes": 23316
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\dfw-youth-ministries-guide-2026.html",
+      "rel": "blog/dfw-youth-ministries-guide-2026.html",
+      "urlPath": "/blog/dfw-youth-ministries-guide-2026.html",
+      "title": "DFW Youth Ministries Guide 2026: Programs Parents Should Know | Upper Room DFW Blog",
+      "description": "Youth nights, summer camps, and mentorship across Dallas–Fort Worth—and what parents should ask before enrolling teens.",
+      "canonical": "https://upperroomdfw.com/blog/dfw-youth-ministries-guide-2026.html",
+      "fingerprint": "a48e63afb0a8eb7f3aeaf6be95ff95b503abcff0",
+      "sizeBytes": 23289
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\first-time-church-visitor-checklist-dfw.html",
+      "rel": "blog/first-time-church-visitor-checklist-dfw.html",
+      "urlPath": "/blog/first-time-church-visitor-checklist-dfw.html",
+      "title": "First-Time Church Visitor Checklist for DFW Newcomers | Upper Room DFW Blog",
+      "description": "A comprehensive DFW visitor checklist—parking, kids drop-off, dress, follow-up questions—optimized for newcomers searching churches near me and first-time visitor guides.",
+      "canonical": "https://upperroomdfw.com/blog/first-time-church-visitor-checklist-dfw.html",
+      "fingerprint": "7e287e898cc3101f25da692b3060aa4c80e6c96d",
+      "sizeBytes": 24451
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\fort-worth-churches-contemporary-worship.html",
+      "rel": "blog/fort-worth-churches-contemporary-worship.html",
+      "urlPath": "/blog/fort-worth-churches-contemporary-worship.html",
+      "title": "Fort Worth Churches with Contemporary Worship: A Local Shortlist | Upper Room DFW Blog",
+      "description": "From downtown Fort Worth to Keller and Arlington, a practical local guide to contemporary worship communities—live bands, practical teaching, and how to compare listings for churches in DFW’s western half.",
+      "canonical": "https://upperroomdfw.com/blog/fort-worth-churches-contemporary-worship.html",
+      "fingerprint": "d8e60f1f38759d402325a2d837ffcd825f5bf3fc",
+      "sizeBytes": 23684
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\frisco-mckinney-churches-families.html",
+      "rel": "blog/frisco-mckinney-churches-families.html",
+      "urlPath": "/blog/frisco-mckinney-churches-families.html",
+      "title": "Frisco &amp; McKinney Churches for Growing Families | Upper Room DFW Blog",
+      "description": "Collin County growth means new campuses and packed kids wings. A local guide for Frisco and McKinney families searching churches near me and youth programs.",
+      "canonical": "https://upperroomdfw.com/blog/frisco-mckinney-churches-families.html",
+      "fingerprint": "9eca9253f31a52e5743d802053ae9eb813234ea9",
+      "sizeBytes": 24151
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\garland-mesquite-churches-local-seo.html",
+      "rel": "blog/garland-mesquite-churches-local-seo.html",
+      "urlPath": "/blog/garland-mesquite-churches-local-seo.html",
+      "title": "Garland &amp; Mesquite Churches: A Local Guide for East DFW | Upper Room DFW Blog",
+      "description": "East DFW seekers need accurate listings and bilingual options. A practical guide for Garland and Mesquite church discovery.",
+      "canonical": "https://upperroomdfw.com/blog/garland-mesquite-churches-local-seo.html",
+      "fingerprint": "63deb73152a7bb083427f7a11f5065649ac28ba3",
+      "sizeBytes": 24080
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\grand-prairie-euless-bedford-churches.html",
+      "rel": "blog/grand-prairie-euless-bedford-churches.html",
+      "urlPath": "/blog/grand-prairie-euless-bedford-churches.html",
+      "title": "Grand Prairie, Euless &amp; Bedford Churches: Mid-Cities Faith Guide | Upper Room DFW Blog",
+      "description": "Mid-Cities living means multi-direction commutes. Find churches near me in Grand Prairie, Euless, and Bedford with directory-driven shortlists.",
+      "canonical": "https://upperroomdfw.com/blog/grand-prairie-euless-bedford-churches.html",
+      "fingerprint": "ede742e152853a9771a126ed61cdd7430a0184e6",
+      "sizeBytes": 24205
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\holiday-church-services-dfw-easter-christmas.html",
+      "rel": "blog/holiday-church-services-dfw-easter-christmas.html",
+      "urlPath": "/blog/holiday-church-services-dfw-easter-christmas.html",
+      "title": "Easter &amp; Christmas Services in DFW: Finding Churches Near You | Upper Room DFW Blog",
+      "description": "Holiday service searches spike every year. Plan ahead with Upper Room DFW for Christmas Eve and Easter times across churches in DFW.",
+      "canonical": "https://upperroomdfw.com/blog/holiday-church-services-dfw-easter-christmas.html",
+      "fingerprint": "b78748969976c3c700681728cab41150641ec48b",
+      "sizeBytes": 24344
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\how-google-business-profile-helps-churches.html",
+      "rel": "blog/how-google-business-profile-helps-churches.html",
+      "urlPath": "/blog/how-google-business-profile-helps-churches.html",
+      "title": "Google Business Profile + Church Directory: Working Together for Local Discovery | Upper Room DFW Blog",
+      "description": "Align Google Business Profile data with Upper Room DFW listings to rank for churches near me, churches in DFW, and related local queries.",
+      "canonical": "https://upperroomdfw.com/blog/how-google-business-profile-helps-churches.html",
+      "fingerprint": "94658001e23f246cf1666adc99630b6395627ac1",
+      "sizeBytes": 24433
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\how-to-choose-a-church-in-dfw.html",
+      "rel": "blog/how-to-choose-a-church-in-dfw.html",
+      "urlPath": "/blog/how-to-choose-a-church-in-dfw.html",
+      "title": "How to Choose a Church in DFW: A Local Family Guide | Upper Room DFW Blog",
+      "description": "A 1,000+ word local family guide for Dallas–Fort Worth families comparing worship, youth programs, bilingual services, and outreach using the Upper Room DFW church directory using the Upper Room DFW church directory.",
+      "canonical": "https://upperroomdfw.com/blog/how-to-choose-a-church-in-dfw.html",
+      "fingerprint": "71917c009e8cd01d6118df8430da6062a3f6075f",
+      "sizeBytes": 24248
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\how-to-list-church-seo-texas.html",
+      "rel": "blog/how-to-list-church-seo-texas.html",
+      "urlPath": "/blog/how-to-list-church-seo-texas.html",
+      "title": "How to List Your Church in Texas (DFW Playbook) | Upper Room DFW Blog",
+      "description": "A pastor’s playbook for listing on Upper Room DFW, aligning GBP, and earning visibility for churches in Texas and churches near me searches.",
+      "canonical": "https://upperroomdfw.com/blog/how-to-list-church-seo-texas.html",
+      "fingerprint": "189bf7192d09c9b823b94bbaa54fd8c918f9ae23",
+      "sizeBytes": 24076
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\irving-las-colinas-churches-guide.html",
+      "rel": "blog/irving-las-colinas-churches-guide.html",
+      "urlPath": "/blog/irving-las-colinas-churches-guide.html",
+      "title": "Irving &amp; Las Colinas Churches: Corporate Corridor Faith Communities | Upper Room DFW Blog",
+      "description": "For professionals and families along the Irving–Las Colinas corridor—how to find churches near me with weekday groups that match corporate schedules.",
+      "canonical": "https://upperroomdfw.com/blog/irving-las-colinas-churches-guide.html",
+      "fingerprint": "44c8fd72bfe173aec0cd6138869a99452e091c7f",
+      "sizeBytes": 24202
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\methodist-presbyterian-lutheran-dfw.html",
+      "rel": "blog/methodist-presbyterian-lutheran-dfw.html",
+      "urlPath": "/blog/methodist-presbyterian-lutheran-dfw.html",
+      "title": "Mainline Churches in DFW: Methodist, Presbyterian &amp; Lutheran Options | Upper Room DFW Blog",
+      "description": "A respectful local guide to mainline Protestant communities in Dallas–Fort Worth and how directory tags help beyond generic churches near me searches.",
+      "canonical": "https://upperroomdfw.com/blog/methodist-presbyterian-lutheran-dfw.html",
+      "fingerprint": "b5059b517c37c49df9e9ad4842e4bc135510bfa9",
+      "sizeBytes": 24392
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\multi-campus-churches-dfw-how-to-choose.html",
+      "rel": "blog/multi-campus-churches-dfw-how-to-choose.html",
+      "urlPath": "/blog/multi-campus-churches-dfw-how-to-choose.html",
+      "title": "Multi-Campus Churches in DFW: How to Choose the Right Campus | Upper Room DFW Blog",
+      "description": "Satellite campuses change “near me” math. Evaluate teaching model, campus pastors, and kids ministry quality across multi-site churches in DFW.",
+      "canonical": "https://upperroomdfw.com/blog/multi-campus-churches-dfw-how-to-choose.html",
+      "fingerprint": "52b7a8e053944b304267751f7db9e3ad127a3c0a",
+      "sizeBytes": 24358
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\non-denominational-churches-dfw-guide.html",
+      "rel": "blog/non-denominational-churches-dfw-guide.html",
+      "urlPath": "/blog/non-denominational-churches-dfw-guide.html",
+      "title": "Nondenominational Churches in DFW: What the Label Really Means | Upper Room DFW Blog",
+      "description": "Nondenominational is popular in Texas searches. Understand theology transparency, governance, and how to compare listings for churches near me.",
+      "canonical": "https://upperroomdfw.com/blog/non-denominational-churches-dfw-guide.html",
+      "fingerprint": "7de6e04191202219b33048db9c51d26ec1eb36c7",
+      "sizeBytes": 24342
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\online-church-vs-local-campus-dfw.html",
+      "rel": "blog/online-church-vs-local-campus-dfw.html",
+      "urlPath": "/blog/online-church-vs-local-campus-dfw.html",
+      "title": "Online Church vs. Local Campus in DFW: A Balanced Local Take | Upper Room DFW Blog",
+      "description": "Streaming helps—but local belonging still matters. How to weigh online options against churches near me for real community in Dallas–Fort Worth.",
+      "canonical": "https://upperroomdfw.com/blog/online-church-vs-local-campus-dfw.html",
+      "fingerprint": "4657dfd42577308d0a750199dee38f4ac274b9d8",
+      "sizeBytes": 24284
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\register-your-church-upper-room-dfw.html",
+      "rel": "blog/register-your-church-upper-room-dfw.html",
+      "urlPath": "/blog/register-your-church-upper-room-dfw.html",
+      "title": "Register Your Church on Upper Room DFW: Why Local Listings Matter | Upper Room DFW Blog",
+      "description": "Why verified church listings rank in Google local search, how Google Business Profile alignment helps, and what pastors get with Standard and Premium plans on Upper Room DFW.",
+      "canonical": "https://upperroomdfw.com/blog/register-your-church-upper-room-dfw.html",
+      "fingerprint": "a48190025978465b4d573158f5fa0a630c70b38d",
+      "sizeBytes": 23250
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\richardson-carrollton-churches-guide.html",
+      "rel": "blog/richardson-carrollton-churches-guide.html",
+      "urlPath": "/blog/richardson-carrollton-churches-guide.html",
+      "title": "Richardson &amp; Carrollton Churches: Telecom Corridor Local Guide | Upper Room DFW Blog",
+      "description": "Diverse suburbs with strong family and international communities—how to search churches near me in Richardson and Carrollton effectively.",
+      "canonical": "https://upperroomdfw.com/blog/richardson-carrollton-churches-guide.html",
+      "fingerprint": "6bd6b36a47e809db90b5ae6211c7822e63699e47",
+      "sizeBytes": 24338
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\small-groups-north-texas.html",
+      "rel": "blog/small-groups-north-texas.html",
+      "urlPath": "/blog/small-groups-north-texas.html",
+      "title": "Small Groups in North Texas: How to Find Community Beyond Sunday | Upper Room DFW Blog",
+      "description": "Sunday is the front door; small groups build lasting friendships. A practical guide to home groups, Bible studies, and community across Plano, Dallas, Fort Worth, and suburbs.",
+      "canonical": "https://upperroomdfw.com/blog/small-groups-north-texas.html",
+      "fingerprint": "37a61eeada055804bf56b286581782833dc88155",
+      "sizeBytes": 24326
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\upper-room-dfw-church-directory-explained.html",
+      "rel": "blog/upper-room-dfw-church-directory-explained.html",
+      "urlPath": "/blog/upper-room-dfw-church-directory-explained.html",
+      "title": "Upper Room DFW Explained: How Our Church Directory Helps Locals | Upper Room DFW Blog",
+      "description": "What Upper Room DFW is (and is not), how listings work, and why a dedicated church directory improves discovery for families and pastors across Dallas–Fort Worth.",
+      "canonical": "https://upperroomdfw.com/blog/upper-room-dfw-church-directory-explained.html",
+      "fingerprint": "7c5d40353188683edb30f6048f5095ae0e85ca06",
+      "sizeBytes": 24450
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\women-mens-ministry-dfw-churches.html",
+      "rel": "blog/women-mens-ministry-dfw-churches.html",
+      "urlPath": "/blog/women-mens-ministry-dfw-churches.html",
+      "title": "Women’s &amp; Men’s Ministries at DFW Churches: Finding Your People | Upper Room DFW Blog",
+      "description": "Beyond Sunday—how to evaluate men’s and women’s ministries when comparing churches in DFW using directory tags and visit questions.",
+      "canonical": "https://upperroomdfw.com/blog/women-mens-ministry-dfw-churches.html",
+      "fingerprint": "37062452b4292601eef11083e7bbfad764462067",
+      "sizeBytes": 24393
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\blog\\young-adults-churches-dallas-fort-worth.html",
+      "rel": "blog/young-adults-churches-dallas-fort-worth.html",
+      "urlPath": "/blog/young-adults-churches-dallas-fort-worth.html",
+      "title": "Young Adult Churches &amp; Ministries in Dallas–Fort Worth | Upper Room DFW Blog",
+      "description": "20s and 30s seekers need peers and purpose. Local guide for young adult ministry across churches in DFW and churches near me queries.",
+      "canonical": "https://upperroomdfw.com/blog/young-adults-churches-dallas-fort-worth.html",
+      "fingerprint": "97565f39a5c14257dcfcbbdddd184a0293112217",
+      "sizeBytes": 24328
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\abundant-life-worship-center-dallas-1781406081268.html",
@@ -769,8 +441,8 @@
       "title": "Abundant Life Worship Center Dallas | Dallas, TX | Upper Room DFW",
       "description": "A welcoming assembly of god youth serving families across Dallas and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "5340593e18731073d38f4eab7867c5e860216d7d",
-      "sizeBytes": 8719
+      "fingerprint": "2b6fd7c2892999383aaa6d98e1daae14124b7db1",
+      "sizeBytes": 10469
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\abundant-life-worship-center-denton-1781406081308.html",
@@ -779,8 +451,8 @@
       "title": "Abundant Life Worship Center Denton | Denton, TX | Upper Room DFW",
       "description": "A welcoming assembly of god church serving families across Denton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "49e98799c08ae38f3794363228885b642cdc8b7f",
-      "sizeBytes": 8728
+      "fingerprint": "497bd9741f7b0b0f05a99ccef50f4eab4f4a8ee8",
+      "sizeBytes": 10478
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\abundant-life-worship-center-garland-1781406081288.html",
@@ -789,8 +461,8 @@
       "title": "Abundant Life Worship Center Garland | Garland, TX | Upper Room DFW",
       "description": "A welcoming assembly of god ministry serving families across Garland and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "d230b60b8958389a2a81907a95fdec1de638501d",
-      "sizeBytes": 8759
+      "fingerprint": "c857c38533e00c0f2949f3bd88048a4ae71bd370",
+      "sizeBytes": 10509
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\all-nations-fellowship.html",
@@ -799,18 +471,8 @@
       "title": "All Nations Fellowship | Irving, TX | Upper Room DFW",
       "description": "Intentionally multi-ethnic, multilingual church celebrating the diversity of God",
       "canonical": "https://upperroomdfw.com/churches/all-nations-fellowship.html",
-      "fingerprint": "7be8225d29e65135bba2b6de314ee0f82ec36972",
-      "sizeBytes": 8752
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\bethel-ministries-dallas-1781406081253.html",
-      "rel": "churches/bethel-ministries-dallas-1781406081253.html",
-      "urlPath": "/churches/bethel-ministries-dallas-1781406081253.html",
-      "title": "Bethel Ministries Dallas | Dallas, TX | Upper Room DFW",
-      "description": "A welcoming baptist ministry serving families across Dallas and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "995b163bda663c6f58fac0f2f786a1258da50ef6",
-      "sizeBytes": 8596
+      "fingerprint": "bbcf38e5f1f3c90bac32b23a31a98cd45861da16",
+      "sizeBytes": 10502
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\bethel-ministries-dallas-1781406081313.html",
@@ -819,8 +481,8 @@
       "title": "Bethel Ministries Dallas | Dallas, TX | Upper Room DFW",
       "description": "A welcoming baptist church serving families across Dallas and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "9fc881fcd0df8f26dcb6ddbb87c32e5d3e68b9cc",
-      "sizeBytes": 8586
+      "fingerprint": "bfe995b812cf450956dafa74da5b5eb2cce37781",
+      "sizeBytes": 10336
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\bethel-ministries-denton-1781406081293.html",
@@ -829,8 +491,8 @@
       "title": "Bethel Ministries Denton | Denton, TX | Upper Room DFW",
       "description": "A welcoming baptist church serving families across Denton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "b5c4ba1f2d9b2f846d53049c3f83cf19696cc8ea",
-      "sizeBytes": 8589
+      "fingerprint": "2d57a0aa004e3de208a7c56b7e755fb1e2f10169",
+      "sizeBytes": 10339
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\bethel-ministries-garland-1781406081273.html",
@@ -839,8 +501,8 @@
       "title": "Bethel Ministries Garland | Garland, TX | Upper Room DFW",
       "description": "A welcoming baptist church serving families across Garland and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "2cf315a066d7fc4f907fc0a27e2312a3fb469a6b",
-      "sizeBytes": 8606
+      "fingerprint": "355e68e6e7d92a201dc873a21d08596a437be72f",
+      "sizeBytes": 10356
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\bridge-of-hope-ministries.html",
@@ -849,8 +511,8 @@
       "title": "Bridge of Hope Ministries | Dallas, TX | Upper Room DFW",
       "description": "Bridge of Hope Ministries — street outreach, mobile showers, hot meals, and long-term recovery for the homeless in South Dallas and Oak Cliff.",
       "canonical": "https://upperroomdfw.com/churches/bridge-of-hope-ministries.html",
-      "fingerprint": "7417eb8be85c67621f80f424c8ae5c193377b283",
-      "sizeBytes": 3866
+      "fingerprint": "cf0bfcc6df52e11b3802c1ff24bba1949e63087a",
+      "sizeBytes": 5616
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\calvary-chapel-fort-worth.html",
@@ -859,8 +521,8 @@
       "title": "Calvary Chapel Fort Worth | Fort Worth, TX | Upper Room DFW",
       "description": "Calvary Chapel Fort Worth — verse-by-verse Bible teaching church with a heart for the lost and strong emphasis on the Holy Spirit. Casual atmosphere.",
       "canonical": "https://upperroomdfw.com/churches/calvary-chapel-fort-worth.html",
-      "fingerprint": "6305fb51685af5d8d3444b6a041043334b372fd1",
-      "sizeBytes": 3921
+      "fingerprint": "93fabb4c97d0e19ba007688d267b1659b810629f",
+      "sizeBytes": 5671
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\calvary-family-church-carrollton-1781406081306.html",
@@ -869,18 +531,8 @@
       "title": "Calvary Family Church Carrollton | Carrollton, TX | Upper Room DFW",
       "description": "A welcoming presbyterian church serving families across Carrollton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "3d6105fc41e4b3905cb2b4c8dd91358795deabf8",
-      "sizeBytes": 8736
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\calvary-family-church-euless-1781406081266.html",
-      "rel": "churches/calvary-family-church-euless-1781406081266.html",
-      "urlPath": "/churches/calvary-family-church-euless-1781406081266.html",
-      "title": "Calvary Family Church Euless | Euless, TX | Upper Room DFW",
-      "description": "A welcoming presbyterian church serving families across Euless and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "3a662022dfff42947bfe8a105086d499da55d3c6",
-      "sizeBytes": 8651
+      "fingerprint": "d06419eb9a34489b0844439b2735d0c50210a493",
+      "sizeBytes": 10486
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\calvary-family-church-euless-1781406081326.html",
@@ -889,8 +541,8 @@
       "title": "Calvary Family Church Euless | Euless, TX | Upper Room DFW",
       "description": "A welcoming presbyterian event serving families across Euless and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "93cbc53f84bda99290d2b5e7959fcb31d9928920",
-      "sizeBytes": 8650
+      "fingerprint": "9006b4f0570f1091093edac57b3797f65a742f6f",
+      "sizeBytes": 10400
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\calvary-family-church-frisco-1781406081286.html",
@@ -899,8 +551,8 @@
       "title": "Calvary Family Church Frisco | Frisco, TX | Upper Room DFW",
       "description": "A welcoming presbyterian church serving families across Frisco and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "18a832bc4a9ad08e973f4678d4ad3485f3d000e3",
-      "sizeBytes": 8641
+      "fingerprint": "0d8fde18775ab85d5f2ab2c7f113a4db8f054152",
+      "sizeBytes": 10391
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\cornerstone-chapel-grand-prairie-1781406081310.html",
@@ -909,8 +561,8 @@
       "title": "Cornerstone Chapel Grand Prairie | Grand Prairie, TX | Upper Room DFW",
       "description": "A welcoming episcopal youth serving families across Grand Prairie and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "c5455cd8e034a1ddc3255d6032d5932a53091366",
-      "sizeBytes": 8748
+      "fingerprint": "cf4bf7890001c739a13fc0a414ac083304ca2477",
+      "sizeBytes": 10498
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\cornerstone-chapel-plano-1781406081270.html",
@@ -919,8 +571,8 @@
       "title": "Cornerstone Chapel Plano | Plano, TX | Upper Room DFW",
       "description": "A welcoming episcopal event serving families across Plano and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "812be9406b5b530fad9fabe3f68e822136602ff2",
-      "sizeBytes": 8584
+      "fingerprint": "7fead923f5cb3b8fe5214b805077f125afbd2924",
+      "sizeBytes": 10334
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\cornerstone-chapel-richardson-1781406081290.html",
@@ -929,8 +581,8 @@
       "title": "Cornerstone Chapel Richardson | Richardson, TX | Upper Room DFW",
       "description": "A welcoming episcopal outreach serving families across Richardson and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "8eaaa4defc8e5961abc864a3a4778c66f5a106b6",
-      "sizeBytes": 8708
+      "fingerprint": "eef1eec6aa579c9347208059bee91e2f170d1de1",
+      "sizeBytes": 10458
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\covenant-bible-church-fort-worth-1781406081299.html",
@@ -939,8 +591,8 @@
       "title": "Covenant Bible Church Fort Worth | Fort Worth, TX | Upper Room DFW",
       "description": "A welcoming church of christ church serving families across Fort Worth and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "a80db058d00cac26503b328338f1dbb7984bdd33",
-      "sizeBytes": 8753
+      "fingerprint": "06155fb330064f3d4ba181083cda8dac7da720a9",
+      "sizeBytes": 10503
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\covenant-bible-church-lewisville-1781406081279.html",
@@ -949,18 +601,8 @@
       "title": "Covenant Bible Church Lewisville | Lewisville, TX | Upper Room DFW",
       "description": "A welcoming church of christ church serving families across Lewisville and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "463b88210f3393544229106d02eff47f6476cff1",
-      "sizeBytes": 8751
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\covenant-bible-church-mesquite-1781406081259.html",
-      "rel": "churches/covenant-bible-church-mesquite-1781406081259.html",
-      "urlPath": "/churches/covenant-bible-church-mesquite-1781406081259.html",
-      "title": "Covenant Bible Church Mesquite | Mesquite, TX | Upper Room DFW",
-      "description": "A welcoming church of christ church serving families across Mesquite and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "02c8e3c9188b68c04c4a86b232e551160d5b0c50",
-      "sizeBytes": 8711
+      "fingerprint": "b264c23274cbc2d6a666adfa4b1c021a446f937b",
+      "sizeBytes": 10501
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\covenant-bible-church-mesquite-1781406081319.html",
@@ -969,8 +611,8 @@
       "title": "Covenant Bible Church Mesquite | Mesquite, TX | Upper Room DFW",
       "description": "A welcoming church of christ event serving families across Mesquite and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "73e3482ceff207d0b70ed1243766f4b06d037592",
-      "sizeBytes": 8709
+      "fingerprint": "7d41eeba8645a86da3407dc9e6b0dadd91846149",
+      "sizeBytes": 10459
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\covenant-church-dallas.html",
@@ -979,8 +621,8 @@
       "title": "Covenant Church | Dallas, TX | Upper Room DFW",
       "description": "Covenant Church in Dallas — one of the largest and most diverse multi-campus congregations in DFW with powerful worship, prayer, and extensive local and global outreach.",
       "canonical": "https://upperroomdfw.com/churches/covenant-church-dallas.html",
-      "fingerprint": "3a65500e5fbebb989eea991bec3a941b0e50e925",
-      "sizeBytes": 3920
+      "fingerprint": "d6a55fc4a774f7624a3155670d28f6cd5fec0faf",
+      "sizeBytes": 5670
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\crossroads-assembly-arlington-1781406081297.html",
@@ -989,18 +631,8 @@
       "title": "Crossroads Assembly Arlington | Arlington, TX | Upper Room DFW",
       "description": "A welcoming lutheran outreach serving families across Arlington and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "7a6cfce8451cf0d9b656c3acdab1e20956ec9194",
-      "sizeBytes": 8684
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\crossroads-assembly-irving-1781406081257.html",
-      "rel": "churches/crossroads-assembly-irving-1781406081257.html",
-      "urlPath": "/churches/crossroads-assembly-irving-1781406081257.html",
-      "title": "Crossroads Assembly Irving | Irving, TX | Upper Room DFW",
-      "description": "A welcoming lutheran church serving families across Irving and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "c4b422e25aa86d9b759d835ecd82343f7fc8368b",
-      "sizeBytes": 8613
+      "fingerprint": "f2f26d7ad7e69c49cf0d0b663a2385684653fecf",
+      "sizeBytes": 10434
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\crossroads-assembly-irving-1781406081317.html",
@@ -1009,8 +641,8 @@
       "title": "Crossroads Assembly Irving | Irving, TX | Upper Room DFW",
       "description": "A welcoming lutheran youth serving families across Irving and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "ffcce81d74d828b6aed6b1608cf51fb3444d9768",
-      "sizeBytes": 8608
+      "fingerprint": "7d19f7111cb9cb876eb6a4192d54d625d7fcee3d",
+      "sizeBytes": 10358
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\crossroads-assembly-mckinney-1781406081277.html",
@@ -1019,8 +651,8 @@
       "title": "Crossroads Assembly McKinney | McKinney, TX | Upper Room DFW",
       "description": "A welcoming lutheran event serving families across McKinney and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "d20b558b23bff9c429d057d0b4e3ca122528a8d3",
-      "sizeBytes": 8652
+      "fingerprint": "6239bab55ebba7495fb7303891dae027e70874b4",
+      "sizeBytes": 10402
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\dfw-faith-fest.html",
@@ -1029,8 +661,8 @@
       "title": "DFW Faith Fest | Frisco, TX | Upper Room DFW",
       "description": "DFW Faith Fest — the largest annual multi-church worship and community festival in North Texas. Free concerts, food trucks, kids zone. March in Frisco.",
       "canonical": "https://upperroomdfw.com/churches/dfw-faith-fest.html",
-      "fingerprint": "72c39619a3de938946048cf2d39013c0e8de1ed6",
-      "sizeBytes": 4421
+      "fingerprint": "77b51e316a61c2a07dc0d2a677f58bf4bb6b6a6e",
+      "sizeBytes": 6171
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\elevate-youth-dallas.html",
@@ -1039,8 +671,8 @@
       "title": "Elevate Youth Dallas | DFW Youth Ministry | Upper Room DFW",
       "description": "Elevate Youth Dallas — high-energy discipleship-focused youth ministry serving 6th–12th graders across North and East Dallas through partner churches.",
       "canonical": "https://upperroomdfw.com/churches/elevate-youth-dallas.html",
-      "fingerprint": "74e68015088cbb723cf8d72920a763a376beb14a",
-      "sizeBytes": 4292
+      "fingerprint": "4082c325fc1cb921383c23f275b290e8f4e10a9b",
+      "sizeBytes": 6042
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\emmanuel-chapel-grand-prairie-1781406081280.html",
@@ -1049,8 +681,8 @@
       "title": "Emmanuel Chapel Grand Prairie | Grand Prairie, TX | Upper Room DFW",
       "description": "A welcoming episcopal church serving families across Grand Prairie and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "9585a4d9d9d593657309bc913175f512efe2c18d",
-      "sizeBytes": 8725
+      "fingerprint": "20c63d1938a2289b695a14143b308764a5c06251",
+      "sizeBytes": 10475
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\emmanuel-chapel-plano-1781406081300.html",
@@ -1059,18 +691,8 @@
       "title": "Emmanuel Chapel Plano | Plano, TX | Upper Room DFW",
       "description": "A welcoming episcopal church serving families across Plano and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "7460b6900b14f35ced8083d8dcb067fd33875639",
-      "sizeBytes": 8550
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\emmanuel-chapel-richardson-1781406081260.html",
-      "rel": "churches/emmanuel-chapel-richardson-1781406081260.html",
-      "urlPath": "/churches/emmanuel-chapel-richardson-1781406081260.html",
-      "title": "Emmanuel Chapel Richardson | Richardson, TX | Upper Room DFW",
-      "description": "A welcoming episcopal ministry serving families across Richardson and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "b5c3ce0764dbb937efb5a06b611bf108abf220f8",
-      "sizeBytes": 8671
+      "fingerprint": "8d00cf395dd0b2d8698bdecb1e735aaf503ecd45",
+      "sizeBytes": 10300
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\emmanuel-chapel-richardson-1781406081320.html",
@@ -1079,8 +701,8 @@
       "title": "Emmanuel Chapel Richardson | Richardson, TX | Upper Room DFW",
       "description": "A welcoming episcopal church serving families across Richardson and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "88929650b2a94dc4c267fcb09babdf2c9d953a4d",
-      "sizeBytes": 8662
+      "fingerprint": "653d2a35921faeccee67c644a3cf2d136e9c7855",
+      "sizeBytes": 10412
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\epiphany-anglican-church.html",
@@ -1089,8 +711,8 @@
       "title": "Epiphany Anglican Church | Plano, TX | Upper Room DFW",
       "description": "Epiphany Anglican Church in Plano — liturgical Anglican community cherishing ancient-future worship, thoughtful preaching, arts ministry, and neighborhood engagement.",
       "canonical": "https://upperroomdfw.com/churches/epiphany-anglican-church.html",
-      "fingerprint": "6c650bd5cbe720b00208101c7d1294c6c587cc52",
-      "sizeBytes": 3923
+      "fingerprint": "03d0f3f9cd8ee0d68be844e4061d67ee728205ed",
+      "sizeBytes": 5673
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\faith-family-church-carrollton-1781406081276.html",
@@ -1099,8 +721,8 @@
       "title": "Faith Family Church Carrollton | Carrollton, TX | Upper Room DFW",
       "description": "A welcoming presbyterian outreach serving families across Carrollton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "c494f82b820d85ec612ee455e847e9861013102a",
-      "sizeBytes": 8723
+      "fingerprint": "e0651fe266060be49334765f7b080298d4830e4c",
+      "sizeBytes": 10473
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\faith-family-church-euless-1781406081296.html",
@@ -1109,8 +731,8 @@
       "title": "Faith Family Church Euless | Euless, TX | Upper Room DFW",
       "description": "A welcoming presbyterian youth serving families across Euless and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "2d3761a53a514a2d0348b5e05e77745fdce3771e",
-      "sizeBytes": 8621
+      "fingerprint": "c813df49c2c32d1c984a740c44198b37a5cd60ac",
+      "sizeBytes": 10371
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\faith-family-church-frisco-1781406081256.html",
@@ -1119,18 +741,8 @@
       "title": "Faith Family Church Frisco | Frisco, TX | Upper Room DFW",
       "description": "A welcoming presbyterian event serving families across Frisco and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "409a86639f68328b194aa79fc00167f1992bd407",
-      "sizeBytes": 8621
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\faith-family-church-frisco-1781406081316.html",
-      "rel": "churches/faith-family-church-frisco-1781406081316.html",
-      "urlPath": "/churches/faith-family-church-frisco-1781406081316.html",
-      "title": "Faith Family Church Frisco | Frisco, TX | Upper Room DFW",
-      "description": "A welcoming presbyterian ministry serving families across Frisco and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "19ff29890e38f66470c8fbde5baa4e9024cec262",
-      "sizeBytes": 8633
+      "fingerprint": "b110ae83d58ecc6f8a774881ce6d608480e306b8",
+      "sizeBytes": 10371
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\first-baptist-arlington.html",
@@ -1139,8 +751,8 @@
       "title": "First Baptist Arlington | Arlington, TX | Upper Room DFW",
       "description": "First Baptist Arlington — historic downtown church since 1873 offering both traditional and contemporary services with excellent children",
       "canonical": "https://upperroomdfw.com/churches/first-baptist-arlington.html",
-      "fingerprint": "5dbdff75f1f27d699d7450d7fef147b1aba0797e",
-      "sizeBytes": 3928
+      "fingerprint": "f65e5ca3c24f3ec07e0db4234e1265917fdd3a36",
+      "sizeBytes": 5678
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-city-church.html",
@@ -1149,8 +761,8 @@
       "title": "Grace City Church | Frisco, TX | Upper Room DFW",
       "description": "Dynamic, Spirit-filled church passionate about next-gen ministry and city transformation in Frisco. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/churches/grace-city-church.html",
-      "fingerprint": "d7d90f4bf36e9c9babe2f078f9972ad280097612",
-      "sizeBytes": 8526
+      "fingerprint": "41d11d8997a71b1e410b5cfeed56d83af59fd473",
+      "sizeBytes": 10276
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-community-church-arlington-1781406081282.html",
@@ -1159,8 +771,8 @@
       "title": "Grace Community Church Arlington | Arlington, TX | Upper Room DFW",
       "description": "A welcoming non-denominational youth serving families across Arlington and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "0785011bad5da78892b7ffd08816d6569a6f9338",
-      "sizeBytes": 8744
+      "fingerprint": "086fd97bcb0b28b16231c208b3e7517a2e58223e",
+      "sizeBytes": 10494
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-community-church-irving-1781406081302.html",
@@ -1169,18 +781,8 @@
       "title": "Grace Community Church Irving | Irving, TX | Upper Room DFW",
       "description": "A welcoming non-denominational ministry serving families across Irving and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "ef462cd316b30ba76c9d7adf85be99ad750be5e5",
-      "sizeBytes": 8695
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-community-church-mckinney-1781406081262.html",
-      "rel": "churches/grace-community-church-mckinney-1781406081262.html",
-      "urlPath": "/churches/grace-community-church-mckinney-1781406081262.html",
-      "title": "Grace Community Church McKinney | McKinney, TX | Upper Room DFW",
-      "description": "A welcoming non-denominational outreach serving families across McKinney and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "76ed0c1491c1f61e1172a2bcb46847d82b2692a8",
-      "sizeBytes": 8728
+      "fingerprint": "76772d4cd3ae6a8e0e980dc1be5fc04ba95fd499",
+      "sizeBytes": 10445
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-community-church-mckinney-1781406081322.html",
@@ -1189,8 +791,8 @@
       "title": "Grace Community Church McKinney | McKinney, TX | Upper Room DFW",
       "description": "A welcoming non-denominational church serving families across McKinney and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "b6a3084312367f9524d38e466c0d6bc805ed9879",
-      "sizeBytes": 8719
+      "fingerprint": "d1d767a18b82540a94964404aa8d61446b0996f1",
+      "sizeBytes": 10469
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-community-church-plano.html",
@@ -1199,8 +801,8 @@
       "title": "Grace Community Church Plano | Plano, TX | Upper Room DFW",
       "description": "Grace Community Church Plano — contemporary worship, deep teaching, and thriving young adult and singles community in Plano, Texas.",
       "canonical": "https://upperroomdfw.com/churches/grace-community-church-plano.html",
-      "fingerprint": "2292ff3c68919a371248089a2223aded63ede000",
-      "sizeBytes": 2630
+      "fingerprint": "c5e1eb4ab435eb8ba73425ebaa4e0dfc93b9a8ca",
+      "sizeBytes": 4332
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\grace-korean-church.html",
@@ -1209,8 +811,8 @@
       "title": "Grace Korean Church of DFW | Carrollton, TX | Upper Room DFW",
       "description": "Multigenerational Korean-American church with powerful worship, solid teaching, and strong emphasis on family and education. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/churches/grace-korean-church.html",
-      "fingerprint": "f5fc04ef8d2596b0f4e5c95b314916e66c14444c",
-      "sizeBytes": 8884
+      "fingerprint": "ab6d9336e95970854bcee4d98554556c1041ecda",
+      "sizeBytes": 10634
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\hands-of-compassion-outreach.html",
@@ -1219,8 +821,8 @@
       "title": "Hands of Compassion Outreach | Mesquite, TX | Upper Room DFW",
       "description": "Hands of Compassion Outreach — mobile food pantry, clothing, job training serving East Dallas and Mesquite. Partners with 27 local churches.",
       "canonical": "https://upperroomdfw.com/churches/hands-of-compassion-outreach.html",
-      "fingerprint": "4a135e082524ac136f1d1e5c99fa0bcdccc9ff85",
-      "sizeBytes": 4516
+      "fingerprint": "53cb4ce4c1167b92467294d7fa12dedd1b7cc01b",
+      "sizeBytes": 6266
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\harvest-baptist-church-carrollton-1781406081291.html",
@@ -1229,8 +831,8 @@
       "title": "Harvest Baptist Church Carrollton | Carrollton, TX | Upper Room DFW",
       "description": "A welcoming catholic event serving families across Carrollton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "45d713d474fcaf6d60e251e655b9104efd5f2a8c",
-      "sizeBytes": 8728
+      "fingerprint": "4b3da98973cd4f6cb1f96b0e4605f5d1608bf3d7",
+      "sizeBytes": 10478
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\harvest-baptist-church-euless-1781406081251.html",
@@ -1239,18 +841,8 @@
       "title": "Harvest Baptist Church Euless | Euless, TX | Upper Room DFW",
       "description": "A welcoming catholic church serving families across Euless and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "6b45ce1505e5850f55e97a99f92779b4e80c6368",
-      "sizeBytes": 8644
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\harvest-baptist-church-euless-1781406081311.html",
-      "rel": "churches/harvest-baptist-church-euless-1781406081311.html",
-      "urlPath": "/churches/harvest-baptist-church-euless-1781406081311.html",
-      "title": "Harvest Baptist Church Euless | Euless, TX | Upper Room DFW",
-      "description": "A welcoming catholic outreach serving families across Euless and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "8d8e949930b036d442fb347af9cf0de4c5e63ecd",
-      "sizeBytes": 8654
+      "fingerprint": "551c069cb4bbd6a8f5bc70a75cbbd94d5739a823",
+      "sizeBytes": 10394
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\harvest-baptist-church-frisco-1781406081271.html",
@@ -1259,8 +851,8 @@
       "title": "Harvest Baptist Church Frisco | Frisco, TX | Upper Room DFW",
       "description": "A welcoming catholic church serving families across Frisco and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "ee6dbad79653c6fbc1b09c2292564c18bdbece20",
-      "sizeBytes": 8645
+      "fingerprint": "e55c2a3cf8f32e53a77e983c8623ad2c441c8086",
+      "sizeBytes": 10395
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\hispanic-family-church-arlington.html",
@@ -1269,8 +861,8 @@
       "title": "Iglesia Familiar Arlington | Arlington, TX | Upper Room DFW",
       "description": "Iglesia Familiar Arlington (Hispanic Family Church) — vibrant Spanish-speaking congregation serving the Latino community with powerful worship and strong family focus.",
       "canonical": "https://upperroomdfw.com/churches/hispanic-family-church-arlington.html",
-      "fingerprint": "cb07df3810b3de4f16701e9e590bf50bf4153b81",
-      "sizeBytes": 3952
+      "fingerprint": "026edc8b4e253f2ad2fe7019d992945958a91a4c",
+      "sizeBytes": 5702
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\hope-and-healing-ministry-center.html",
@@ -1279,8 +871,8 @@
       "title": "Hope &amp; Healing Ministry Center | Dallas, TX | Upper Room DFW",
       "description": "Hope &amp; Healing Ministry Center in Dallas offers Christian counseling, recovery programs, grief support, and marriage restoration. Partnering with DFW churches.",
       "canonical": "https://upperroomdfw.com/churches/hope-and-healing-ministry-center.html",
-      "fingerprint": "238d35ff0dbfbf70924684fd91b13ad31e034716",
-      "sizeBytes": 5833
+      "fingerprint": "5f7894692f647cb65389ca368a50229778260460",
+      "sizeBytes": 7583
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\hope-bible-church-fort-worth-1781406081269.html",
@@ -1289,8 +881,8 @@
       "title": "Hope Bible Church Fort Worth | Fort Worth, TX | Upper Room DFW",
       "description": "A welcoming church of christ outreach serving families across Fort Worth and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "9e4341762ceb82af549965c3638b7cb499a65b6c",
-      "sizeBytes": 8723
+      "fingerprint": "d8d3dc69d4a986fd428fe8d94d03480a764a1002",
+      "sizeBytes": 10473
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\hope-bible-church-lewisville-1781406081309.html",
@@ -1299,8 +891,8 @@
       "title": "Hope Bible Church Lewisville | Lewisville, TX | Upper Room DFW",
       "description": "A welcoming church of christ ministry serving families across Lewisville and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "6029def2b98120817fad632e3c4ac37ab608ecfe",
-      "sizeBytes": 8718
+      "fingerprint": "aea5c833d122abda0321d94a3989858d8798785c",
+      "sizeBytes": 10468
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\hope-bible-church-mesquite-1781406081289.html",
@@ -1309,8 +901,8 @@
       "title": "Hope Bible Church Mesquite | Mesquite, TX | Upper Room DFW",
       "description": "A welcoming church of christ youth serving families across Mesquite and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "f03ca6040dedba46043b745abf7d68e584dd5c34",
-      "sizeBytes": 8661
+      "fingerprint": "5110741eb477d8295357fe81df94bce9d072b8bc",
+      "sizeBytes": 10411
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\index.html",
@@ -1319,8 +911,8 @@
       "title": "Churches • Upper Room DFW Directory",
       "description": "Churches • Upper Room DFW Directory — Upper Room DFW, the trusted Dallas–Fort Worth church directory.",
       "canonical": "https://upperroomdfw.com/churches/index.html",
-      "fingerprint": "62004264d0e203437ddab796578f363063b61ee1",
-      "sizeBytes": 1557
+      "fingerprint": "86cac0a34a029d4c633f8f43426e4067aeab2345",
+      "sizeBytes": 3263
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\kingdom-builders-network.html",
@@ -1329,8 +921,8 @@
       "title": "Kingdom Builders Network | Garland, TX | Upper Room DFW",
       "description": "Kingdom Builders Network — network of pastors and leaders across DFW focused on church planting, leadership development, and city-wide impact. Monthly roundtables.",
       "canonical": "https://upperroomdfw.com/churches/kingdom-builders-network.html",
-      "fingerprint": "ad5defdb18cbec6a110fdb6e39e67eaf9d51a7c8",
-      "sizeBytes": 3994
+      "fingerprint": "6a10f1443b927a535616547c3ddf4d15918cfbae",
+      "sizeBytes": 5744
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\kingdom-fellowship-grand-prairie-1781406081295.html",
@@ -1339,18 +931,8 @@
       "title": "Kingdom Fellowship Grand Prairie | Grand Prairie, TX | Upper Room DFW",
       "description": "A welcoming pentecostal ministry serving families across Grand Prairie and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "a7cec872fd0b0a3afb5b69170faf5908fc0351a5",
-      "sizeBytes": 8781
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\kingdom-fellowship-plano-1781406081255.html",
-      "rel": "churches/kingdom-fellowship-plano-1781406081255.html",
-      "urlPath": "/churches/kingdom-fellowship-plano-1781406081255.html",
-      "title": "Kingdom Fellowship Plano | Plano, TX | Upper Room DFW",
-      "description": "A welcoming pentecostal outreach serving families across Plano and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "837f8da0b5c52567425ed6d95b0aacacb0a61624",
-      "sizeBytes": 8601
+      "fingerprint": "8f2ea832491c4724fda0ad44d7a1443060c427bf",
+      "sizeBytes": 10531
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\kingdom-fellowship-plano-1781406081315.html",
@@ -1359,8 +941,8 @@
       "title": "Kingdom Fellowship Plano | Plano, TX | Upper Room DFW",
       "description": "A welcoming pentecostal church serving families across Plano and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "28b6951fcd43eb81a0ab2f41fe7e4d43bced948b",
-      "sizeBytes": 8591
+      "fingerprint": "97688b69151026106a4c730cc5db9919ee2504ae",
+      "sizeBytes": 10341
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\kingdom-fellowship-richardson-1781406081275.html",
@@ -1369,8 +951,8 @@
       "title": "Kingdom Fellowship Richardson | Richardson, TX | Upper Room DFW",
       "description": "A welcoming pentecostal youth serving families across Richardson and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "e6f4b3ae270dc6227a5229a863b3c782084bd287",
-      "sizeBytes": 8699
+      "fingerprint": "43201af8c3cf089afa67cbd7909191d858ed91e9",
+      "sizeBytes": 10449
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\lifepoint-church-richardson.html",
@@ -1379,8 +961,8 @@
       "title": "LifePoint Church Richardson | Richardson, TX | Upper Room DFW",
       "description": "LifePoint Church in Richardson — large modern congregation with excellent worship, practical teaching, and one of the strongest small group systems in DFW.",
       "canonical": "https://upperroomdfw.com/churches/lifepoint-church-richardson.html",
-      "fingerprint": "25a1cc30ab4e5fa7cfa931b1d06437bdef258bc9",
-      "sizeBytes": 3931
+      "fingerprint": "b5815c81a73fb9917550fa6ca4a67583f5aa0385",
+      "sizeBytes": 5681
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\living-word-worship-center-dallas-1781406081298.html",
@@ -1389,8 +971,8 @@
       "title": "Living Word Worship Center Dallas | Dallas, TX | Upper Room DFW",
       "description": "A welcoming assembly of god event serving families across Dallas and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "853fef87b17ac40dead3d597759fee628f25f5d9",
-      "sizeBytes": 8700
+      "fingerprint": "95b769e620403ff5508571253a15e56aeeef2123",
+      "sizeBytes": 10450
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\living-word-worship-center-denton-1781406081278.html",
@@ -1399,8 +981,8 @@
       "title": "Living Word Worship Center Denton | Denton, TX | Upper Room DFW",
       "description": "A welcoming assembly of god church serving families across Denton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "06173183789f48ba31bdd6f3571691fbd584e424",
-      "sizeBytes": 8714
+      "fingerprint": "a839bd58aaa52b7b32bb554b6feedb95e3534c5c",
+      "sizeBytes": 10464
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\living-word-worship-center-garland-1781406081258.html",
@@ -1409,18 +991,8 @@
       "title": "Living Word Worship Center Garland | Garland, TX | Upper Room DFW",
       "description": "A welcoming assembly of god church serving families across Garland and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "65b01e6dc05f05b511615a69f4ffabb1a1c3cca3",
-      "sizeBytes": 8733
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\living-word-worship-center-garland-1781406081318.html",
-      "rel": "churches/living-word-worship-center-garland-1781406081318.html",
-      "urlPath": "/churches/living-word-worship-center-garland-1781406081318.html",
-      "title": "Living Word Worship Center Garland | Garland, TX | Upper Room DFW",
-      "description": "A welcoming assembly of god outreach serving families across Garland and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "e6450d6a1820115b5fe5d84687c229cd3280e7e5",
-      "sizeBytes": 8743
+      "fingerprint": "ffaf914658ed37984e5f062c97d8f26d364d31d8",
+      "sizeBytes": 10483
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\new-bethel-missionary-baptist.html",
@@ -1429,8 +1001,8 @@
       "title": "New Bethel Missionary Baptist Church | Dallas, TX | Upper Room DFW",
       "description": "Historic African-American congregation in South Dallas with powerful preaching, music ministry, and deep community roots. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/churches/new-bethel-missionary-baptist.html",
-      "fingerprint": "19e86dcd472d76984f6f04280503f8dc4ace856c",
-      "sizeBytes": 8924
+      "fingerprint": "3837923d212471105a7c939fa3c40c64d772d79b",
+      "sizeBytes": 10674
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\new-life-fellowship-irving.html",
@@ -1439,8 +1011,8 @@
       "title": "New Life Fellowship Irving | Irving, TX | Upper Room DFW",
       "description": "Bilingual English/Spanish church in Irving, TX reaching internationals and diverse families.",
       "canonical": "https://upperroomdfw.com/churches/new-life-fellowship-irving.html",
-      "fingerprint": "d33748966e8ea1718eadbaa6c5b4b09dce7ee03a",
-      "sizeBytes": 2519
+      "fingerprint": "66f23319c24e2fd0109bfd9f17a3e1083ec29f33",
+      "sizeBytes": 4221
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\new-life-ministries-dallas-1781406081283.html",
@@ -1449,8 +1021,8 @@
       "title": "New Life Ministries Dallas | Dallas, TX | Upper Room DFW",
       "description": "A welcoming baptist outreach serving families across Dallas and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "df7405731886115e0a16b5d9a450b7b6b6c727cc",
-      "sizeBytes": 8621
+      "fingerprint": "4b3210cc93792ab370e7507e32a0a43b451be30a",
+      "sizeBytes": 10371
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\new-life-ministries-denton-1781406081263.html",
@@ -1459,18 +1031,8 @@
       "title": "New Life Ministries Denton | Denton, TX | Upper Room DFW",
       "description": "A welcoming baptist event serving families across Denton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "615e1beb8821d646cfac356d47388912491d568a",
-      "sizeBytes": 8607
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\new-life-ministries-denton-1781406081323.html",
-      "rel": "churches/new-life-ministries-denton-1781406081323.html",
-      "urlPath": "/churches/new-life-ministries-denton-1781406081323.html",
-      "title": "New Life Ministries Denton | Denton, TX | Upper Room DFW",
-      "description": "A welcoming baptist ministry serving families across Denton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "d86d52e938b508ddfcd39af5610e3d91c9dcd156",
-      "sizeBytes": 8620
+      "fingerprint": "694b4fd495d8fabe71b93a121c476d4c831bd875",
+      "sizeBytes": 10357
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\new-life-ministries-garland-1781406081303.html",
@@ -1479,8 +1041,8 @@
       "title": "New Life Ministries Garland | Garland, TX | Upper Room DFW",
       "description": "A welcoming baptist youth serving families across Garland and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "fb77b2bd502067ae1ee6b630ca07956250de0c98",
-      "sizeBytes": 8623
+      "fingerprint": "31c54913c97f787209ca869a7a26c35767023cb1",
+      "sizeBytes": 10373
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\north-dallas-christian-fellowship.html",
@@ -1489,8 +1051,8 @@
       "title": "North Dallas Christian Fellowship | Dallas, TX | Upper Room DFW",
       "description": "North Dallas Christian Fellowship — warm traditional church with deep roots, solid expository preaching, and caring community for all ages.",
       "canonical": "https://upperroomdfw.com/churches/north-dallas-christian-fellowship.html",
-      "fingerprint": "d2961a81c80173fc2671915efe1d9b2239041b01",
-      "sizeBytes": 3930
+      "fingerprint": "2a25cdf8be975e1783360bc31a371d9f4792d1f8",
+      "sizeBytes": 5680
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\redeemer-assembly-arlington-1781406081267.html",
@@ -1499,8 +1061,8 @@
       "title": "Redeemer Assembly Arlington | Arlington, TX | Upper Room DFW",
       "description": "A welcoming lutheran ministry serving families across Arlington and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "924023da5afd7a2d004a124c7b73678107472715",
-      "sizeBytes": 8666
+      "fingerprint": "38d8dc268bb9c28f82e3874bae2e5b7821e44ae6",
+      "sizeBytes": 10416
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\redeemer-assembly-irving-1781406081287.html",
@@ -1509,8 +1071,8 @@
       "title": "Redeemer Assembly Irving | Irving, TX | Upper Room DFW",
       "description": "A welcoming lutheran church serving families across Irving and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "35b4b06ddb716bb6df88361601ec9aa3d8c372ec",
-      "sizeBytes": 8594
+      "fingerprint": "7b603e380ff0d56c3b808033103378910712c397",
+      "sizeBytes": 10344
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\redeemer-assembly-mckinney-1781406081307.html",
@@ -1519,8 +1081,8 @@
       "title": "Redeemer Assembly McKinney | McKinney, TX | Upper Room DFW",
       "description": "A welcoming lutheran church serving families across McKinney and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "43c618ed53a14c7b8a16f9b0585283fbe0502cb8",
-      "sizeBytes": 8639
+      "fingerprint": "b16ff356fa3dc5274206ea66108a14336f2c8058",
+      "sizeBytes": 10389
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\restoration-house-frisco.html",
@@ -1529,8 +1091,8 @@
       "title": "Restoration House Frisco | Frisco, TX | Upper Room DFW",
       "description": "Restoration House Frisco provides safe housing, trauma-informed counseling, and discipleship for women and children escaping domestic violence in the DFW area.",
       "canonical": "https://upperroomdfw.com/churches/restoration-house-frisco.html",
-      "fingerprint": "67078f96751a16776750447af790d814c440f2dd",
-      "sizeBytes": 4041
+      "fingerprint": "4995d056e302c0001c3943a9bc640476daa28b25",
+      "sizeBytes": 5791
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\restoration-methodist-church-fort-worth-1781406081254.html",
@@ -1539,18 +1101,8 @@
       "title": "Restoration Methodist Church Fort Worth | Fort Worth, TX | Upper Room DFW",
       "description": "A welcoming methodist youth serving families across Fort Worth and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "99a7245136a2db28aa6917aea1f42c6d0aa6e962",
-      "sizeBytes": 8793
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\restoration-methodist-church-fort-worth-1781406081314.html",
-      "rel": "churches/restoration-methodist-church-fort-worth-1781406081314.html",
-      "urlPath": "/churches/restoration-methodist-church-fort-worth-1781406081314.html",
-      "title": "Restoration Methodist Church Fort Worth | Fort Worth, TX | Upper Room DFW",
-      "description": "A welcoming methodist church serving families across Fort Worth and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "81d5e4c3703d37da3a1c15b2e597232b10a8b44c",
-      "sizeBytes": 8798
+      "fingerprint": "2a8b5d290500b34df80f16ad4f6106800153c4c3",
+      "sizeBytes": 10543
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\restoration-methodist-church-lewisville-1781406081294.html",
@@ -1559,8 +1111,8 @@
       "title": "Restoration Methodist Church Lewisville | Lewisville, TX | Upper Room DFW",
       "description": "A welcoming methodist church serving families across Lewisville and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "fc79b269bc0ce9cb1afbc408303c94dcb59f9190",
-      "sizeBytes": 8795
+      "fingerprint": "6604bdf93acc6f4d6624a0cf35e66bef79679838",
+      "sizeBytes": 10545
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\restoration-methodist-church-mesquite-1781406081274.html",
@@ -1569,8 +1121,8 @@
       "title": "Restoration Methodist Church Mesquite | Mesquite, TX | Upper Room DFW",
       "description": "A welcoming methodist ministry serving families across Mesquite and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "7278f9e0215a0a2435c9397746dc71fff72d2703",
-      "sizeBytes": 8753
+      "fingerprint": "1ac1866e806938166fb4fc773baf4ed76ad7a255",
+      "sizeBytes": 10503
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\riverside-fellowship-grand-prairie-1781406081265.html",
@@ -1579,18 +1131,8 @@
       "title": "Riverside Fellowship Grand Prairie | Grand Prairie, TX | Upper Room DFW",
       "description": "A welcoming pentecostal church serving families across Grand Prairie and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "6870b72f1b44f7d5de749d8964240b498ce63056",
-      "sizeBytes": 8785
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\riverside-fellowship-grand-prairie-1781406081325.html",
-      "rel": "churches/riverside-fellowship-grand-prairie-1781406081325.html",
-      "urlPath": "/churches/riverside-fellowship-grand-prairie-1781406081325.html",
-      "title": "Riverside Fellowship Grand Prairie | Grand Prairie, TX | Upper Room DFW",
-      "description": "A welcoming pentecostal outreach serving families across Grand Prairie and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "b105ad4c072f01ef8a993b9439af93a367c64a44",
-      "sizeBytes": 8796
+      "fingerprint": "881fdf2e987a0d99bb293f1d651df6d3fe13fc09",
+      "sizeBytes": 10535
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\riverside-fellowship-plano-1781406081285.html",
@@ -1599,8 +1141,8 @@
       "title": "Riverside Fellowship Plano | Plano, TX | Upper Room DFW",
       "description": "A welcoming pentecostal church serving families across Plano and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "830e7c6c53612866d7e92be587073066498f8bb5",
-      "sizeBytes": 8608
+      "fingerprint": "903485e8664719c44f0a9769ac10d6b4365c3186",
+      "sizeBytes": 10358
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\riverside-fellowship-richardson-1781406081305.html",
@@ -1609,8 +1151,8 @@
       "title": "Riverside Fellowship Richardson | Richardson, TX | Upper Room DFW",
       "description": "A welcoming pentecostal event serving families across Richardson and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "abddd1ba84a4df280e68ec05d2f9bb8c109b14ad",
-      "sizeBytes": 8720
+      "fingerprint": "45341cd6c5fac329862cf8fa5891ef62256272a6",
+      "sizeBytes": 10470
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\sisters-of-hope-ministry.html",
@@ -1619,8 +1161,8 @@
       "title": "Sisters of Hope Women's Ministry | Plano, TX | Upper Room DFW",
       "description": "Faith-based ministry empowering women through Bible study, mentorship, healing from trauma, and leadership development. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/churches/sisters-of-hope-ministry.html",
-      "fingerprint": "26e12fc72dc4fbd62bdc7d95fd54d317b9fbcd61",
-      "sizeBytes": 8933
+      "fingerprint": "179a9cb2afbeb070b7a7a321cfead98901f220f1",
+      "sizeBytes": 10683
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\st-marys-catholic-parish.html",
@@ -1629,8 +1171,8 @@
       "title": "St. Mary's Catholic Parish | Dallas, TX | Upper Room DFW",
       "description": "Historic Catholic parish in downtown Dallas with beautiful liturgy, strong community, and active social outreach. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/churches/st-marys-catholic-parish.html",
-      "fingerprint": "cc33a1544d3f2d5dc071a1d81a474e4ba1d14906",
-      "sizeBytes": 8821
+      "fingerprint": "bc0a7cfc7a3413abe32476dda1735f5cc9650cc6",
+      "sizeBytes": 10571
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\summit-methodist-church-fort-worth-1781406081284.html",
@@ -1639,18 +1181,8 @@
       "title": "Summit Methodist Church Fort Worth | Fort Worth, TX | Upper Room DFW",
       "description": "A welcoming methodist event serving families across Fort Worth and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "ce93fe5dbf772ac6699637ffdb0b421d4c49b368",
-      "sizeBytes": 8740
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\summit-methodist-church-lewisville-1781406081264.html",
-      "rel": "churches/summit-methodist-church-lewisville-1781406081264.html",
-      "urlPath": "/churches/summit-methodist-church-lewisville-1781406081264.html",
-      "title": "Summit Methodist Church Lewisville | Lewisville, TX | Upper Room DFW",
-      "description": "A welcoming methodist church serving families across Lewisville and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "72336d264f044b0835e0f3ab8504d936af94d764",
-      "sizeBytes": 8740
+      "fingerprint": "74a5350c565d4abcb88471b773730b459aa168b6",
+      "sizeBytes": 10490
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\summit-methodist-church-lewisville-1781406081324.html",
@@ -1659,8 +1191,8 @@
       "title": "Summit Methodist Church Lewisville | Lewisville, TX | Upper Room DFW",
       "description": "A welcoming methodist youth serving families across Lewisville and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "b3f7bc88dc108f2fda875a5999c5960775d9f954",
-      "sizeBytes": 8736
+      "fingerprint": "a16e977663f8f3f06bed5bcecf84c324450c8531",
+      "sizeBytes": 10486
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\summit-methodist-church-mesquite-1781406081304.html",
@@ -1669,8 +1201,8 @@
       "title": "Summit Methodist Church Mesquite | Mesquite, TX | Upper Room DFW",
       "description": "A welcoming methodist outreach serving families across Mesquite and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "8876563a1e674dc2f8a1eab7e63b3cf7ac4fbe6d",
-      "sizeBytes": 8704
+      "fingerprint": "876242c8c365bf4b217e70822adcd9368a343828",
+      "sizeBytes": 10454
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\the-grove-community-church.html",
@@ -1679,8 +1211,8 @@
       "title": "The Grove Community Church | Arlington, TX | Upper Room DFW",
       "description": "The Grove Community Church in Arlington, TX — vibrant multi-generational church with powerful worship, excellent youth ministry, and deep community. Find service times and visit.",
       "canonical": "https://upperroomdfw.com/churches/the-grove-community-church.html",
-      "fingerprint": "dfaad921959fe0f02264fa52ce478e9d42231526",
-      "sizeBytes": 7244
+      "fingerprint": "539a8c5aaa756d7a6dad408b7ff7d497a042d89e",
+      "sizeBytes": 8994
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\the-house-network.html",
@@ -1689,8 +1221,8 @@
       "title": "The House Network DFW | Multiple, TX | Upper Room DFW",
       "description": "Network of simple house churches focused on authentic community, discipleship, and neighborhood mission. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/churches/the-house-network.html",
-      "fingerprint": "07a6275d9fad6a0cec4699460ea617bb7486fd8c",
-      "sizeBytes": 8796
+      "fingerprint": "d790eab7b85116e96a444f25391c5ed9f6ae9038",
+      "sizeBytes": 10546
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\the-sanctuary-worship-center.html",
@@ -1699,8 +1231,8 @@
       "title": "The Sanctuary Worship Center | Dallas, TX | Upper Room DFW",
       "description": "The Sanctuary Worship Center — historic Dallas church focused on authentic worship, prayer, and serving South Dallas. Discover service times and community impact.",
       "canonical": "https://upperroomdfw.com/churches/the-sanctuary-worship-center.html",
-      "fingerprint": "a31a018cd6975699c1e4c1729ea8b2e60bb3670a",
-      "sizeBytes": 5348
+      "fingerprint": "7beb60f1368399f3a8fcc6640df204317880ba02",
+      "sizeBytes": 7098
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\the-table-church.html",
@@ -1709,8 +1241,8 @@
       "title": "The Table Church | Fort Worth, TX | Upper Room DFW",
       "description": "The Table Church in Fort Worth",
       "canonical": "https://upperroomdfw.com/churches/the-table-church.html",
-      "fingerprint": "d6bf5f7da5dabcf08ea74d5035a4da7ce55c5174",
-      "sizeBytes": 4175
+      "fingerprint": "05d0463970a6371e157dbf7a089489aee63126ef",
+      "sizeBytes": 5925
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\the-well-young-adults-dallas.html",
@@ -1719,18 +1251,8 @@
       "title": "The Well Young Adults | DFW | Upper Room DFW",
       "description": "The Well Young Adults — movement of 18-30 year olds across DFW gathering for worship, deep community, and mission. Friday nights and house churches.",
       "canonical": "https://upperroomdfw.com/churches/the-well-young-adults-dallas.html",
-      "fingerprint": "2da2c898b5671b88af1736932291fe5e64267c05",
-      "sizeBytes": 3826
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\trinity-community-church-arlington-1781406081252.html",
-      "rel": "churches/trinity-community-church-arlington-1781406081252.html",
-      "urlPath": "/churches/trinity-community-church-arlington-1781406081252.html",
-      "title": "Trinity Community Church Arlington | Arlington, TX | Upper Room DFW",
-      "description": "A welcoming non-denominational church serving families across Arlington and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "8f67afc774332e034e4d93ef8a2b9e629bb02a99",
-      "sizeBytes": 8765
+      "fingerprint": "4f4bae03b59cc2d27d617e9c670f3ea20fc044b8",
+      "sizeBytes": 5576
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\trinity-community-church-arlington-1781406081312.html",
@@ -1739,8 +1261,8 @@
       "title": "Trinity Community Church Arlington | Arlington, TX | Upper Room DFW",
       "description": "A welcoming non-denominational event serving families across Arlington and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "e689be7eb261f48840bd6871bd37126b894d8469",
-      "sizeBytes": 8764
+      "fingerprint": "90aab9579ef76e084d49bfee00f59bb2c5e619bb",
+      "sizeBytes": 10514
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\trinity-community-church-irving-1781406081272.html",
@@ -1749,8 +1271,8 @@
       "title": "Trinity Community Church Irving | Irving, TX | Upper Room DFW",
       "description": "A welcoming non-denominational church serving families across Irving and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "095c5fffabceb36db1d882b265a71c31eff67707",
-      "sizeBytes": 8700
+      "fingerprint": "415fb580da6ef411b804971df9dde6a3504d3d7e",
+      "sizeBytes": 10450
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\trinity-community-church-mckinney-1781406081292.html",
@@ -1759,8 +1281,8 @@
       "title": "Trinity Community Church McKinney | McKinney, TX | Upper Room DFW",
       "description": "A welcoming non-denominational church serving families across McKinney and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "a130082e4ffe1f4fd42328eee4aa253bbd1c4a1b",
-      "sizeBytes": 8741
+      "fingerprint": "92e27fbe8f439bf0283a5fe56fd17f2a1dbdd8e2",
+      "sizeBytes": 10491
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\united-faith-chapel.html",
@@ -1769,8 +1291,8 @@
       "title": "United Faith Chapel | Fort Worth, TX | Upper Room DFW",
       "description": "United Faith Chapel in Fort Worth — warm family church in the Cultural District with strong small groups and children",
       "canonical": "https://upperroomdfw.com/churches/united-faith-chapel.html",
-      "fingerprint": "522bc544af82c7dd2295edece95dd301f7e2c7ea",
-      "sizeBytes": 2708
+      "fingerprint": "e301675f4cd9b8ba61d3909bc78bbe14837bb52e",
+      "sizeBytes": 4410
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\vibrant-life-church-frisco.html",
@@ -1779,8 +1301,8 @@
       "title": "Vibrant Life Church | Frisco, TX | Upper Room DFW",
       "description": "Vibrant Life Church in Frisco — energetic, modern church with outstanding children",
       "canonical": "https://upperroomdfw.com/churches/vibrant-life-church-frisco.html",
-      "fingerprint": "2cee28f19bbe3e4ce1ae9e6326d22d071add1134",
-      "sizeBytes": 3847
+      "fingerprint": "7409b55429b3002a49dceaa80b78b4698f43af9b",
+      "sizeBytes": 5597
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\victory-baptist-church-carrollton-1781406081261.html",
@@ -1789,18 +1311,8 @@
       "title": "Victory Baptist Church Carrollton | Carrollton, TX | Upper Room DFW",
       "description": "A welcoming catholic youth serving families across Carrollton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "eb7316961615678d9177626e65e802c0b22cf12b",
-      "sizeBytes": 8720
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\victory-baptist-church-carrollton-1781406081321.html",
-      "rel": "churches/victory-baptist-church-carrollton-1781406081321.html",
-      "urlPath": "/churches/victory-baptist-church-carrollton-1781406081321.html",
-      "title": "Victory Baptist Church Carrollton | Carrollton, TX | Upper Room DFW",
-      "description": "A welcoming catholic church serving families across Carrollton and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
-      "canonical": "",
-      "fingerprint": "860c15c36dfc29c5285120a7d310e2d725c10617",
-      "sizeBytes": 8726
+      "fingerprint": "11a7be5903b6b170cba6020f213620581145f7bc",
+      "sizeBytes": 10470
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\victory-baptist-church-euless-1781406081281.html",
@@ -1809,8 +1321,8 @@
       "title": "Victory Baptist Church Euless | Euless, TX | Upper Room DFW",
       "description": "A welcoming catholic ministry serving families across Euless and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "d5d8be46b9a4a0cf994ff99beaec8165bd719ae2",
-      "sizeBytes": 8653
+      "fingerprint": "1d2bd72463210f63ced8bfbbedd966ef1013dfd8",
+      "sizeBytes": 10403
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\churches\\victory-baptist-church-frisco-1781406081301.html",
@@ -1819,8 +1331,8 @@
       "title": "Victory Baptist Church Frisco | Frisco, TX | Upper Room DFW",
       "description": "A welcoming catholic church serving families across Frisco and the greater DFW metroplex. | Listed on Upper Room DFW — the local church directory for Dallas-Fort Worth.",
       "canonical": "",
-      "fingerprint": "bf65fad40d586113fbe75ba09b1c748016ba48ac",
-      "sizeBytes": 8639
+      "fingerprint": "309fc326119cbd825050e8ac858db8eb99012ad0",
+      "sizeBytes": 10389
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\claim-listing.html",
@@ -1829,8 +1341,8 @@
       "title": "Claim Listing | Upper Room DFW",
       "description": "Claim your church or ministry listing on Upper Room DFW — verify ownership and manage your DFW directory profile.",
       "canonical": "https://upperroomdfw.com/claim-listing.html",
-      "fingerprint": "f0ca9dc674ea3d7499aea0f2a7c5a6701ccdc620",
-      "sizeBytes": 3378
+      "fingerprint": "07f91466b9f91174199bdd173b1ac6d856b31cf6",
+      "sizeBytes": 5059
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\collections.html",
@@ -1839,8 +1351,8 @@
       "title": "My Collections | Upper Room DFW",
       "description": "Save and organize favorite DFW churches and ministries into collections on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/collections.html",
-      "fingerprint": "fc3dfa3c2296c3c34b9cb5b408ed84a1ca5b62dc",
-      "sizeBytes": 2688
+      "fingerprint": "4c3bdfc7cf8b6c7c6b650cccfe6c69ab66d73c37",
+      "sizeBytes": 4369
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\contact.html",
@@ -1849,8 +1361,8 @@
       "title": "Contact &amp; Submit a Listing | Upper Room DFW",
       "description": "Contact Upper Room DFW or submit your church, ministry, or event to the local DFW directory. All submissions are saved locally in your browser.",
       "canonical": "https://upperroomdfw.com/contact.html",
-      "fingerprint": "ef163c8c29b7b23267c6b597d6629668ebec2f12",
-      "sizeBytes": 13356
+      "fingerprint": "6f199ad25d2dedbfc158927a8b08daf226f06fcb",
+      "sizeBytes": 15072
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\csv-import.html",
@@ -1859,8 +1371,8 @@
       "title": "CSV Import / Export | Upper Room DFW",
       "description": "Import or export church directory data via CSV on the Upper Room DFW admin platform.",
       "canonical": "https://upperroomdfw.com/csv-import.html",
-      "fingerprint": "21edf02df627221763833f9a92060e953d173045",
-      "sizeBytes": 3038
+      "fingerprint": "bc04cd1206d5377f36ae3ba60d7845d897a2c66a",
+      "sizeBytes": 4719
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\directory.html",
@@ -1869,8 +1381,8 @@
       "title": "DFW Church Directory: Find Verified Churches in Dallas, Fort Worth &amp; Texas | Upper Room DFW",
       "description": "Discover 140+ verified DFW churches, ministries &amp; faith communities. Intelligent keyword search for families in Dallas, Fort Worth, Arlington, Plano &amp; all Texas areas. Find your spiritual home today.",
       "canonical": "https://upperroomdfw.com/directory.html",
-      "fingerprint": "d8624998e0540f698ca2adec2e3ea1e8c2e4efdf",
-      "sizeBytes": 20067
+      "fingerprint": "6e3d39ca184c2f48943d74c930eee01deb38a9a6",
+      "sizeBytes": 31474
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\email-updates.html",
@@ -1879,8 +1391,8 @@
       "title": "Email Updates &amp; Digests | Upper Room DFW",
       "description": "Stay informed with weekly church listings, events, and stories from the DFW faith community.",
       "canonical": "https://upperroomdfw.com/email-updates.html",
-      "fingerprint": "800e7784f2f72ce52cc03d09692f49f821ed13d9",
-      "sizeBytes": 9382
+      "fingerprint": "750eff8265d605539677d82ebdce46b26bb7ed15",
+      "sizeBytes": 10655
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\embed.html",
@@ -1889,8 +1401,8 @@
       "title": "Embed Directory",
       "description": "Embed the Upper Room DFW church directory on your website with a customizable widget.",
       "canonical": "https://upperroomdfw.com/embed.html",
-      "fingerprint": "c3d799160a078e3631f1eff51a5dd2478cef9260",
-      "sizeBytes": 2310
+      "fingerprint": "4a6112a5ed3258115db14e65ec26266dcc41eb64",
+      "sizeBytes": 3992
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\events.html",
@@ -1899,8 +1411,8 @@
       "title": "DFW Church Events 2025: Worship Nights, Conferences &amp; Community Gatherings | Upper Room DFW",
       "description": "Find upcoming DFW church events: worship nights, youth conferences, outreach in Dallas, Fort Worth, Arlington, Plano &amp; Texas. Filter &amp; RSVP for faith-based gatherings.",
       "canonical": "https://upperroomdfw.com/events.html",
-      "fingerprint": "df611104397813bbdb8d8e889dedfec1bd61654c",
-      "sizeBytes": 15447
+      "fingerprint": "7e31b54ba441f3aa94b19618dd2c0296898297f1",
+      "sizeBytes": 13552
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\feature-checklist.html",
@@ -1909,8 +1421,8 @@
       "title": "Feature Checklist | Upper Room DFW Platform",
       "description": "Full feature checklist for the Upper Room DFW church directory SaaS platform — verify every capability.",
       "canonical": "https://upperroomdfw.com/feature-checklist.html",
-      "fingerprint": "3019e4412f6914859e4fcd068edcc7ea966b384e",
-      "sizeBytes": 9230
+      "fingerprint": "2f026780b1ee9f281df61ff8e38803d8a13417d7",
+      "sizeBytes": 10911
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\features.html",
@@ -1919,8 +1431,8 @@
       "title": "Features | Upper Room DFW — Powerful Church Directory Tools",
       "description": "Explore Upper Room DFW platform features — listings, maps, billing, CRM, training, SEO, and church member tools.",
       "canonical": "https://upperroomdfw.com/features.html",
-      "fingerprint": "bfbdc7b66ec05bd0b560efe06c6252b4656ae90a",
-      "sizeBytes": 14190
+      "fingerprint": "5ec05026f76673aa51ce60a48db1116b21dec178",
+      "sizeBytes": 15548
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\field-builder.html",
@@ -1929,8 +1441,8 @@
       "title": "Field Builder | Upper Room DFW",
       "description": "Build custom listing fields for DFW churches and ministries on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/field-builder.html",
-      "fingerprint": "671bfdd283e6c267f6880b5b8099d4aba887e7da",
-      "sizeBytes": 3358
+      "fingerprint": "8f0c7a021e4420325b5691cb946518d0477e8903",
+      "sizeBytes": 5039
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\form-builder.html",
@@ -1939,8 +1451,8 @@
       "title": "Form Builder | Upper Room DFW",
       "description": "Create contact and lead capture forms for church listings on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/form-builder.html",
-      "fingerprint": "54928dbe25cbbf775cdfd07fe65955d2b3058899",
-      "sizeBytes": 2202
+      "fingerprint": "55bc37821a48575988cd44ee6367d3e0986923d0",
+      "sizeBytes": 3883
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\go.html",
@@ -1949,8 +1461,8 @@
       "title": "Redirecting...",
       "description": "Short-link redirect for Upper Room DFW directory listings, events, and campaigns.",
       "canonical": "https://upperroomdfw.com/go.html",
-      "fingerprint": "3224915f4a8066e129d1a83485a028aa48e1b1ac",
-      "sizeBytes": 2490
+      "fingerprint": "a0d56cb87438045067a12047a43bd434cad7f478",
+      "sizeBytes": 4171
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\index.html",
@@ -1958,9 +1470,9 @@
       "urlPath": "/index.html",
       "title": "Upper Room DFW | Discover Local Churches in Dallas-Fort Worth",
       "description": "The trusted local directory for churches, ministries, and faith communities across Dallas, Fort Worth, Arlington, Plano, Frisco, and the entire DFW metroplex. Find your spiritual home.",
-      "canonical": "https://upperroomdfw.com/",
-      "fingerprint": "14e1180f32ce38d546748624cb5846e472f80b2a",
-      "sizeBytes": 52900
+      "canonical": "https://upperroomdfw.com",
+      "fingerprint": "3fc2ffccb2651b7132f04ead242668af86ea2f16",
+      "sizeBytes": 57750
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\member-dashboard.html",
@@ -1969,8 +1481,8 @@
       "title": "Church Member Dashboard | Upper Room DFW",
       "description": "Manage your DFW church listing, leads, training, and billing in one member portal.",
       "canonical": "https://upperroomdfw.com/member-dashboard.html",
-      "fingerprint": "148921f0182d9a4b49cb0b56205a0f1ae461fb70",
-      "sizeBytes": 18321
+      "fingerprint": "74a8be1646a6bfa1ecd1b09397729a0a6b44db38",
+      "sizeBytes": 20000
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\messages.html",
@@ -1979,8 +1491,8 @@
       "title": "Messages & Notifications | Upper Room DFW",
       "description": "Member messages and notifications for church partners on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/messages.html",
-      "fingerprint": "a3bc4baf9a8207cf8babfefed0ed1792aad0f02d",
-      "sizeBytes": 3116
+      "fingerprint": "1c5a70a178b87848ebfa4a79cbd727479d41d8bf",
+      "sizeBytes": 4797
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\page-builder.html",
@@ -1989,8 +1501,8 @@
       "title": "Page Builder | Upper Room DFW",
       "description": "Drag-and-drop page builder for church listing pages on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/page-builder.html",
-      "fingerprint": "d47f6d8ecf5189f1d85028c878b9071030565ea3",
-      "sizeBytes": 1858
+      "fingerprint": "f1821e7247680b3cf6b079611c34813b24cc1f8f",
+      "sizeBytes": 3539
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\pricing.html",
@@ -1999,8 +1511,8 @@
       "title": "Pricing for Churches | Upper Room DFW Local Directory",
       "description": "Affordable pricing plans for churches and ministries to be listed and featured in the Upper Room DFW local church directory.",
       "canonical": "https://upperroomdfw.com/pricing.html",
-      "fingerprint": "44152dd1fab21e661eef2ddae27b21df9b7a6a5a",
-      "sizeBytes": 14560
+      "fingerprint": "b9b26ed1c6039054030745ae11b1f6f8b59c1fb7",
+      "sizeBytes": 15918
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\privacy-policy.html",
@@ -2009,8 +1521,8 @@
       "title": "Privacy Policy | Upper Room DFW",
       "description": "Privacy Policy for Upper Room DFW — how we collect, use, and protect your data on our DFW church directory.",
       "canonical": "https://upperroomdfw.com/privacy-policy.html",
-      "fingerprint": "5ad0934cc9c9eea5480b17a6f5907403323f1e8a",
-      "sizeBytes": 5747
+      "fingerprint": "6141eeaad8b21621dcf4ceab402f033158e191eb",
+      "sizeBytes": 7018
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\register.html",
@@ -2019,8 +1531,8 @@
       "title": "Register Your Church | Upper Room DFW — Local Directory",
       "description": "Register your church or ministry with Upper Room DFW. Get listed in the most trusted local church directory for Dallas-Fort Worth.",
       "canonical": "https://upperroomdfw.com/register.html",
-      "fingerprint": "19f0db9c0a022892834cd20cf3a0ccfc973505a3",
-      "sizeBytes": 10567
+      "fingerprint": "43b6dcae103e210e8f23587417a85a9ffdf9ecc1",
+      "sizeBytes": 12248
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\shortcode-builder.html",
@@ -2029,8 +1541,8 @@
       "title": "Shortcode Builder | Upper Room DFW",
       "description": "Generate directory shortcodes for listings, maps, and search widgets on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/shortcode-builder.html",
-      "fingerprint": "025a4b1a10d5983b93febca4781f1b1c9fbe81a8",
-      "sizeBytes": 3293
+      "fingerprint": "c177e1b68f5a2da0212637656356c4f9ffc61847",
+      "sizeBytes": 4974
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\signup.html",
@@ -2039,8 +1551,18 @@
       "title": "Sign Up | Upper Room DFW",
       "description": "Create your Upper Room DFW account to register a church, manage listings, and access the member portal.",
       "canonical": "https://upperroomdfw.com/signup.html",
-      "fingerprint": "ddf416f0fdff46925f2728df10f55ec91e3a8957",
-      "sizeBytes": 4320
+      "fingerprint": "bf3475b28267f00cf38c68d3d345d9ff1e15e4f4",
+      "sizeBytes": 6001
+    },
+    {
+      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\sitemap.html",
+      "rel": "sitemap.html",
+      "urlPath": "/sitemap.html",
+      "title": "Sitemap | Upper Room DFW",
+      "description": "Browse every public page on Upper Room DFW — main site pages, blog guides, and church directory listings across Dallas–Fort Worth.",
+      "canonical": "https://upperroomdfw.com/sitemap.html",
+      "fingerprint": "32c21dc3db6c0e2d9c684fc96c3dee1372dce94f",
+      "sizeBytes": 29712
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\submit-listing.html",
@@ -2049,8 +1571,8 @@
       "title": "Submit Listing | Upper Room DFW",
       "description": "Submit a church, ministry, or event to the Upper Room DFW directory for DFW families to discover.",
       "canonical": "https://upperroomdfw.com/submit-listing.html",
-      "fingerprint": "3b7d8fe99565eaee8711cbab24084ef73dfd333b",
-      "sizeBytes": 5162
+      "fingerprint": "97bd36d65b693ee9a13a08178e63010d2668fb69",
+      "sizeBytes": 6843
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\support.html",
@@ -2059,8 +1581,8 @@
       "title": "Support | Upper Room DFW",
       "description": "Get help with your Upper Room DFW listing, billing, or member portal — contact support.",
       "canonical": "https://upperroomdfw.com/support.html",
-      "fingerprint": "8808db9f5190f7db67ecfec8f2dd51430fa1b43d",
-      "sizeBytes": 3451
+      "fingerprint": "e30545456db378a5cb95a8b3d5697bea9b593ae3",
+      "sizeBytes": 5132
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates.html",
@@ -2069,188 +1591,8 @@
       "title": "Listing Templates | Upper Room DFW",
       "description": "Choose single-page and multipage listing templates for DFW churches on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/templates.html",
-      "fingerprint": "7ae2bea4a26c93b0ab60c28493bd10184e16b0a2",
-      "sizeBytes": 2638
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\multi\\premium-multipage.html",
-      "rel": "templates/multi/premium-multipage.html",
-      "urlPath": "/templates/multi/premium-multipage.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;premium-multipage&quot; multipage listing template for churches across Dallas–Fort Worth.",
-      "canonical": "https://upperroomdfw.com/templates/multi/premium-multipage.html",
-      "fingerprint": "b69ac8906b4178dac8c3e166efb1b9daa64607bf",
-      "sizeBytes": 3713
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\multi\\standard-multipage.html",
-      "rel": "templates/multi/standard-multipage.html",
-      "urlPath": "/templates/multi/standard-multipage.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;standard-multipage&quot; multipage listing template for churches across Dallas–Fort Worth.",
-      "canonical": "https://upperroomdfw.com/templates/multi/standard-multipage.html",
-      "fingerprint": "077b6f25c9959a8d1ec77e80969fbda3cebf76d7",
-      "sizeBytes": 3719
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\card.html",
-      "rel": "templates/single/card.html",
-      "urlPath": "/templates/single/card.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;card&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/card.html",
-      "fingerprint": "f73c315785185a7f77e32ff9baf4789f0e5934bf",
-      "sizeBytes": 3406
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\catholic.html",
-      "rel": "templates/single/catholic.html",
-      "urlPath": "/templates/single/catholic.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;catholic&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/catholic.html",
-      "fingerprint": "67eb25033b6550517d65ad2eeff360920920ce84",
-      "sizeBytes": 3430
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\classic.html",
-      "rel": "templates/single/classic.html",
-      "urlPath": "/templates/single/classic.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;classic&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/classic.html",
-      "fingerprint": "4cd464521f4babdb9685507095532da106b0dc8b",
-      "sizeBytes": 3424
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\dark.html",
-      "rel": "templates/single/dark.html",
-      "urlPath": "/templates/single/dark.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;dark&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/dark.html",
-      "fingerprint": "aea87106d54a776a5861efabbbe599026afc9931",
-      "sizeBytes": 3406
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\event.html",
-      "rel": "templates/single/event.html",
-      "urlPath": "/templates/single/event.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;event&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/event.html",
-      "fingerprint": "cad2bda76c6e5f12dd90222905bd96ab4a139464",
-      "sizeBytes": 3412
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\fullwidth.html",
-      "rel": "templates/single/fullwidth.html",
-      "urlPath": "/templates/single/fullwidth.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;fullwidth&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/fullwidth.html",
-      "fingerprint": "97c4c00b9dee8ee3ae06e0d5fd880a86c73ef387",
-      "sizeBytes": 3436
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\hero.html",
-      "rel": "templates/single/hero.html",
-      "urlPath": "/templates/single/hero.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;hero&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/hero.html",
-      "fingerprint": "bfbc30f68d289ca57f76d777898595371d9bc7fd",
-      "sizeBytes": 3406
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\light.html",
-      "rel": "templates/single/light.html",
-      "urlPath": "/templates/single/light.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;light&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/light.html",
-      "fingerprint": "1c702d955e933f2581ded92858789f4731afb3b1",
-      "sizeBytes": 3412
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\magazine.html",
-      "rel": "templates/single/magazine.html",
-      "urlPath": "/templates/single/magazine.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;magazine&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/magazine.html",
-      "fingerprint": "4f54a9dcfde47621af23587dc5cfb717bd63e234",
-      "sizeBytes": 3430
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\minimal.html",
-      "rel": "templates/single/minimal.html",
-      "urlPath": "/templates/single/minimal.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;minimal&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/minimal.html",
-      "fingerprint": "a096a6b9591e80eeeff3fa3f8587ab546288b261",
-      "sizeBytes": 3424
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\ministry.html",
-      "rel": "templates/single/ministry.html",
-      "urlPath": "/templates/single/ministry.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;ministry&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/ministry.html",
-      "fingerprint": "bd644d08cb89cd84a55cb9ee2e147200ecc577cc",
-      "sizeBytes": 3430
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\modern.html",
-      "rel": "templates/single/modern.html",
-      "urlPath": "/templates/single/modern.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;modern&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/modern.html",
-      "fingerprint": "e211e2b43a4e94bf4e7f2cb089609098b53231b0",
-      "sizeBytes": 3418
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\network.html",
-      "rel": "templates/single/network.html",
-      "urlPath": "/templates/single/network.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;network&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/network.html",
-      "fingerprint": "aec93f836f17e382bf541f3a513ad34fd40b5e38",
-      "sizeBytes": 3424
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\outreach.html",
-      "rel": "templates/single/outreach.html",
-      "urlPath": "/templates/single/outreach.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;outreach&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/outreach.html",
-      "fingerprint": "9bc1c821dfd4e7020913e5014730e186e9c6b340",
-      "sizeBytes": 3430
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\sidebar.html",
-      "rel": "templates/single/sidebar.html",
-      "urlPath": "/templates/single/sidebar.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;sidebar&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/sidebar.html",
-      "fingerprint": "a0d9d09998ead5856c5a3dad3a8a0eb8834edd82",
-      "sizeBytes": 3424
-    },
-    {
-      "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\templates\\single\\youth.html",
-      "rel": "templates/single/youth.html",
-      "urlPath": "/templates/single/youth.html",
-      "title": "Listing | Upper Room DFW",
-      "description": "Upper Room DFW &quot;youth&quot; single-page listing template for DFW churches and ministries.",
-      "canonical": "https://upperroomdfw.com/templates/single/youth.html",
-      "fingerprint": "3aa0524450b68ddb304a04e012a92ca7e08ddae1",
-      "sizeBytes": 3412
+      "fingerprint": "b299a9f534fbc6865c2a90119a156d29b5b259ef",
+      "sizeBytes": 4319
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\terms-of-service.html",
@@ -2259,8 +1601,8 @@
       "title": "Terms of Service | Upper Room DFW",
       "description": "Terms of Service for Upper Room DFW — rules and guidelines for using our DFW church directory platform.",
       "canonical": "https://upperroomdfw.com/terms-of-service.html",
-      "fingerprint": "28447647d273ec6c8941575c8673307c61c82ad0",
-      "sizeBytes": 5570
+      "fingerprint": "9fb3e34a9a48ca7f548d1d03974b7c051ca279be",
+      "sizeBytes": 6841
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\training.html",
@@ -2269,8 +1611,8 @@
       "title": "Training &amp; Onboarding | Upper Room DFW",
       "description": "Interactive training and onboarding for church partners on Upper Room DFW — SEO, leads, and visibility.",
       "canonical": "https://upperroomdfw.com/training.html",
-      "fingerprint": "f6eda65c64ec586939bdb0287b100f3dfe54af4e",
-      "sizeBytes": 9270
+      "fingerprint": "73e7d4203dc10d44475e4fa3df00bb8f83f88894",
+      "sizeBytes": 10578
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\upper-room-dfw-complete.html",
@@ -2278,9 +1620,9 @@
       "urlPath": "/upper-room-dfw-complete.html",
       "title": "Upper Room DFW | Premium DFW Church Directory - Find Your Faith Community in Dallas, Fort Worth, Arlington, Plano &amp; Texas",
       "description": "Discover 140+ verified churches, ministries &amp; faith communities across Dallas, Fort Worth, Arlington, Plano, Frisco &amp; all DFW Texas areas. The Upper Room DFW directory helps families find their perfect spiritual home with intelligent keyword search, events and community connections.",
-      "canonical": "https://upperroomdfw.com/upper-room-dfw-complete.html",
+      "canonical": "https://upperroomdfw.com",
       "fingerprint": "d4a91d3058cf18c66a83a165c6e191c861660869",
-      "sizeBytes": 109766
+      "sizeBytes": 110196
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\user-directory.html",
@@ -2289,8 +1631,8 @@
       "title": "User Directory | Upper Room DFW",
       "description": "Browse registered church members and partners in the Upper Room DFW platform directory.",
       "canonical": "https://upperroomdfw.com/user-directory.html",
-      "fingerprint": "175237545a8110042337e9a58fcc3b3840e907d6",
-      "sizeBytes": 2453
+      "fingerprint": "4e39c649b9b8150668087880549dab5e0cec150b",
+      "sizeBytes": 4134
     },
     {
       "file": "E:\\OneDrive\\Documents\\Factory AI.02.20.26\\ai-upper-room-dir\\widgets.html",
@@ -2299,8 +1641,8 @@
       "title": "Directory Widgets | Upper Room DFW",
       "description": "Directory widgets for search, categories, maps, and featured listings on Upper Room DFW.",
       "canonical": "https://upperroomdfw.com/widgets.html",
-      "fingerprint": "fa90b5fbb7999a1277b4fadf46f6738878797d10",
-      "sizeBytes": 2846
+      "fingerprint": "0a5e14be8e97b3ae22ee25cc00da279e67fcaecc",
+      "sizeBytes": 4527
     }
   ],
   "suggestedRedirects": [
@@ -2308,8 +1650,9 @@
       "from": "/upper-room-dfw-complete.html",
       "to": "/",
       "status": 301,
-      "reason": "orphan-duplicate-of-index",
-      "canonical": "https://upperroomdfw.com/"
+      "reason": "canonical-duplicate",
+      "mergeTarget": "index.html",
+      "autoGenerated": true
     },
     {
       "from": "/index.html",
@@ -2443,142 +1786,6 @@
       "status": 301,
       "reason": "title-duplicate",
       "mergeTarget": "churches/victory-baptist-church-carrollton-1781406081261.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/multi/premium-multipage.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/multi/standard-multipage.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/catholic.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/classic.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/dark.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/event.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/fullwidth.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/hero.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/light.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/magazine.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/minimal.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/ministry.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/modern.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/network.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/outreach.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/sidebar.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
-      "autoGenerated": true
-    },
-    {
-      "from": "/templates/single/youth.html",
-      "to": "/templates/single/card.html",
-      "status": 301,
-      "reason": "title-duplicate",
-      "mergeTarget": "templates/single/card.html",
       "autoGenerated": true
     }
   ]

@@ -124,6 +124,38 @@ async function verifyPaypal() {
   }
 }
 
+async function verifyAcumbamail() {
+  const key = process.env.ACUMBAMAIL_API_KEY;
+  if (!key) return { ok: false, provider: 'acumbamail', error: 'ACUMBAMAIL_API_KEY not set' };
+  try {
+    const body = 'auth_token=' + encodeURIComponent(key);
+    const res = await httpsJson('POST', 'https://acumbamail.com/api/1/getLists/', {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(body),
+    }, body);
+    if (res.status === 200 && res.body && typeof res.body === 'object') {
+      const smtp = await verifySmtp().catch((err) => ({ ok: false, error: err.message }));
+      const smtpBlocked = !smtp.ok && (smtp.error || '').includes('535');
+      return {
+        ok: true,
+        provider: 'acumbamail',
+        lists: Object.keys(res.body).length,
+        smtpRelay: smtp.ok,
+        smtpError: smtp.ok ? null : (smtp.error || 'SMTP relay not verified'),
+        smtpActivationRequired: smtpBlocked,
+        message: smtp.ok
+          ? 'Acumbamail API + SMTP relay connected'
+          : smtpBlocked
+            ? 'Acumbamail API OK — SMTP relay not active yet. Contact Acumbamail technical support to activate transactional SMTP.'
+            : 'Acumbamail API OK — SMTP relay not verified',
+      };
+    }
+    return { ok: false, provider: 'acumbamail', error: res.body?.error || `HTTP ${res.status}` };
+  } catch (err) {
+    return { ok: false, provider: 'acumbamail', error: err.message };
+  }
+}
+
 async function verifySmtp() {
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
     return { ok: false, provider: 'smtp', error: 'SMTP_HOST/SMTP_USER not set' };
@@ -134,15 +166,23 @@ async function verifySmtp() {
       return { ok: true, provider: 'smtp', message: 'Dev mail transport (no SMTP verify)' };
     }
     await transport.verify();
+    const relay = process.env.SMTP_PROVIDER
+      || (process.env.SMTP_HOST?.includes('acumbamail') ? 'acumbamail' : 'smtp');
     return {
       ok: true,
       provider: 'smtp',
+      relay,
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT || '587',
-      message: 'SMTP connection verified',
+      from: process.env.EMAIL_FROM || null,
+      message: `${relay} SMTP connection verified`,
     };
   } catch (err) {
-    return { ok: false, provider: 'smtp', error: err.message };
+    const msg = err.message || '';
+    const activationHint = msg.includes('535') && process.env.SMTP_HOST?.includes('acumbamail')
+      ? ' — contact Acumbamail support to activate SMTP relay (transactional email package required)'
+      : '';
+    return { ok: false, provider: 'smtp', error: msg + activationHint };
   }
 }
 
@@ -156,17 +196,32 @@ function integrationConfig() {
       mode: process.env.PAYPAL_MODE || 'live',
       nvp: !!(process.env.PAYPAL_API_USERNAME && process.env.PAYPAL_API_PASSWORD),
     },
-    smtp: { enabled: !!(process.env.SMTP_HOST && process.env.SMTP_USER) },
+    smtp: {
+      enabled: !!(process.env.SMTP_HOST && process.env.SMTP_USER),
+      provider: process.env.SMTP_PROVIDER
+        || (process.env.SMTP_HOST?.includes('acumbamail') ? 'acumbamail' : 'smtp'),
+      host: process.env.SMTP_HOST || null,
+    },
+    acumbamail: { enabled: !!process.env.ACUMBAMAIL_API_KEY },
+    tinyurl: { enabled: !!process.env.TINYURL_API_TOKEN },
+    mailchimpListId: process.env.MAILCHIMP_LIST_ID || null,
+    vboutListId: process.env.VBOUT_LIST_ID || null,
+    route53: { enabled: !!process.env.ROUTE53_HOSTED_ZONE_ID, hostedZoneId: process.env.ROUTE53_HOSTED_ZONE_ID || null },
   };
 }
 
 async function verifyAll() {
+  const { verifyTinyUrl } = require('./tinyurl');
+  const { verifyDns } = require('./dns');
   const results = await Promise.all([
     verifyStripe(),
     verifyMailchimp(),
     verifyVbout(),
     verifyPaypal(),
     verifySmtp(),
+    verifyAcumbamail(),
+    verifyTinyUrl(),
+    verifyDns(),
   ]);
   return {
     ok: results.every((r) => r.ok),
@@ -183,4 +238,5 @@ module.exports = {
   verifyVbout,
   verifyPaypal,
   verifySmtp,
+  verifyAcumbamail,
 };

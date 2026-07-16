@@ -6,6 +6,16 @@
   'use strict';
 
   const STORAGE_PREFIX = 'urdfw_';
+
+  function assetBase() {
+    if (typeof window !== 'undefined' && window.__URDFW_ASSET_BASE__ != null) {
+      return window.__URDFW_ASSET_BASE__;
+    }
+    const parts = (typeof location !== 'undefined' ? location.pathname : '').split('/').filter(Boolean);
+    const depth = Math.max(0, parts.length - 1);
+    return depth ? '../'.repeat(depth) : '';
+  }
+
   const Platform = {
     version: '2.0.0',
     config: null,
@@ -43,9 +53,14 @@
     return Platform.i18n[key] || fallback || key;
   };
 
+  Platform.assetBase = assetBase;
+  Platform.resolveAsset = function (rel) {
+    return assetBase() + String(rel).replace(/^\//, '');
+  };
+
   Platform.loadConfig = async function () {
     try {
-      const res = await fetch('data/platform-config.json');
+      const res = await fetch(Platform.resolveAsset('data/platform-config.json'));
       Platform.config = await res.json();
     } catch {
       Platform.config = { displayModes: ['grid', 'list', 'map', 'compact'], packages: [] };
@@ -56,7 +71,7 @@
   Platform.loadI18n = async function (lang) {
     Platform.lang = lang || Platform.lang;
     try {
-      const res = await fetch('data/i18n/' + Platform.lang + '.json');
+      const res = await fetch(Platform.resolveAsset('data/i18n/' + Platform.lang + '.json'));
       Platform.i18n = await res.json();
     } catch {
       Platform.i18n = {};
@@ -123,11 +138,51 @@
     return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9);
   };
 
+  Platform.getBreakpoint = function () {
+    const w = window.innerWidth;
+    const bp = Platform.config?.breakpoints || {};
+    if (w >= (bp.desktop?.min || 1440)) return 'desktop';
+    if (w >= (bp.laptop?.min || 1024)) return 'laptop';
+    if (w >= (bp.tablet?.min || 768)) return 'tablet';
+    if (w >= (bp.mobileLg?.min || 480)) return 'mobile-lg';
+    return 'mobile';
+  };
+
+  Platform.applyBreakpoint = function () {
+    const bp = Platform.getBreakpoint();
+    const classes = ['urdfw-bp-mobile', 'urdfw-bp-mobile-lg', 'urdfw-bp-tablet', 'urdfw-bp-laptop', 'urdfw-bp-desktop'];
+    document.body.classList.remove(...classes);
+    document.body.classList.add('urdfw-bp-' + bp);
+    document.body.dataset.urdfwBp = bp;
+    Platform.emit('breakpoint', bp);
+  };
+
+  Platform.initPerformanceHints = function () {
+    const perf = Platform.config?.performance || {};
+    if (perf.lazyBelowFoldImages !== false) {
+      document.querySelectorAll('main img, section img, .church-card img').forEach((img, i) => {
+        if (i > 2 && !img.loading) img.loading = 'lazy';
+        if (!img.decoding) img.decoding = 'async';
+      });
+    }
+    if (perf.contentVisibilityLists !== false) {
+      document.querySelectorAll('section:not(:first-of-type), footer').forEach((el) => {
+        el.classList.add('urdfw-below-fold');
+      });
+    }
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => Platform.applyBreakpoint(), 150);
+    });
+  };
+
   Platform.initCore = async function () {
     await Platform.loadConfig();
     await Platform.loadI18n(Platform.lang);
     Platform.applyTheme();
     Platform.applyDisplayMode(Platform.displayMode);
+    Platform.applyBreakpoint();
     Platform.emit('core:ready', Platform);
   };
 

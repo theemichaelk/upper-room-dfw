@@ -114,6 +114,196 @@ function paymentReceiptEmail(amount, plan) {
   };
 }
 
+const CAMPAIGN_META = {
+  welcome: { subject: 'Welcome to Upper Room DFW', trigger: 'user.registered' },
+  forgot_password: { subject: 'Reset your password', trigger: 'auth.forgot' },
+  order: { subject: 'Order confirmation', trigger: 'payment.completed' },
+  subscription_reminder: { subject: 'Subscription renews soon', trigger: 'billing.reminder' },
+  contact_auto_reply: { subject: 'We received your message', trigger: 'support.created' },
+  contact_admin: { subject: 'New contact form submission', trigger: 'support.created' },
+  digest: { subject: 'Weekly DFW Church Digest', trigger: 'newsletter.digest' },
+  subscriber_welcome: { subject: 'You are subscribed to DFW faith updates', trigger: 'subscriber.added' },
+  listing_approved: { subject: 'Your listing is approved', trigger: 'client.approved' },
+  payment_receipt: { subject: 'Payment received', trigger: 'payment.completed' },
+  lead_notification: { subject: 'New directory lead', trigger: 'lead.created' },
+};
+
+function campaignMeta(key) {
+  return CAMPAIGN_META[key] || { subject: key, trigger: 'manual' };
+}
+
+function orderConfirmationEmail(data) {
+  const order = data.order || {};
+  const amount = order.amount ?? data.amount ?? 0;
+  const gateway = order.gateway || data.gateway || 'stripe';
+  const plan = order.plan || data.plan || 'standard';
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+  return {
+    subject: `Order confirmation #${order.id || order.ref || 'URDFW'}`,
+    html: layout({
+      title: 'Order confirmed',
+      preheader: `Thank you! $${amount} charged via ${gateway}.`,
+      bodyHtml: `
+        <p>Thank you for your <strong>${escapeHtml(plan)}</strong> subscription.</p>
+        <p>Amount: <strong>$${amount}</strong> · Gateway: <strong>${escapeHtml(gateway)}</strong></p>
+        <p>Reference: ${escapeHtml(order.ref || order.id || '—')}</p>`,
+      ctaUrl: appUrl + '/member-dashboard.html',
+      ctaLabel: 'View Dashboard',
+    }),
+    text: `Order confirmed: $${amount} via ${gateway}. Ref: ${order.ref || order.id}`,
+  };
+}
+
+function subscriptionReminderEmail(data) {
+  const plan = data.plan || data.order?.plan || 'Standard';
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+  return {
+    subject: 'Your Upper Room DFW subscription renews soon',
+    html: layout({
+      title: 'Renewal reminder',
+      preheader: `Your ${plan} plan renews in 3 days.`,
+      bodyHtml: `
+        <p>Your <strong>${escapeHtml(plan)}</strong> plan renews in <strong>3 days</strong>.</p>
+        <p>Update billing anytime from your member dashboard.</p>`,
+      ctaUrl: appUrl + '/member-dashboard.html?tab=billing',
+      ctaLabel: 'Manage Billing',
+    }),
+    text: `Your ${plan} plan renews in 3 days. Manage billing: ${appUrl}/member-dashboard.html`,
+  };
+}
+
+function contactAutoReplyEmail(data) {
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+  const name = data.name || 'there';
+  return {
+    subject: 'We received your message — Upper Room DFW',
+    html: layout({
+      title: 'Message received',
+      preheader: 'Thanks for contacting Upper Room DFW. We reply within 24 hours.',
+      bodyHtml: `
+        <p>Hi <strong>${escapeHtml(name)}</strong>,</p>
+        <p>Thanks for contacting <strong>Upper Room DFW</strong>. We received your message and will reply within <strong>24 business hours</strong>.</p>
+        <p>In the meantime, explore churches and events across DFW in our directory.</p>`,
+      ctaUrl: appUrl + '/directory.html',
+      ctaLabel: 'Browse Directory',
+    }),
+    text: `Hi ${name}, we received your message and will reply within 24 hours.`,
+  };
+}
+
+function contactAdminEmail(data) {
+  return {
+    subject: `New contact: ${data.name || data.email || 'Visitor'}`,
+    html: layout({
+      title: 'New contact submission',
+      bodyHtml: `
+        <p><strong>From:</strong> ${escapeHtml(data.name || 'Visitor')} &lt;${escapeHtml(data.email || '')}&gt;</p>
+        <p><strong>Topic:</strong> ${escapeHtml(data.topic || 'General')}</p>
+        <div style="background:#f8fafc;padding:16px;border-radius:8px;margin-top:12px">${escapeHtml(data.message || '')}</div>`,
+    }),
+    text: `Contact from ${data.name} (${data.email}): ${data.message}`,
+  };
+}
+
+function digestEmail(data) {
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+  const directoryUrl = data.directoryUrl || appUrl + '/directory.html';
+  return {
+    subject: 'Weekly DFW Church Digest — Upper Room DFW',
+    html: layout({
+      title: 'Weekly DFW Church Digest',
+      preheader: 'This week in DFW faith communities…',
+      bodyHtml: `
+        <p>Here is your weekly snapshot of faith life across Dallas–Fort Worth.</p>
+        <ul style="padding-left:20px">
+          <li>New and updated church listings in Arlington, Dallas, Frisco &amp; Fort Worth</li>
+          <li>Upcoming worship nights, family conferences &amp; community events</li>
+          <li>Tips for churches growing visibility in the directory</li>
+        </ul>
+        <p>${escapeHtml(data.blurb || 'Discover churches near you and share your listing with families searching for a church home.')}</p>`,
+      ctaUrl: directoryUrl,
+      ctaLabel: 'Explore Directory',
+    }),
+    text: `Weekly DFW Church Digest. Browse: ${directoryUrl}`,
+  };
+}
+
+function subscriberWelcomeEmail(data) {
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+  return {
+    subject: 'You are subscribed — DFW faith updates from Upper Room DFW',
+    html: layout({
+      title: 'Welcome to our digest list',
+      preheader: 'You will receive DFW church news, events, and directory highlights.',
+      bodyHtml: `
+        <p>Thank you for subscribing to <strong>Upper Room DFW</strong> email updates.</p>
+        <p>You will receive directory highlights, faith community news, and event roundups for the DFW metroplex.</p>`,
+      ctaUrl: appUrl + '/directory.html',
+      ctaLabel: 'Find a Church',
+    }),
+    text: `Thanks for subscribing to Upper Room DFW updates. Directory: ${appUrl}/directory.html`,
+  };
+}
+
+function listingApprovedEmail(data) {
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+  return {
+    subject: 'Your Upper Room DFW listing is approved',
+    html: layout({
+      title: 'Listing approved',
+      preheader: 'Your church listing is now live on Upper Room DFW.',
+      bodyHtml: `
+        <p>Hi <strong>${escapeHtml(data.name || 'there')}</strong>,</p>
+        <p>Your church listing is now <strong>live</strong> on Upper Room DFW. Families across DFW can find you in the directory.</p>`,
+      ctaUrl: appUrl + '/member-dashboard.html',
+      ctaLabel: 'Open Dashboard',
+    }),
+    text: `Your listing is approved. Dashboard: ${appUrl}/member-dashboard.html`,
+  };
+}
+
+async function buildCampaign(key, data, helpers = {}) {
+  const short = helpers.maybeShorten || (async (u) => u);
+  const appUrl = process.env.APP_URL || 'https://upperroomdfw.com';
+
+  switch (key) {
+    case 'welcome':
+      return welcomeEmail(data.name);
+    case 'forgot_password': {
+      const link = data.link || `${appUrl}/member-dashboard.html?reset=${data.token || ''}`;
+      const shortened = await short(link);
+      const tpl = passwordResetEmail(data.token || '');
+      if (data.token) {
+        tpl.html = tpl.html.replace(link, shortened);
+        tpl.text = tpl.text.replace(link, shortened);
+      }
+      return tpl;
+    }
+    case 'order':
+      return orderConfirmationEmail(data);
+    case 'subscription_reminder':
+      return subscriptionReminderEmail(data);
+    case 'contact_auto_reply':
+      return contactAutoReplyEmail(data);
+    case 'contact_admin':
+      return contactAdminEmail(data);
+    case 'digest': {
+      const d = { ...data, directoryUrl: await short(data.directoryUrl || appUrl + '/directory.html') };
+      return digestEmail(d);
+    }
+    case 'subscriber_welcome':
+      return subscriberWelcomeEmail(data);
+    case 'listing_approved':
+      return listingApprovedEmail(data);
+    case 'payment_receipt':
+      return paymentReceiptEmail(data.amount, data.plan);
+    case 'lead_notification':
+      return leadNotificationEmail(data);
+    default:
+      return null;
+  }
+}
+
 function escapeHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -129,4 +319,7 @@ module.exports = {
   passwordResetEmail,
   leadNotificationEmail,
   paymentReceiptEmail,
+  campaignMeta,
+  buildCampaign,
+  CAMPAIGN_META,
 };

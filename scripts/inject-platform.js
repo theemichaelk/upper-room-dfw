@@ -69,8 +69,12 @@ function injectMeta(html) {
   return html.replace(/<head[^>]*>/i, (m) => m + '\n' + block);
 }
 
-function injectStyles(html, depth) {
+function injectStyles(html, depth, rel = '') {
+  const base = path.basename(rel || '');
   for (const sheet of config.stylesheets || []) {
+    if (Array.isArray(sheet.pages) && sheet.pages.length) {
+      if (!sheet.pages.includes(base) && !sheet.pages.includes(rel)) continue;
+    }
     const href = hrefFor(sheet.href, depth);
     if (hasTag(html, `href="${href}"`) || hasTag(html, `href='${href}'`)) continue;
     if (depth === 0 && (hasTag(html, `href="${sheet.href}"`) || hasTag(html, `href='${sheet.href}'`))) continue;
@@ -141,12 +145,13 @@ function injectTelemetry(html) {
 function injectFile(filePath, depth) {
   let html = fs.readFileSync(filePath, 'utf8');
   const before = html;
+  const rel = path.relative(ROOT, filePath).replace(/\\/g, '/');
   html = ensureViewport(html);
   html = injectFaviconMeta(html, depth);
   html = injectTelemetry(html);
   html = injectPreconnect(html);
   html = injectMeta(html);
-  html = injectStyles(html, depth);
+  html = injectStyles(html, depth, rel);
   html = applyNavLogo(html, depth).html;
   html = upgradeLoader(html, depth);
   if (html !== before) {
@@ -188,6 +193,7 @@ for (const name of fs.readdirSync(ROOT)) {
   }
 }
 count = walkHtml(path.join(ROOT, 'churches'), 1, count);
+count = walkHtml(path.join(ROOT, 'blog'), 1, count);
 count = walkHtml(path.join(ROOT, 'templates'), 1, count);
 
 console.log('Done. Injected/upgraded', count, 'files.');

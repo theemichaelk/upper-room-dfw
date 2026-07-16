@@ -91,24 +91,44 @@
           </div>
           <p class="text-xs text-slate-500 mt-3">Role: <strong>${P.getUserRole(user)}</strong>. Package controls listing limits and featured placement.</p>
         </div>
+      </div>
+      <div class="mt-8 border-t pt-6" id="member-integrations-panel">
+        <h3 class="font-semibold mb-2">My API Integrations</h3>
+        <p class="text-xs text-slate-500 mb-4">Connect your own Mailchimp, Vbout, or Acumbamail accounts. Platform admin keys are not shared with members.</p>
+        <div class="grid md:grid-cols-3 gap-4" id="member-int-forms">Loading…</div>
       </div>`;
 
-    el.querySelector('#member-profile-form').onsubmit = (e) => {
+    P.renderMemberIntegrationsPanel?.(el.querySelector('#member-int-forms'), client);
+
+    el.querySelector('#member-profile-form').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
+      const patch = { name: fd.get('name'), area: fd.get('area') };
+      if (P.apiConfig?.mode === 'remote' && client?.id && localStorage.getItem('urdfw_api_token')) {
+        try {
+          await P.api.clients.update(client.id, patch);
+          const updated = { ...client, ...patch };
+          localStorage.setItem('urdfw_current_client', JSON.stringify(updated));
+          P.portalToast?.('Profile saved to your account.');
+          return;
+        } catch (err) {
+          P.portalToast?.(err.message || 'Save failed');
+          return;
+        }
+      }
       const users = P.get('users', []);
       const u = users.find((x) => x.id === user.id);
       if (u) {
-        u.name = fd.get('name');
-        u.area = fd.get('area');
+        u.name = patch.name;
+        u.area = patch.area;
         if (fd.get('password')) u.password = fd.get('password');
         P.set('users', users);
         P.set('current_user', u);
       }
       let clients = P.get('clients', []);
       const c = clients.find((x) => x.email === client.email);
-      if (c) { c.name = fd.get('name'); c.area = fd.get('area'); P.set('clients', clients); }
-      alert('Profile saved.');
+      if (c) { c.name = patch.name; c.area = patch.area; P.set('clients', clients); }
+      P.portalToast?.('Profile saved.');
     };
 
     const bindUpload = (inputId, field, previewId) => {
@@ -132,9 +152,16 @@
     bindUpload('#banner-img-upload', 'bannerImage', '#banner-img-preview');
   };
 
-  P.renderMemberMessages = function (el, user) {
+  P.renderMemberMessages = async function (el, user) {
     if (!el || !user) return;
-    const msgs = P.getMessages(user.id);
+    el.innerHTML = '<p class="text-sm text-slate-500 py-4">Loading messages…</p>';
+    let msgs = P.getMessages(user.id);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const list = await P.api.messages.list(user.id);
+        if (Array.isArray(list)) msgs = list;
+      } catch { /* keep local */ }
+    }
     const notifs = P.getNotifications(user.id);
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
@@ -162,11 +189,12 @@
         <div class="text-sm space-y-1">${notifs.length ? notifs.map((n) => `<div class="py-1 border-b text-xs">${n.subject || n.text} — ${new Date(n.at || Date.now()).toLocaleDateString()}</div>`).join('') : '<span class="text-slate-500 text-xs">No new notifications.</span>'}</div>
       </div>`;
 
-    el.querySelector('#member-send-msg').onsubmit = (e) => {
+    el.querySelector('#member-send-msg').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      P.sendMessage('admin', user.email, fd.get('subject'), fd.get('body'));
-      alert('Message sent to the Upper Room DFW team.');
+      await P.api.messages.send('admin', user.email, fd.get('subject'), fd.get('body'));
+      P.portalToast?.('Message sent to the Upper Room DFW team.');
+      e.target.reset();
       P.renderMemberMessages(el, user);
     };
   };
@@ -193,17 +221,18 @@
     });
   };
 
-  P.renderMemberMedia = function (el, client) {
+  P.renderMemberMedia = async function (el, client) {
     if (!el) return;
     const listingId = client?.listingId || client?.id;
-    const media = P.getListingMedia(listingId);
+    const media = await (P.loadListingMedia?.(listingId) || Promise.resolve(P.getListingMedia(listingId)));
+    const thumb = (m) => m.url || m.dataUrl || '';
     el.innerHTML = `
       <h3 class="font-semibold mb-3">Photos &amp; Video</h3>
       <div class="grid md:grid-cols-2 gap-6">
         <div>
           <label class="text-sm font-medium">Upload listing photo</label>
           <input type="file" accept="image/*" id="member-media-upload" class="mt-2 text-sm w-full">
-          <div id="member-media-gallery" class="mt-3 flex flex-wrap gap-2">${media.map((m) => `<img src="${m.dataUrl}" class="w-16 h-16 rounded object-cover border" alt="">`).join('') || '<span class="text-xs text-slate-500">No uploads yet.</span>'}</div>
+          <div id="member-media-gallery" class="mt-3 flex flex-wrap gap-2">${media.map((m) => `<div class="relative group"><img src="${thumb(m)}" class="w-16 h-16 rounded object-cover border" alt=""><button type="button" data-del="${m.id}" class="hidden group-hover:block absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] leading-4">×</button></div>`).join('') || '<span class="text-xs text-slate-500">No uploads yet.</span>'}</div>
           <div class="mt-4">
             <label class="text-xs font-medium">YouTube or Vimeo URL</label>
             <input id="member-video-url" placeholder="https://youtube.com/..." class="w-full border rounded-2xl px-3 py-2 text-sm mt-1">
@@ -225,9 +254,21 @@
     el.querySelector('#member-media-upload').onchange = async (ev) => {
       const file = ev.target.files[0];
       if (!file) return;
-      await P.uploadImageAjax(file, listingId);
+      try {
+        await P.uploadImageAjax(file, listingId, client?.id);
+        P.portalToast?.('Photo uploaded to cloud storage.');
+      } catch (err) {
+        P.portalToast?.(err.message || 'Upload failed');
+      }
       P.renderMemberMedia(el, client);
     };
+
+    el.querySelectorAll('[data-del]').forEach((btn) => {
+      btn.onclick = async () => {
+        await P.deleteListingMedia?.(btn.dataset.del, listingId);
+        P.renderMemberMedia(el, client);
+      };
+    });
 
     const videoUrl = client?.customFields?.youtube || client?.youtube || '';
     if (videoUrl) {
@@ -394,12 +435,13 @@
     { id: 'claims', label: 'Claims' },
     { id: 'billing', label: 'Billing' },
     { id: 'email', label: 'Email' },
-    { id: 'seo', label: 'SEO' },
+    { id: 'seo', label: 'SEO Hub' },
     { id: 'integrations', label: 'Integrations' },
     { id: 'reviews', label: 'Reviews' },
     { id: 'support', label: 'Support' },
     { id: 'analytics', label: 'Analytics' },
     { id: 'api', label: 'API & Webhooks' },
+    { id: 'dns', label: 'DNS' },
   ];
 
   P._adminDashState = { root: null, panels: null, show: null };
@@ -408,27 +450,10 @@
     const root = document.getElementById(rootId || 'admin-platform-root');
     if (!root) return;
 
-    root.innerHTML = `
-      <div class="border-b mb-4 overflow-x-auto">
-        <div class="flex gap-1 text-sm min-w-max" id="admin-tab-bar">
-          ${P.adminTabs.map((t, i) => `<button type="button" data-admin-tab="${t.id}" class="admin-tab-btn px-4 py-2 border-b-2 ${i === 0 ? 'border-sky-600 text-sky-700 font-semibold' : 'border-transparent text-slate-600'}">${t.label}</button>`).join('')}
-        </div>
-      </div>
-      <div id="admin-tab-panels"></div>`;
+    root.innerHTML = `<div id="admin-tab-panels"></div>`;
 
     const panels = root.querySelector('#admin-tab-panels');
-    const show = (id) => {
-      root.querySelectorAll('.admin-tab-btn').forEach((b) => {
-        b.classList.toggle('border-sky-600', b.dataset.adminTab === id);
-        b.classList.toggle('text-sky-700', b.dataset.adminTab === id);
-        b.classList.toggle('font-semibold', b.dataset.adminTab === id);
-        b.classList.toggle('border-transparent', b.dataset.adminTab !== id);
-        b.classList.toggle('text-slate-600', b.dataset.adminTab !== id);
-      });
-      P.renderAdminTab(panels, id);
-    };
-
-    root.querySelectorAll('.admin-tab-btn').forEach((b) => { b.onclick = () => show(b.dataset.adminTab); });
+    const show = (id) => P.renderAdminTab(panels, id);
     P._adminDashState = { root, panels, show };
     show('overview');
   };
@@ -454,37 +479,69 @@
     if (tabId === 'support') return P.renderAdminSupport(el);
     if (tabId === 'analytics') return P.renderAdminAnalytics(el);
     if (tabId === 'api') return P.renderAdminApi(el);
+    if (tabId === 'dns') return P.renderAdminDns(el);
   };
 
-  P.renderAdminOverview = function (el) {
+  P.renderAdminOverview = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 py-8 text-center"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading live command center…</div>';
+    const A = global.URDFWAnalytics;
+    try {
+      if (P.apiConfig?.mode === 'remote' && A?.fetchAdmin) {
+        const data = await A.fetchAdmin();
+        A.renderKpiGrid(el, data.kpis);
+        const chartsHost = document.createElement('div');
+        el.appendChild(chartsHost);
+        A.renderAdminCharts(chartsHost, data);
+        const actions = document.createElement('div');
+        actions.className = 'flex flex-wrap gap-2 mt-4';
+        actions.innerHTML = `
+          <button type="button" id="admin-backup-now" class="px-4 py-2 text-xs bg-slate-900 text-white rounded-xl">Backup DB to S3</button>
+          <button type="button" id="admin-refresh-stats" class="px-4 py-2 text-xs border rounded-xl">Refresh Live Data</button>`;
+        el.appendChild(actions);
+        actions.querySelector('#admin-backup-now')?.addEventListener('click', async () => {
+          const token = localStorage.getItem('urdfw_api_token');
+          const r = await fetch('/api/admin/backup-db', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+          const j = await r.json();
+          P.portalToast?.(j.ok ? 'DB backed up (' + j.bytes + ' bytes)' : (j.error || 'Backup failed'));
+        });
+        actions.querySelector('#admin-refresh-stats')?.onclick = () => P.renderAdminOverview(el);
+        return;
+      }
+    } catch { /* fallback */ }
     const clients = P.get('clients', []);
     const users = P.get('users', []);
     const orders = P.get('orders', []);
     const claims = P.get('claims', []);
-    const stats = P.getClickStats();
     el.innerHTML = `
+      <div class="portal-panel mb-4 text-amber-700 bg-amber-50 text-xs">Local mode — connect API for live analytics.</div>
       <div class="grid md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Registered Clients</div><div class="text-2xl font-bold">${clients.length}</div></div>
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Platform Users</div><div class="text-2xl font-bold">${users.length}</div></div>
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Orders</div><div class="text-2xl font-bold">${orders.length}</div></div>
         <div class="bg-white border rounded-2xl p-4"><div class="text-xs text-slate-500">Pending Claims</div><div class="text-2xl font-bold">${claims.filter((c) => c.status === 'pending').length}</div></div>
-      </div>
-      <div class="bg-white border rounded-3xl p-6">
-        <h3 class="font-semibold mb-2">Click Analytics Summary</h3>
-        <div class="text-sm">Total tracked clicks: <strong>${stats.total}</strong></div>
-        <div class="text-xs mt-2 text-slate-500">${Object.entries(stats.byType || {}).map(([k, v]) => `${k}: ${v}`).join(' • ') || 'No data yet'}</div>
       </div>`;
   };
 
   P.renderAdminListings = async function (el) {
-    let churches = [];
-    try {
-      const res = await fetch('data/churches.json');
-      churches = await res.json();
-    } catch { /* ignore */ }
-    const customs = P.get('custom_listings', []);
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading listings…</p>';
+    let all = [];
+    const token = localStorage.getItem('urdfw_api_token');
+    if (P.apiConfig?.mode === 'remote' && token) {
+      try {
+        const res = await fetch('/api/listings?status=all', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.ok) all = await res.json();
+      } catch { /* fallback */ }
+    }
+    if (!all.length) {
+      let churches = [];
+      try {
+        const res = await fetch(P.resolveAsset('data/churches.json'));
+        churches = await res.json();
+      } catch { /* ignore */ }
+      const customs = P.get('custom_listings', []);
+      all = [...customs, ...churches.map((c) => P.enhanceListing(c))];
+    }
     const meta = P.get('listing_meta', {});
-    const all = [...customs, ...churches.map((c) => P.enhanceListing(c))];
 
     el.innerHTML = `
       <div class="flex flex-wrap gap-2 mb-4">
@@ -492,16 +549,17 @@
         <button type="button" id="admin-seed-demo" class="px-3 py-1.5 text-xs border rounded-2xl">Seed Demo Meta</button>
       </div>
       <div class="bg-white border rounded-3xl p-4 max-h-[480px] overflow-auto text-sm space-y-2" id="admin-all-listings">
-        ${all.slice(0, 50).map((l) => {
+        ${all.slice(0, 100).map((l) => {
           const m = meta[l.id] || {};
+          const featured = l.featured || m.featured;
           return `<div class="flex flex-wrap items-center justify-between gap-2 border-b py-2">
             <div><strong>${l.name}</strong> <span class="text-xs text-slate-500">${l.area || ''} • ${l.status || 'live'}</span>
-              ${m.featured ? '<span class="badge-featured">Featured</span>' : ''}${m.vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
+              ${featured ? '<span class="badge-featured">Featured</span>' : ''}${m.vip ? '<span class="badge-vip">VIP</span>' : ''}</div>
             <div class="flex gap-1 text-xs">
               <button type="button" data-feat="${l.id}" class="admin-feat px-2 py-0.5 border rounded">Feature</button>
               <button type="button" data-sticky="${l.id}" class="admin-sticky px-2 py-0.5 border rounded">Sticky</button>
               <button type="button" data-vip="${l.id}" class="admin-vip px-2 py-0.5 border rounded">VIP</button>
-              ${l.status === 'pending' ? `<button type="button" data-approve="${l.id}" class="text-emerald-600">Approve</button>` : ''}
+              ${(l.status === 'pending' || l.status === 'registered') ? `<button type="button" data-approve="${l.id}" class="text-emerald-600">Go Live</button>` : ''}
             </div></div>`;
         }).join('') || '<p class="text-slate-500">No listings.</p>'}
       </div>`;
@@ -512,10 +570,19 @@
     el.querySelectorAll('[data-feat]').forEach((b) => b.onclick = () => { P.markFeatured(b.dataset.feat, true); P.renderAdminListings(el); });
     el.querySelectorAll('[data-sticky]').forEach((b) => b.onclick = () => { P.upgradeListing(b.dataset.sticky, 'premium'); P.renderAdminListings(el); });
     el.querySelectorAll('[data-vip]').forEach((b) => b.onclick = () => { P.upgradeListing(b.dataset.vip, 'vip'); P.renderAdminListings(el); });
-    el.querySelectorAll('[data-approve]').forEach((b) => b.onclick = () => {
-      const customs2 = P.get('custom_listings', []);
-      const item = customs2.find((x) => x.id === b.dataset.approve);
-      if (item) { item.status = 'approved'; P.set('custom_listings', customs2); }
+    el.querySelectorAll('[data-approve]').forEach((b) => b.onclick = async () => {
+      const id = b.dataset.approve;
+      if (P.apiConfig?.mode === 'remote' && token) {
+        await fetch('/api/listings/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ status: 'live' }),
+        });
+      } else {
+        const customs2 = P.get('custom_listings', []);
+        const item = customs2.find((x) => x.id === id);
+        if (item) { item.status = 'approved'; P.set('custom_listings', customs2); }
+      }
       P.renderAdminListings(el);
     });
   };
@@ -562,8 +629,15 @@
     });
   };
 
-  P.renderAdminClaims = function (el) {
-    const claims = P.get('claims', []);
+  P.renderAdminClaims = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading claims…</p>';
+    let claims = P.get('claims', []);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const list = await P.api.claims.list();
+        if (Array.isArray(list)) { claims = list; P.set('claims', list); }
+      } catch { /* keep local */ }
+    }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
         <h3 class="font-semibold mb-3">Listing Claims (${claims.length})</h3>
@@ -575,17 +649,28 @@
           </div>`).join('') : '<p class="text-slate-500 text-sm">No claims submitted yet.</p>'}
       </div>`;
 
-    el.querySelectorAll('.admin-approve-claim').forEach((b) => b.onclick = () => {
-      const list = P.get('claims', []);
-      const c = list.find((x) => x.id === b.dataset.claim);
-      if (c) { c.status = 'approved'; P.set('claims', list); }
+    el.querySelectorAll('.admin-approve-claim').forEach((b) => b.onclick = async () => {
+      if (P.apiConfig?.mode === 'remote') await P.api.claims.approve(b.dataset.claim);
+      else {
+        const list = P.get('claims', []);
+        const c = list.find((x) => x.id === b.dataset.claim);
+        if (c) { c.status = 'approved'; P.set('claims', list); }
+      }
+      P.portalToast?.('Claim approved — listing linked to client.');
       P.renderAdminClaims(el);
     });
   };
 
-  P.renderAdminBilling = function (el) {
-    const orders = P.get('orders', []);
-    const invoices = P.get('invoices', []);
+  P.renderAdminBilling = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading billing…</p>';
+    let orders = P.get('orders', []);
+    let invoices = P.get('invoices', []);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const o = await P.api.admin.orders();
+        if (Array.isArray(o)) { orders = o; P.set('orders', o); }
+      } catch { /* keep */ }
+    }
     const coupons = P.get('coupons', []);
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
@@ -618,13 +703,33 @@
     });
   };
 
-  P.renderAdminEmail = function (el) {
+  P.renderAdminEmail = async function (el) {
     const log = P.get('email_log', []);
     const templates = P.emailTemplates;
+    let smtpBanner = '';
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const r = await fetch('/api/integrations/status', {
+          headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') },
+        });
+        const j = await r.json();
+        const smtp = (j.results || []).find((x) => x.provider === 'smtp');
+        const acumba = (j.results || []).find((x) => x.provider === 'acumbamail');
+        if (smtp?.ok) {
+          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800"><i class="fa-solid fa-circle-check mr-1"></i> Acumbamail SMTP relay connected (${smtp.host || 'smtp.acumbamail.com'})</div>`;
+        } else if (acumba?.smtpActivationRequired || (smtp?.error || '').includes('535')) {
+          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-sm text-amber-900"><strong>Acumbamail SMTP not active yet.</strong> API is connected but relay login fails (535). Contact <a class="underline" href="https://acumbamail.com/contact/" target="_blank" rel="noopener">Acumbamail technical support</a> to activate transactional SMTP on your account, then run a test send.</div>`;
+        } else if (smtp?.error) {
+          smtpBanner = `<div class="mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800">SMTP: ${smtp.error}</div>`;
+        }
+      } catch { /* ignore */ }
+    }
     el.innerHTML = `
+      ${smtpBanner}
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Email Templates</h3>
+          <p id="admin-campaigns-hint" class="text-xs text-slate-500 mb-2"></p>
           <div class="space-y-3 text-sm">${Object.entries(templates).map(([k, t]) => `
             <div class="border rounded-2xl p-3">
               <div class="font-medium text-xs uppercase text-sky-600">${k}</div>
@@ -636,84 +741,145 @@
         <div class="bg-white border rounded-3xl p-5">
           <h3 class="font-semibold mb-3">Send Test Email</h3>
           <form id="admin-test-email" class="space-y-2 text-sm">
-            <select name="template" class="w-full border rounded px-3 py-2">${Object.keys(templates).map((k) => `<option value="${k}">${k}</option>`).join('')}</select>
+            <select name="template" class="w-full border rounded px-3 py-2"><option value="smtp_ping">smtp_ping (connection test)</option>${Object.keys(templates).map((k) => `<option value="${k}">${k}</option>`).join('')}</select>
             <input name="email" placeholder="recipient@email.com" class="w-full border rounded px-3 py-2">
-            <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-2xl text-sm">Send (simulated)</button>
+            <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-2xl text-sm">Send Test via SMTP</button>
           </form>
           <h4 class="font-semibold text-sm mt-6 mb-2">Email Log (${log.length})</h4>
           <div class="text-xs max-h-48 overflow-auto">${log.slice(0, 20).map((e) => `<div class="py-1 border-b">${e.template}: ${e.subject} → ${e.to}</div>`).join('') || 'Empty.'}</div>
         </div>
       </div>`;
 
-    el.querySelector('#admin-test-email').onsubmit = (e) => {
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      fetch('/api/admin/campaigns', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } })
+        .then((r) => r.json())
+        .then((j) => {
+          const hint = el.querySelector('#admin-campaigns-hint');
+          if (hint && j.campaigns) hint.textContent = j.campaigns.length + ' live campaigns wired to event bus (welcome, leads, payments, etc.)';
+        })
+        .catch(() => {});
+    }
+
+    el.querySelector('#admin-test-email').onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      P.sendEmail(fd.get('template'), { email: fd.get('email'), name: 'Admin Test' });
-      alert('Email logged (simulated send).');
+      const email = fd.get('email');
+      if (P.apiConfig?.mode === 'remote') {
+        const token = localStorage.getItem('urdfw_api_token');
+        const r = await fetch('/api/admin/test-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ email, template: fd.get('template') }),
+        });
+        const j = await r.json();
+        P.portalToast?.(j.ok ? 'Test email sent to ' + email : (j.error || 'Send failed'));
+      } else {
+        P.sendEmail(fd.get('template'), { email, name: 'Admin Test' });
+        P.portalToast?.('Email logged (local mode).');
+      }
       P.renderAdminEmail(el);
     };
   };
 
-  P.renderAdminSeo = function (el) {
-    const pages = ['index.html', 'directory.html', 'features.html', 'pricing.html', 'contact.html'];
-    el.innerHTML = `
-      <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Page SEO Settings</h3>
-        <div class="space-y-4">${pages.map((p) => {
-          const s = P.getPageSettings(p);
-          return `<form data-page="${p}" class="admin-seo-form border rounded-2xl p-4 text-sm">
-            <div class="font-medium mb-2">${p}</div>
-            <input name="title" value="${(s.title || '').replace(/"/g, '&quot;')}" placeholder="SEO title" class="w-full border rounded px-3 py-1.5 mb-2 text-xs">
-            <textarea name="description" rows="2" placeholder="Meta description" class="w-full border rounded px-3 py-1.5 text-xs">${s.description || ''}</textarea>
-            <label class="text-xs flex items-center gap-2 mt-2"><input type="checkbox" name="noindex" ${s.noindex ? 'checked' : ''}> noindex</label>
-            <button type="submit" class="mt-2 px-3 py-1 text-xs border rounded-2xl">Save</button>
-          </form>`;
-        }).join('')}</div>
-      </div>`;
-
-    el.querySelectorAll('.admin-seo-form').forEach((form) => {
-      form.onsubmit = (e) => {
-        e.preventDefault();
-        const fd = new FormData(form);
-        P.setPageSettings(form.dataset.page, {
-          title: fd.get('title'),
-          description: fd.get('description'),
-          noindex: fd.get('noindex') === 'on',
-        });
-        alert('SEO settings saved for ' + form.dataset.page);
-      };
-    });
+  P.renderAdminSeo = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading control panel…</div>';
+    if (P.apiConfig?.mode === 'remote') {
+      try {
+        const token = localStorage.getItem('urdfw_api_token');
+        const settingsRes = await fetch('/api/platform/site-settings', { headers: { Authorization: 'Bearer ' + token } });
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          P.set('site_settings', data.settings || P.get('site_settings', {}));
+        }
+      } catch { /* use local */ }
+    }
+    if (P.renderAdminSeoControlPanel) {
+      return P.renderAdminSeoControlPanel(el);
+    }
+    el.innerHTML = '<div class="text-sm text-red-600 p-4">Control panel module not loaded. Ensure js/platform/25-control-panel.js is in the loader.</div>';
   };
 
   P.renderAdminIntegrations = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 p-4">Loading platform integrations from server…</div>';
     const providers = P.INTEGRATION_PROVIDERS || ['mailchimp', 'vbout', 'acumbamail'];
-    const stats = P.getIntegrationStats?.() || providers.map((p) => ({ provider: p, syncedCount: 0, enabled: true }));
-    const subs = P.get('subscribers', []);
+    let subs = P.get('subscribers', []);
     const apiBase = P.apiConfig?.endpoints?.integrations || '/api/integrations';
-    const log = P.getIntegrationLog?.(null, 12) || [];
+    let log = P.getIntegrationLog?.(null, 12) || [];
+    let connections = null;
+    let platformData = null;
+    if (P.apiConfig?.mode === 'remote') {
+      try {
+        const token = localStorage.getItem('urdfw_api_token');
+        const [connRes, logRes, platRes, integRes] = await Promise.all([
+          fetch('/api/platform/connections', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/integrations/log', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/platform/integrations', { headers: { Authorization: 'Bearer ' + token } }),
+          fetch('/api/integrations', { headers: { Authorization: 'Bearer ' + token } }),
+        ]);
+        if (connRes.ok) connections = await connRes.json();
+        if (logRes.ok) {
+          const lj = await logRes.json();
+          log = (lj.entries || []).map((e) => ({ action: e.action, provider: e.provider, status: e.status, email: e.email, at: e.at }));
+        }
+        if (platRes.ok) {
+          platformData = await platRes.json();
+          P.applyPlatformIntegrations?.(platformData);
+        }
+        if (integRes.ok) {
+          const ij = await integRes.json();
+          if (ij.subscriberEmails) {
+            subs = ij.subscriberEmails;
+            P.set('subscribers', subs);
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    const stats = P.getIntegrationStats?.() || providers.map((p) => ({ provider: p, syncedCount: 0, enabled: true }));
+
+    const connCards = connections?.results ? `
+      <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
+        ${connections.results.map((r) => `
+          <div class="rounded-xl px-3 py-2 text-xs border ${r.ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-700'}">
+            <i class="fa-solid ${r.ok ? 'fa-circle-check' : 'fa-circle-xmark'} mr-1"></i>
+            <strong class="capitalize">${r.provider}</strong>
+            <div class="text-[10px] mt-0.5 truncate">${r.ok ? (r.message || 'Connected') : (r.error || 'Not configured')}</div>
+          </div>`).join('')}
+      </div>` : '';
+
+    const envBanner = platformData?.source === 'env' ? `
+      <div class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <strong><i class="fa-solid fa-server mr-1"></i> Platform credentials loaded from server .env</strong>
+        <div class="text-xs mt-1 text-emerald-800">Admin accounts use production API keys automatically. Members configure their own keys in Profile → My API Integrations.</div>
+      </div>` : '';
 
     el.innerHTML = `
+      ${envBanner}
+      ${connCards}
       <div class="portal-panel mb-4 text-xs text-slate-600">
         <strong>Integrations API:</strong> <code class="bg-slate-100 px-2 py-0.5 rounded">${apiBase}</code>
-        <span class="ml-2">Endpoints: <code>GET /{provider}</code> · <code>POST /{provider}/config</code> · <code>POST /{provider}/test</code> · <code>POST /{provider}/sync-all</code> · <code>POST /subscribe</code></span>
+        <span class="ml-2">Admin keys: <code>server .env</code> · Members: <code>/api/client/integrations</code></span>
       </div>
       <div class="grid lg:grid-cols-3 gap-4 mb-6">
         ${stats.map((s) => {
           const cfg = P.getIntegrationConfig(s.provider);
+          const keyLabel = cfg.source === 'env'
+            ? (cfg.apiKeySet ? `API key: ${cfg.apiKey || 'configured'}` : 'API key not in .env')
+            : (cfg.apiKeySet ? 'API key set' : 'No API key');
           return `<div class="portal-panel" data-provider-card="${s.provider}">
             <div class="flex items-center justify-between mb-3">
               <div class="font-semibold capitalize flex items-center gap-2">
                 <i class="fa-solid fa-plug text-sky-600"></i> ${s.provider}
               </div>
-              <span class="text-[10px] px-2 py-0.5 rounded-full ${s.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${s.enabled ? 'Enabled' : 'Off'}</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full ${cfg.enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${cfg.enabled ? 'Enabled' : 'Off'}</span>
             </div>
             <div class="text-2xl font-bold text-[#0369a1]">${s.syncedCount}</div>
             <div class="text-xs text-slate-500 mb-3">synced contacts · list <code>${cfg.listId || '—'}</code></div>
+            <div class="text-[10px] text-slate-500 mb-2 font-mono">${keyLabel}</div>
             <form class="admin-int-config space-y-2 text-xs mb-3" data-provider="${s.provider}">
               <input name="listId" value="${(cfg.listId || '').replace(/"/g, '&quot;')}" placeholder="List ID" class="w-full border rounded-lg px-2 py-1.5">
-              <input name="apiKey" type="password" value="${(cfg.apiKey || '').replace(/"/g, '&quot;')}" placeholder="API Key" class="w-full border rounded-lg px-2 py-1.5">
+              <input name="apiKey" type="text" value="${cfg.source === 'env' ? (cfg.apiKey || 'from .env') : ''}" placeholder="API key (admin: from .env)" class="w-full border rounded-lg px-2 py-1.5 bg-slate-50" readonly>
               <label class="flex items-center gap-2"><input type="checkbox" name="enabled" ${cfg.enabled ? 'checked' : ''}> Enabled</label>
-              <button type="submit" class="w-full py-1.5 border rounded-lg hover:bg-slate-50">Save via API</button>
+              <button type="submit" class="w-full py-1.5 border rounded-lg hover:bg-slate-50">Save list settings</button>
             </form>
             <div class="flex flex-wrap gap-1">
               <button type="button" data-test="${s.provider}" class="admin-int-test px-2 py-1 text-[11px] border rounded-lg">Test</button>
@@ -738,6 +904,17 @@
             ${log.length ? log.map((e) => `<div class="py-1 border-b"><span class="text-sky-700">${e.action}</span> · ${e.provider || '—'} · ${e.status || ''} · ${e.email || ''} <span class="text-slate-400">${new Date(e.at).toLocaleString()}</span></div>`).join('') : '<span class="text-slate-500">No API calls yet.</span>'}
           </div>
         </div>
+      </div>
+      <div class="portal-panel mt-4 text-sm">
+        <h3 class="font-semibold mb-2"><i class="fa-solid fa-share-nodes text-sky-600 mr-1"></i> Social Media Links</h3>
+        <form id="admin-social-form" class="grid md:grid-cols-2 gap-2 text-xs">
+          <input name="facebook" placeholder="Facebook URL" class="border rounded-lg px-2 py-1.5">
+          <input name="instagram" placeholder="Instagram URL" class="border rounded-lg px-2 py-1.5">
+          <input name="twitter" placeholder="X / Twitter URL" class="border rounded-lg px-2 py-1.5">
+          <input name="youtube" placeholder="YouTube URL" class="border rounded-lg px-2 py-1.5">
+          <input name="linkedin" placeholder="LinkedIn URL" class="border rounded-lg px-2 py-1.5 col-span-2">
+          <button type="submit" class="md:col-span-2 py-2 bg-slate-800 text-white rounded-lg">Save Social Links</button>
+        </form>
       </div>`;
 
     el.querySelectorAll('.admin-int-config').forEach((form) => {
@@ -747,7 +924,6 @@
         const fd = new FormData(form);
         const res = await P.api.integrations.configure(provider, {
           listId: fd.get('listId'),
-          apiKey: fd.get('apiKey'),
           enabled: fd.get('enabled') === 'on',
         });
         P.portalToast?.(res.ok ? `${provider} config saved via API` : 'Config save failed');
@@ -795,23 +971,69 @@
       e.target.reset();
       P.renderAdminIntegrations(el);
     });
+
+    if (P.apiConfig?.mode === 'remote') {
+      fetch('/api/platform/social').then((r) => r.json()).then((d) => {
+        const form = el.querySelector('#admin-social-form');
+        if (!form || !d.links) return;
+        Object.entries(d.links).forEach(([k, v]) => {
+          const inp = form.querySelector('[name="' + k + '"]');
+          if (inp) inp.value = v || '';
+        });
+      }).catch(() => {});
+    }
+
+    el.querySelector('#admin-social-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = Object.fromEntries(new FormData(e.target).entries());
+      const token = localStorage.getItem('urdfw_api_token');
+      const r = await fetch('/api/platform/social', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      P.portalToast?.(j.ok ? 'Social links saved' : (j.error || 'Save failed'));
+    });
   };
 
-  P.renderAdminReviews = function (el) {
-    const reviews = P.get('reviews', {});
-    const entries = Object.entries(reviews);
+  P.renderAdminReviews = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading reviews…</p>';
+    let flat = [];
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        flat = await P.api.reviews.listAll();
+      } catch { /* fallback */ }
+    }
+    if (!flat.length) {
+      const reviews = P.get('reviews', {});
+      flat = Object.entries(reviews).flatMap(([lid, revs]) => revs.map((r) => ({ ...r, listingId: lid })));
+    }
+    const byListing = {};
+    flat.forEach((r) => {
+      const lid = r.listingId || r.listing_id || 'unknown';
+      if (!byListing[lid]) byListing[lid] = [];
+      byListing[lid].push(r);
+    });
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
-        <h3 class="font-semibold mb-3">Reviews by Listing</h3>
-        <div class="space-y-4 text-sm max-h-[400px] overflow-auto">${entries.length ? entries.map(([lid, revs]) => `
+        <h3 class="font-semibold mb-3">Reviews by Listing (${flat.length})</h3>
+        <div class="space-y-4 text-sm max-h-[400px] overflow-auto">${Object.keys(byListing).length ? Object.entries(byListing).map(([lid, revs]) => `
           <div><div class="font-medium text-xs text-slate-500">Listing #${lid}</div>
-          ${revs.map((r) => `<div class="border rounded p-2 mt-1 text-xs">${P.renderStars(r.stars)} ${r.author}: ${r.text}</div>`).join('')}
-          </div>`).join('') : '<p class="text-slate-500">No reviews in storage.</p>'}
+          ${revs.map((r) => `<div class="border rounded p-2 mt-1 text-xs">${P.renderStars?.(r.stars) || r.stars + '★'} ${r.author}: ${r.text}</div>`).join('')}
+          </div>`).join('') : '<p class="text-slate-500">No reviews yet.</p>'}
       </div>`;
   };
 
-  P.renderAdminSupport = function (el) {
-    const tickets = P.get('support_tickets', []);
+  P.renderAdminSupport = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading support tickets…</p>';
+    let tickets = P.get('support_tickets', []);
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const res = await fetch('/api/support', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } });
+        if (res.ok) { tickets = await res.json(); P.set('support_tickets', tickets); }
+      } catch { /* keep */ }
+    }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-5">
         <h3 class="font-semibold mb-3">Support Tickets (${tickets.length})</h3>
@@ -822,38 +1044,83 @@
           </div>`).join('') || '<p class="text-slate-500">No tickets.</p>'}
       </div>`;
 
-    el.querySelectorAll('.admin-close-ticket').forEach((b) => b.onclick = () => {
-      const list = P.get('support_tickets', []);
-      const t = list.find((x) => x.id === b.dataset.ticket);
-      if (t) { t.status = 'closed'; P.set('support_tickets', list); }
+    el.querySelectorAll('.admin-close-ticket').forEach((b) => b.onclick = async () => {
+      const id = b.dataset.ticket;
+      if (P.apiConfig?.mode === 'remote') {
+        await fetch('/api/support/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') },
+          body: JSON.stringify({ status: 'closed' }),
+        });
+      } else {
+        const list = P.get('support_tickets', []);
+        const t = list.find((x) => x.id === id);
+        if (t) { t.status = 'closed'; P.set('support_tickets', list); }
+      }
       P.renderAdminSupport(el);
     });
   };
 
-  P.renderAdminAnalytics = function (el) {
+  P.renderAdminAnalytics = async function (el) {
+    el.innerHTML = '<div class="text-sm text-slate-500 py-8 text-center">Loading analytics…</div>';
+    const A = global.URDFWAnalytics;
     const stats = P.getClickStats();
+    try {
+      if (P.apiConfig?.mode === 'remote' && A?.fetchAdmin) {
+        const data = await A.fetchAdmin();
+        el.innerHTML = '<div id="admin-analytics-live"></div><div id="admin-analytics-clicks" class="mt-6"></div>';
+        A.renderAdminCharts(el.querySelector('#admin-analytics-live'), data);
+        const clickEl = el.querySelector('#admin-analytics-clicks');
+        clickEl.innerHTML = `
+          <div class="portal-panel">
+            <h3 class="font-semibold mb-2 text-sm">On-Site Click Tracking</h3>
+            <div class="text-2xl font-bold text-[#0369a1]">${stats.total}</div>
+            <div class="text-xs text-slate-500 mt-2">${Object.entries(stats.byType || {}).map(([k, v]) => k + ': ' + v).join(' · ') || 'No clicks yet'}</div>
+          </div>`;
+        return;
+      }
+    } catch { /* fallback */ }
     el.innerHTML = `
       <div class="bg-white border rounded-3xl p-6">
-        <h3 class="font-semibold mb-4">Click Statistics</h3>
+        <h3 class="font-semibold mb-4">Click Statistics (local)</h3>
         <div class="text-3xl font-bold text-[#0369a1]">${stats.total}</div>
         <div class="text-sm text-slate-500 mt-1">total tracked interactions</div>
-        <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(stats.byType || {}).map(([k, v]) => `
-          <div class="p-3 bg-sky-50 rounded-2xl text-center"><div class="text-xl font-bold">${v}</div><div class="text-xs">${k}</div></div>`).join('') || '<p class="text-slate-500 text-sm col-span-4">Browse the directory and church pages to generate click data.</p>'}
-        </div>
-        <h4 class="font-semibold text-sm mt-6 mb-2">Recent Activity</h4>
-        <div class="text-xs space-y-1">${(stats.recent || []).slice().reverse().map((s) => `<div class="py-1 border-b">${s.type} — ${s.target || s.id} — ${new Date(s.at || Date.now()).toLocaleString()}</div>`).join('') || 'No recent clicks.'}</div>
       </div>`;
   };
 
-  P.renderAdminApi = function (el) {
+  P.renderAdminApi = async function (el) {
+    el.innerHTML = '<p class="text-sm text-slate-500 py-6">Loading API panel…</p>';
     const st = P.api?.getStatus?.() || { mode: 'local', connected: true, endpoints: {}, recentCalls: [] };
-    const hooks = P.get('webhooks', []);
-    const hookLog = P.get('webhook_log', []);
+    const onProd = typeof window !== 'undefined' && /upperroomdfw\.com|amplifyapp\.com|cloudfront\.net/i.test(window.location.hostname || '');
+    let hooks = P.get('webhooks', []);
+    let hookLog = P.get('webhook_log', []);
+    let eventLog = [];
+    let platform = null;
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const [hookList, wlog, elog, plat] = await Promise.all([
+          P.api.webhooks.list(),
+          P.api.webhooks.log(),
+          P.api.webhooks.eventsLog(),
+          fetch('/api/platform/integrations', { headers: { Authorization: 'Bearer ' + localStorage.getItem('urdfw_api_token') } }).then((r) => r.ok ? r.json() : null),
+        ]);
+        hooks = hookList;
+        hookLog = wlog;
+        eventLog = elog;
+        platform = plat;
+        P.set('webhooks', hooks);
+      } catch { /* keep local */ }
+    }
+    const platformRows = platform?.platform ? Object.entries(platform.platform).map(([k, v]) => {
+      const on = v && (v.enabled === true || v.enabled === undefined && v.host);
+      return `<div class="flex justify-between py-1 border-b text-xs"><span class="capitalize">${k}</span><span class="${on ? 'text-emerald-600' : 'text-slate-400'}">${on ? 'env ✓' : 'off'}</span></div>`;
+    }).join('') : '';
     el.innerHTML = `
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="portal-panel">
           <h3 class="font-semibold mb-3">API Connection</h3>
-          <p class="text-xs text-slate-500 mb-4">Local mode uses browser storage. Switch to remote when your backend is ready.</p>
+          <p class="text-xs text-slate-500 mb-4">${onProd ? 'Production is locked to remote API — credentials load from server .env.' : 'Local mode uses browser storage. Switch to remote when your backend is ready.'}</p>
+          ${onProd ? `<div class="text-sm mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800"><i class="fa-solid fa-link mr-1"></i> Connected: <strong>${st.mode}</strong> → ${st.endpoints?.base || location.origin}</div>` : `
           <form id="admin-api-config" class="space-y-3 text-sm">
             <div>
               <label class="text-xs font-medium">Mode</label>
@@ -867,7 +1134,8 @@
               <input name="base" value="${st.endpoints?.base || ''}" placeholder="https://api.yourdomain.com" class="w-full border rounded-xl px-3 py-2 text-sm">
             </div>
             <button type="submit" class="px-4 py-2 bg-[#0369a1] text-white rounded-xl text-sm">Save API Config</button>
-          </form>
+          </form>`}
+          ${platformRows ? `<div class="mt-4"><h4 class="text-xs font-semibold mb-2">Platform .env services</h4>${platformRows}</div>` : ''}
           <div class="mt-4 text-xs space-y-1">
             <div><strong>Auth:</strong> ${st.endpoints?.auth || '/api/auth'}</div>
             <div><strong>Billing:</strong> ${st.endpoints?.billing || '/api/billing'}</div>
@@ -881,11 +1149,13 @@
             <input name="url" placeholder="https://hooks.example.com/urdfw" class="flex-1 border rounded-xl px-3 py-2" required>
             <button type="submit" class="px-3 py-2 bg-slate-800 text-white rounded-xl">Add</button>
           </form>
-          <div class="text-xs space-y-2 max-h-32 overflow-auto mb-4">${hooks.length ? hooks.map((h) => `<div class="py-1 border-b font-mono">${h.url}</div>`).join('') : '<span class="text-slate-500">No webhooks registered.</span>'}</div>
+          <div class="text-xs space-y-2 max-h-32 overflow-auto mb-4">${hooks.length ? hooks.map((h) => `<div class="py-1 border-b font-mono flex justify-between gap-2"><span>${h.url}</span>${h.active === false ? '<span class="text-red-500">off</span>' : ''}</div>`).join('') : '<span class="text-slate-500">No webhooks registered.</span>'}</div>
           <h4 class="font-semibold text-xs mb-2">Recent API Calls</h4>
-          <div class="text-[11px] space-y-1 max-h-40 overflow-auto font-mono">${(st.recentCalls || []).map((c) => `<div class="py-1 border-b">${c.name} • ${c.source} • ${c.ms}ms</div>`).join('') || 'No calls yet.'}</div>
-          <h4 class="font-semibold text-xs mt-4 mb-2">Webhook Queue</h4>
-          <div class="text-[11px] max-h-24 overflow-auto">${hookLog.slice(0, 10).map((l) => `<div class="py-0.5">${l.event} → ${l.url}</div>`).join('') || 'Empty.'}</div>
+          <div class="text-[11px] space-y-1 max-h-32 overflow-auto font-mono">${(st.recentCalls || []).map((c) => `<div class="py-1 border-b">${c.name} • ${c.source} • ${c.ms}ms</div>`).join('') || 'No calls yet.'}</div>
+          <h4 class="font-semibold text-xs mt-4 mb-2">Webhook Delivery Log</h4>
+          <div class="text-[11px] max-h-24 overflow-auto">${hookLog.slice(0, 10).map((l) => `<div class="py-0.5">${l.event || l.action} → ${l.url || l.target} <span class="text-slate-400">${l.status || ''}</span></div>`).join('') || 'Empty.'}</div>
+          <h4 class="font-semibold text-xs mt-4 mb-2">Platform Events</h4>
+          <div class="text-[11px] max-h-24 overflow-auto">${eventLog.slice(0, 10).map((e) => `<div class="py-0.5">${e.type || e.event} — ${e.at || e.created_at}</div>`).join('') || 'No events yet.'}</div>
         </div>
       </div>`;
 
@@ -898,11 +1168,12 @@
       P.renderApiStatusPanel?.('admin-api-status');
     });
 
-    el.querySelector('#admin-webhook-form')?.addEventListener('submit', (e) => {
+    el.querySelector('#admin-webhook-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const url = new FormData(e.target).get('url');
-      P.api.webhooks.register(url, ['payment', 'registration', 'claim', 'support']);
+      await P.api.webhooks.register(url, ['payment.completed', 'user.registered', 'lead.created', 'support.created']);
       P.portalToast?.('Webhook registered.');
+      e.target.reset();
       P.renderAdminApi(el);
     });
   };

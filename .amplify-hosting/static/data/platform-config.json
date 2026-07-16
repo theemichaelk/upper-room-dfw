@@ -1,6 +1,28 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "displayModes": ["grid", "list", "map", "compact"],
+  "breakpoints": {
+    "mobile": { "min": 0, "max": 479, "label": "Mobile" },
+    "mobileLg": { "min": 480, "max": 767, "label": "Mobile Large" },
+    "tablet": { "min": 768, "max": 1023, "label": "Tablet" },
+    "laptop": { "min": 1024, "max": 1439, "label": "Laptop" },
+    "desktop": { "min": 1440, "max": null, "label": "Desktop" }
+  },
+  "performance": {
+    "lazyBelowFoldImages": true,
+    "contentVisibilityLists": true,
+    "deferNonCriticalScripts": true
+  },
+  "injection": {
+    "configPath": "data/injection-config.json",
+    "stylesheets": ["css/platform.css", "css/responsive.css"]
+  },
+  "seo": {
+    "siteName": "Upper Room DFW",
+    "defaultLocale": "en_US",
+    "twitterSite": "@upperroomdfw",
+    "ogImage": "https://upperroomdfw.com/images/10.jpg"
+  },
   "singlePageTemplates": [
     "classic", "modern", "minimal", "magazine", "card", "hero",
     "sidebar", "fullwidth", "dark", "light", "event", "ministry",

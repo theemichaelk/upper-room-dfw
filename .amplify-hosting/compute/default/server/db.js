@@ -145,6 +145,37 @@ function initDb() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS reviews (
+      id TEXT PRIMARY KEY,
+      listing_id TEXT,
+      author TEXT,
+      email TEXT,
+      stars INTEGER DEFAULT 5,
+      text TEXT,
+      criteria_json TEXT,
+      status TEXT DEFAULT 'published',
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS training_progress (
+      user_id TEXT PRIMARY KEY,
+      client_id TEXT,
+      completed_json TEXT DEFAULT '[]',
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS media_assets (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      listing_id TEXT,
+      name TEXT,
+      mime_type TEXT,
+      s3_key TEXT,
+      url TEXT,
+      kind TEXT DEFAULT 'image',
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS subscribers (
       email TEXT PRIMARY KEY,
       created_at TEXT NOT NULL
@@ -173,6 +204,79 @@ function initDb() {
       email TEXT,
       at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS platform_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS webhooks (
+      id TEXT PRIMARY KEY,
+      url TEXT NOT NULL,
+      events_json TEXT NOT NULL DEFAULT '["*"]',
+      label TEXT,
+      active INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS webhook_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      webhook_id TEXT,
+      event TEXT,
+      status TEXT,
+      at TEXT NOT NULL,
+      error TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS event_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event TEXT NOT NULL,
+      payload_json TEXT,
+      at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS short_links (
+      id TEXT PRIMARY KEY,
+      target_url TEXT NOT NULL,
+      tiny_url TEXT,
+      alias TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sites (
+      id TEXT PRIMARY KEY,
+      client_id TEXT,
+      name TEXT NOT NULL,
+      domain TEXT UNIQUE NOT NULL,
+      type TEXT DEFAULT 'client',
+      hosted_zone_id TEXT,
+      status TEXT DEFAULT 'active',
+      cloudfront_domain TEXT,
+      amplify_domain TEXT,
+      source TEXT DEFAULT 'manual',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS dns_records (
+      id TEXT PRIMARY KEY,
+      site_id TEXT NOT NULL,
+      record_type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      value TEXT NOT NULL,
+      ttl INTEGER DEFAULT 300,
+      priority INTEGER,
+      route53_synced INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'pending',
+      error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sites_client ON sites(client_id);
+    CREATE INDEX IF NOT EXISTS idx_sites_domain ON sites(domain);
+    CREATE INDEX IF NOT EXISTS idx_dns_site ON dns_records(site_id);
 
     CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
     CREATE INDEX IF NOT EXISTS idx_leads_church ON leads(church_email);

@@ -1,5 +1,5 @@
 const { getStripe, isStripeEnabled } = require('./services/stripe');
-const { sendPaymentReceipt } = require('./services/email');
+const { getEvents } = require('./services/events');
 
 function handleStripeWebhook(db, req, res) {
   if (!isStripeEnabled()) return res.status(400).send('Stripe not configured');
@@ -45,7 +45,16 @@ function handleStripeWebhook(db, req, res) {
             plan === 'premium' ? 1 : 0, plan, 'live', client.listing_id
           );
         }
-        if (client?.email) sendPaymentReceipt(client.email, amount, plan).catch(() => {});
+        if (client?.email) {
+          getEvents(db).emit('payment.completed', {
+            email: client.email,
+            amount,
+            plan,
+            clientId,
+            gateway: 'stripe',
+            sessionId: session.id,
+          }).catch(() => {});
+        }
       }
       break;
     }
@@ -64,6 +73,13 @@ function handleStripeWebhook(db, req, res) {
             db.prepare('UPDATE listings SET featured = 0, sticky = 0, level = ? WHERE id = ?').run('standard', client.listing_id);
           }
         }
+        const client = db.prepare('SELECT email FROM clients WHERE id = ?').get(clientId);
+        getEvents(db).emit('subscription.updated', {
+          clientId,
+          email: client?.email,
+          status: sub.status,
+          active,
+        }).catch(() => {});
       }
       break;
     }
@@ -73,6 +89,12 @@ function handleStripeWebhook(db, req, res) {
       const client = db.prepare('SELECT id, email FROM clients WHERE stripe_customer_id = ?').get(customerId);
       if (client) {
         db.prepare('UPDATE clients SET subscription_status = ? WHERE id = ?').run('past_due', client.id);
+        getEvents(db).emit('subscription.updated', {
+          clientId: client.id,
+          email: client.email,
+          status: 'past_due',
+          active: false,
+        }).catch(() => {});
       }
       break;
     }

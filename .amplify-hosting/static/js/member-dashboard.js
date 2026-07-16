@@ -6,6 +6,7 @@
   let leadsFilter = 'all';
   let overviewChart = null;
   let apiLeadsCache = null;
+  let trainingCache = null;
 
   const trainingModules = [
     { id: 1, title: 'Optimizing Your Listing for Local SEO', content: 'Use DFW-area keywords, service times, and fresh photos so families searching "churches near me" find you.', tip: 'Update photos monthly for up to 40% more profile views.' },
@@ -17,12 +18,12 @@
     { id: 7, title: 'Verified Listings & Community Trust', content: 'Complete profile, safety policies, and training for the verified badge families trust.', tip: 'Verified churches rank higher in Best Match sort.' },
   ];
 
-  const TAB_MAP = ['overview', 'billing', 'training', 'listing', 'leads', 'profile', 'messages', 'media', 'saved', 'support', 'notifications', 'reviews', 'claims', 'analytics'];
+  const TAB_MAP = ['overview', 'billing', 'training', 'listing', 'leads', 'profile', 'messages', 'media', 'saved', 'support', 'notifications', 'reviews', 'claims', 'analytics', 'dns'];
 
   const MEMBER_TAB_INDEX = {
     overview: 0, billing: 1, training: 2, listing: 3, leads: 4,
     profile: 5, messages: 6, media: 7, saved: 8, support: 9,
-    notifications: 10, reviews: 11, claims: 12, analytics: 13,
+    notifications: 10, reviews: 11, claims: 12, analytics: 13, dns: 14,
   };
 
   function bindMemberSidebarNav() {
@@ -101,6 +102,7 @@
   }
 
   function seedDemoLeadsIfNeeded(client) {
+    if (global.URDFWPlatform?.apiConfig?.mode === 'remote') return;
     const key = 'urdfw_leads_seeded_' + (client.email || client.id || '').toLowerCase();
     if (localStorage.getItem(key)) return;
 
@@ -116,8 +118,28 @@
     localStorage.setItem(key, '1');
   }
 
+  function getTrainingCompleted(key) {
+    if (trainingCache) return trainingCache;
+    return JSON.parse(localStorage.getItem('training_' + (key || '').toLowerCase()) || '[]');
+  }
+
+  async function loadTrainingProgress(client) {
+    const key = (client?.email || client?.id || 'demo').toLowerCase();
+    const P = global.URDFWPlatform;
+    if (P?.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token') && P.api?.training?.get) {
+      try {
+        const res = await P.api.training.get();
+        trainingCache = res?.completed || [];
+        localStorage.setItem('training_' + key, JSON.stringify(trainingCache));
+        return trainingCache;
+      } catch { /* fall through */ }
+    }
+    trainingCache = JSON.parse(localStorage.getItem('training_' + key) || '[]');
+    return trainingCache;
+  }
+
   function computeTrainingProgress(key) {
-    const done = JSON.parse(localStorage.getItem('training_' + (key || '').toLowerCase()) || '[]');
+    const done = getTrainingCompleted(key);
     return Math.round((done.length / trainingModules.length) * 100);
   }
 
@@ -190,6 +212,7 @@
 
     if (res?.token) P?.storeApiToken?.(res.token);
     if (btn) { btn.disabled = false; btn.innerHTML = btnHtml; }
+    await P?.syncPlatformFromApi?.();
     showDashboard(client);
     P?.portalToast?.('Welcome back, ' + (client.name || 'partner') + '!');
   }
@@ -244,7 +267,7 @@
     updateQuickStats(client);
     renderOverview(client);
     renderBilling(client);
-    initTraining(client);
+    loadTrainingProgress(client).then(() => initTraining(client));
     renderMyListing(client);
     renderLeads(client);
 
@@ -429,7 +452,7 @@
     }, 150);
   }
 
-  function renderBilling(client) {
+  async function renderBilling(client) {
     const statusEl = document.getElementById('billing-status');
     const formEl = document.getElementById('payment-form');
     const histEl = document.getElementById('payment-history');
@@ -447,12 +470,28 @@
     const portalBtn = document.getElementById('member-billing-portal');
     if (portalBtn) portalBtn.classList.toggle('hidden', !isActive);
 
-    const payments = client.payments || [];
+    let payments = client.payments || [];
+    const P = global.URDFWPlatform;
+    if (P?.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const invoices = await P.api.billing.getInvoices(client.email);
+        if (Array.isArray(invoices) && invoices.length) {
+          payments = invoices.map((i) => ({
+            date: i.date || i.created_at,
+            amount: i.amount,
+            plan: i.plan || 'Standard',
+            method: i.gateway || 'stripe',
+            status: i.status,
+          }));
+        }
+      } catch { /* keep client.payments */ }
+    }
+
     if (histEl) {
       histEl.innerHTML = payments.length
         ? payments.slice().reverse().map((p) => `
             <div class="py-2.5 flex justify-between text-xs border-b border-slate-100 last:border-0">
-              <span>${new Date(p.date).toLocaleDateString()} — ${p.plan || 'Standard'} · ${p.method || 'card'}</span>
+              <span>${new Date(p.date).toLocaleDateString()} — ${p.plan || 'Standard'} · ${p.method || 'card'}${p.status ? ' · ' + p.status : ''}</span>
               <span class="font-mono text-emerald-600 font-medium">$${p.amount}.00</span>
             </div>`).join('')
         : '<div class="text-xs text-slate-400 py-2">No payments yet. Your first charge appears here after subscribing.</div>';
@@ -552,10 +591,24 @@
 
   function initTraining(client) {
     const key = (client.email || client.id || 'demo').toLowerCase();
-    const completed = JSON.parse(localStorage.getItem('training_' + key) || '[]');
+    const completed = getTrainingCompleted(key);
     const container = document.getElementById('training-modules');
     if (!container) return;
     container.innerHTML = '';
+
+    const markComplete = async (modId) => {
+      const P = global.URDFWPlatform;
+      if (!completed.includes(modId)) completed.push(modId);
+      trainingCache = completed;
+      localStorage.setItem('training_' + key, JSON.stringify(completed));
+      if (P?.api?.training?.complete) {
+        try { await P.api.training.complete(modId); } catch { /* local saved */ }
+      }
+      initTraining(currentClient);
+      updateQuickStats(currentClient);
+      renderOverview(currentClient);
+      P?.portalToast?.('Module ' + modId + ' complete!');
+    };
 
     trainingModules.forEach((mod, i) => {
       const isDone = completed.includes(mod.id);
@@ -571,25 +624,14 @@
         </div>`;
 
       const btn = div.querySelector('button[data-mid]');
-      if (!isDone && btn) {
-        btn.onclick = () => {
-          if (!completed.includes(mod.id)) completed.push(mod.id);
-          localStorage.setItem('training_' + key, JSON.stringify(completed));
-          initTraining(currentClient);
-          updateQuickStats(currentClient);
-          renderOverview(currentClient);
-          global.URDFWPlatform?.portalToast?.('Module ' + mod.id + ' complete!');
-        };
-      }
+      if (!isDone && btn) btn.onclick = () => markComplete(mod.id);
 
       div.querySelector('.quiz-btn')?.addEventListener('click', (ev) => {
         const score = Math.floor(Math.random() * 30) + 70;
         ev.target.textContent = 'Score: ' + score + '%';
         ev.target.disabled = true;
         if (score > 70 && !completed.includes(mod.id)) {
-          completed.push(mod.id);
-          localStorage.setItem('training_' + key, JSON.stringify(completed));
-          setTimeout(() => initTraining(currentClient), 600);
+          setTimeout(() => markComplete(mod.id), 600);
         }
       });
 
@@ -747,7 +789,17 @@
       }).join('') : '<div class="member-empty">No leads for this filter.</div>'}`;
   }
 
-  function replyToLead(leadId) {
+  async function replyToLead(leadId) {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (token && global.URDFWPlatform?.apiConfig?.mode === 'remote') {
+      try {
+        await fetch('/api/leads/' + leadId, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ status: 'contacted' }),
+        });
+      } catch { /* local fallback */ }
+    }
     const leads = JSON.parse(localStorage.getItem('urdfw_leads') || '[]');
     const lead = leads.find((l) => l.id === leadId);
     if (lead) {
@@ -755,8 +807,9 @@
       lead.repliedAt = new Date().toISOString();
       localStorage.setItem('urdfw_leads', JSON.stringify(leads));
     }
-    global.URDFWPlatform?.portalToast?.('Reply logged — lead marked contacted.');
+    global.URDFWPlatform?.portalToast?.('Lead marked contacted.');
     if (currentClient) {
+      await loadApiLeads();
       renderLeads(currentClient);
       renderOverview(currentClient);
       updateQuickStats(currentClient);
@@ -764,9 +817,21 @@
   }
 
   function viewLeadDetail(leadId) {
-    const leads = JSON.parse(localStorage.getItem('urdfw_leads') || '[]');
+    const client = currentClient;
+    const leads = client ? getMyLeads(client) : [];
     const l = leads.find((x) => x.id === leadId) || { name: 'Lead', message: 'No details.', status: 'new' };
-    alert('Lead: ' + l.name + '\n' + l.email + '\n\n' + l.message + '\n\nStatus: ' + (l.status || 'new'));
+    const panel = document.createElement('div');
+    panel.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4';
+    panel.innerHTML = `
+      <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl text-sm">
+        <h3 class="font-bold text-lg mb-2">${l.name || 'Lead'}</h3>
+        <p class="text-slate-500">${l.email || ''} ${l.phone ? '· ' + l.phone : ''}</p>
+        <p class="mt-4 text-slate-700">${l.message || ''}</p>
+        <p class="mt-3 text-xs"><span class="font-semibold">Status:</span> ${l.status || 'new'}</p>
+        ${l.email ? `<a href="mailto:${l.email}" class="inline-block mt-4 px-4 py-2 bg-[#0369a1] text-white rounded-xl">Reply via Email</a>` : ''}
+        <button type="button" class="block mt-3 w-full py-2 border rounded-xl" onclick="this.closest('.fixed').remove()">Close</button>
+      </div>`;
+    document.body.appendChild(panel);
   }
 
   function logActivity() {
@@ -788,6 +853,7 @@
     if (id === 'reviews') P.renderMemberReviews?.(document.getElementById('member-platform-reviews'), client);
     if (id === 'claims') P.renderMemberClaims?.(document.getElementById('member-platform-claims'), client);
     if (id === 'analytics') P.renderMemberAnalytics?.(document.getElementById('member-platform-analytics'), client);
+    if (id === 'dns') P.renderMemberDns?.(document.getElementById('member-platform-dns'));
   }
 
   function switchMemberTab(n, tabId) {
@@ -811,6 +877,12 @@
     if (metrics) metrics.style.display = n === 0 ? '' : 'none';
 
     renderMemberTabPanel(n, id);
+    if (id === 'billing' && currentClient) renderBilling(currentClient);
+    if (id === 'leads' && currentClient) {
+      loadApiLeads().then(() => {
+        if (currentClient) renderLeads(currentClient);
+      });
+    }
     pane.scrollIntoView({ behavior: 'smooth', block: 'start' });
     document.querySelector('.member-workspace')?.scrollTo?.({ top: 0, behavior: 'smooth' });
   }

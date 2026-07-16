@@ -5,23 +5,76 @@
   const P = global.URDFWPlatform;
   if (!P) return;
 
-  P.uploadImageAjax = function (file, listingId) {
-    return new Promise((resolve) => {
+  P._mediaCache = P._mediaCache || {};
+
+  P.uploadImageAjax = function (file, listingId, clientId) {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
+        const dataUrl = e.target.result;
+        if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+          try {
+            const res = await P.api?.media?.upload({
+              listingId,
+              clientId,
+              name: file.name,
+              dataUrl,
+            });
+            const asset = res?.asset || res;
+            if (asset) {
+              P._mediaCache[listingId] = P._mediaCache[listingId] || [];
+              P._mediaCache[listingId].unshift(asset);
+              resolve(asset);
+              return;
+            }
+          } catch (err) {
+            reject(err);
+            return;
+          }
+        }
         const uploads = P.get('media_uploads', {});
         uploads[listingId] = uploads[listingId] || [];
-        const item = { id: P.uuid(), dataUrl: e.target.result, name: file.name, at: Date.now() };
+        const item = { id: P.uuid(), dataUrl, url: dataUrl, name: file.name, at: Date.now() };
         uploads[listingId].push(item);
         P.set('media_uploads', uploads);
         resolve(item);
       };
+      reader.onerror = () => reject(new Error('Failed to read file'));
       reader.readAsDataURL(file);
     });
   };
 
-  P.getListingMedia = function (listingId) {
+  P.loadListingMedia = async function (listingId) {
+    if (!listingId) return [];
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      try {
+        const res = await P.api?.media?.list(listingId);
+        const assets = res?.assets || [];
+        P._mediaCache[listingId] = assets;
+        return assets;
+      } catch { /* fall through */ }
+    }
     return P.get('media_uploads', {})[listingId] || [];
+  };
+
+  P.getListingMedia = function (listingId) {
+    if (P._mediaCache[listingId]?.length) return P._mediaCache[listingId];
+    return P.get('media_uploads', {})[listingId] || [];
+  };
+
+  P.deleteListingMedia = async function (assetId, listingId) {
+    if (P.apiConfig?.mode === 'remote' && localStorage.getItem('urdfw_api_token')) {
+      await P.api?.media?.remove(assetId);
+      if (listingId && P._mediaCache[listingId]) {
+        P._mediaCache[listingId] = P._mediaCache[listingId].filter((a) => a.id !== assetId);
+      }
+      return;
+    }
+    const uploads = P.get('media_uploads', {});
+    if (uploads[listingId]) {
+      uploads[listingId] = uploads[listingId].filter((a) => a.id !== assetId);
+      P.set('media_uploads', uploads);
+    }
   };
 
   P.parseYouTubeId = function (url) {

@@ -81,7 +81,7 @@ function footerBlock(prefix) {
  <a href="${p}directory.html" class="hover:text-white">Directory</a> •
  <a href="${p}blog.html" class="hover:text-white">Blog</a> •
  <a href="${p}feed.xml" class="hover:text-white">RSS</a> •
- <a href="${p}sitemap.xml" class="hover:text-white">Sitemap</a> •
+ <a href="${p}sitemap.html" class="hover:text-white">Sitemap</a> •
  <a href="${p}privacy-policy.html" class="hover:text-white">Privacy</a>
  </div>
  <div class="text-center text-xs py-3 text-slate-500 border-t border-white/10 urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a></div>

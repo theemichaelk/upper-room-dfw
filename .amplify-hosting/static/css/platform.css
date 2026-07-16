@@ -95,7 +95,17 @@ body.urdfw-platform { font-family: var(--urdfw-font); }
 /* Shortcode output */
 .shortcode-output { font-family: ui-monospace, monospace; font-size: 12px; background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; word-break: break-all; }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .urdfw-mode-list .church-card { flex-direction: column; max-height: none; }
-  .urdfw-mode-list .church-card .relative { width: 100%; }
+  .urdfw-mode-list .church-card .relative { width: 100%; min-height: 140px; }
+  .urdfw-mode-grid .directory-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+  #urdfw-customize-drawer { width: min(280px, calc(100vw - 2rem)); }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .urdfw-mode-map #directory-map { height: min(400px, 45vh) !important; }
+}
+
+@media (min-width: 1440px) {
+  .urdfw-mode-grid .directory-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 }

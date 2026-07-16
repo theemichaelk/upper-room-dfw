@@ -1,36 +1,20 @@
 {
-  "scannedAt": "2026-07-11T04:55:18.220Z",
+  "scannedAt": "2026-07-16T20:21:29.561Z",
   "files": {
-    "html": 158,
-    "js": 31,
-    "css": 6
+    "html": 179,
+    "js": 37,
+    "css": 8
   },
-  "criticalCount": 3,
-  "warningCount": 217,
-  "critical": [
-    {
-      "type": "MISMATCH",
-      "expected": "body",
-      "got": "div",
-      "line": 194,
-      "file": "events.html"
-    },
-    {
-      "type": "MISMATCH",
-      "expected": "html",
-      "got": "body",
-      "line": 269,
-      "file": "events.html"
-    },
-    {
-      "type": "UNCLOSED_EXTRA",
-      "tag": "html",
-      "line": 270,
-      "file": "events.html"
-    }
-  ],
+  "criticalCount": 0,
+  "warningCount": 188,
+  "critical": [],
   "warnings": [
     {
+      "type": "RAW_LT_IN_SCRIPT",
+      "file": "admin.html",
+      "count": 1
+    },
+    {
       "type": "TEMPLATE_IN_SCRIPT",
       "file": "billing-hub.html",
       "detail": "Nested closing tag inside template literal in script"
@@ -82,16 +66,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/bethel-ministries-dallas-1781406081253.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/bethel-ministries-dallas-1781406081253.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/bethel-ministries-dallas-1781406081313.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -128,16 +102,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/calvary-family-church-carrollton-1781406081306.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/calvary-family-church-euless-1781406081266.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/calvary-family-church-euless-1781406081266.html",
       "count": 1
     },
     {
@@ -212,16 +176,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/covenant-bible-church-mesquite-1781406081259.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/covenant-bible-church-mesquite-1781406081259.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/covenant-bible-church-mesquite-1781406081319.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -238,16 +192,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/crossroads-assembly-arlington-1781406081297.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/crossroads-assembly-irving-1781406081257.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/crossroads-assembly-irving-1781406081257.html",
       "count": 1
     },
     {
@@ -292,16 +236,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/emmanuel-chapel-richardson-1781406081260.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/emmanuel-chapel-richardson-1781406081260.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/emmanuel-chapel-richardson-1781406081320.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -342,16 +276,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/faith-family-church-frisco-1781406081316.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/faith-family-church-frisco-1781406081316.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/grace-city-church.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -378,16 +302,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/grace-community-church-irving-1781406081302.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/grace-community-church-mckinney-1781406081262.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/grace-community-church-mckinney-1781406081262.html",
       "count": 1
     },
     {
@@ -428,16 +342,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/harvest-baptist-church-euless-1781406081251.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/harvest-baptist-church-euless-1781406081311.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/harvest-baptist-church-euless-1781406081311.html",
       "count": 1
     },
     {
@@ -492,16 +396,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/kingdom-fellowship-plano-1781406081255.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/kingdom-fellowship-plano-1781406081255.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/kingdom-fellowship-plano-1781406081315.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -552,16 +446,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/living-word-worship-center-garland-1781406081318.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/living-word-worship-center-garland-1781406081318.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/new-bethel-missionary-baptist.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -588,16 +472,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/new-life-ministries-denton-1781406081263.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/new-life-ministries-denton-1781406081323.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/new-life-ministries-denton-1781406081323.html",
       "count": 1
     },
     {
@@ -652,16 +526,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/restoration-methodist-church-fort-worth-1781406081314.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/restoration-methodist-church-fort-worth-1781406081314.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/restoration-methodist-church-lewisville-1781406081294.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -688,16 +552,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/riverside-fellowship-grand-prairie-1781406081265.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/riverside-fellowship-grand-prairie-1781406081325.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/riverside-fellowship-grand-prairie-1781406081325.html",
       "count": 1
     },
     {
@@ -752,16 +606,6 @@
     },
     {
       "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/summit-methodist-church-lewisville-1781406081264.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/summit-methodist-church-lewisville-1781406081264.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
       "file": "churches/summit-methodist-church-lewisville-1781406081324.html",
       "detail": "Nested closing tag inside template literal in script"
     },
@@ -788,16 +632,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/the-house-network.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/trinity-community-church-arlington-1781406081252.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/trinity-community-church-arlington-1781406081252.html",
       "count": 1
     },
     {
@@ -838,16 +672,6 @@
     {
       "type": "RAW_LT_IN_SCRIPT",
       "file": "churches/victory-baptist-church-carrollton-1781406081261.html",
-      "count": 1
-    },
-    {
-      "type": "TEMPLATE_IN_SCRIPT",
-      "file": "churches/victory-baptist-church-carrollton-1781406081321.html",
-      "detail": "Nested closing tag inside template literal in script"
-    },
-    {
-      "type": "RAW_LT_IN_SCRIPT",
-      "file": "churches/victory-baptist-church-carrollton-1781406081321.html",
       "count": 1
     },
     {
@@ -1097,6 +921,14 @@
     {
       "type": "NESTED_TEMPLATE_LITERAL_MARKERS",
       "file": "js/platform/20-dns.js"
+    },
+    {
+      "type": "NESTED_TEMPLATE_LITERAL_MARKERS",
+      "file": "js/platform/25-control-panel.js"
+    },
+    {
+      "type": "NESTED_TEMPLATE_LITERAL_MARKERS",
+      "file": "js/platform/26-blog-admin.js"
     }
   ]
 }

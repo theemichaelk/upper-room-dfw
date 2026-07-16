@@ -35,6 +35,50 @@
     return new Promise((r) => setTimeout(r, ms || P.apiConfig.latencyMs));
   }
 
+  function isProductionHost() {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname || '';
+    return host.includes('upperroomdfw.com') || host.includes('amplifyapp.com') || host.includes('cloudfront.net');
+  }
+
+  function getTokenPayload() {
+    const token = localStorage.getItem('urdfw_api_token');
+    if (!token) return null;
+    try {
+      return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    } catch {
+      return null;
+    }
+  }
+
+  function getTokenRole() {
+    return getTokenPayload()?.role || null;
+  }
+
+  function normalizeClient(c) {
+    if (!c) return c;
+    return {
+      ...c,
+      churchEmail: c.churchEmail || c.church_email || c.email,
+      church_email: c.church_email || c.churchEmail || c.email,
+      isPaid: !!(c.isPaid ?? c.is_paid),
+      trialStart: c.trialStart || c.trial_start,
+      listingId: c.listingId || c.listing_id,
+      registeredAt: c.registeredAt || c.registered_at,
+    };
+  }
+
+  function normalizeLead(l) {
+    if (!l) return l;
+    return {
+      ...l,
+      churchEmail: l.churchEmail || l.church_email,
+      church_email: l.church_email || l.churchEmail,
+      listingId: l.listingId || l.listing_id,
+      createdAt: l.createdAt || l.created_at,
+    };
+  }
+
   async function remoteFetch(path, opts) {
     const base = P.apiConfig.endpoints.base ?? '';
     const token = localStorage.getItem('urdfw_api_token');
@@ -79,9 +123,20 @@
         P.apiConfig.mode = 'remote';
         P.apiConfig.endpoints.base = base;
         P.set('api_config', P.apiConfig);
-        P.emit('api:connected', await res.json());
+        const health = await res.json();
+        P.emit('api:connected', health);
+        if (isProductionHost()) {
+          try {
+            const cfgRes = await fetch((base || '') + '/api/config', { credentials: 'omit' });
+            if (cfgRes.ok) P._remoteConfig = await cfgRes.json();
+          } catch { /* ignore */ }
+        }
         return true;
       } catch { /* try next */ }
+    }
+    if (isProductionHost()) {
+      P.apiConfig.mode = 'remote';
+      P.set('api_config', P.apiConfig);
     }
     return false;
   };
@@ -94,9 +149,17 @@
 
     if (P.apiConfig.mode === 'remote') {
       try {
-        result = await remoteFetch(remotePath, remoteBody ? { method: 'POST', body: remoteBody } : { method: 'GET' });
+        const method = remoteBody?.method || (remoteBody ? 'POST' : 'GET');
+        const body = remoteBody?.body !== undefined ? remoteBody.body : remoteBody;
+        result = await remoteFetch(remotePath, body !== undefined && method !== 'GET'
+          ? { method, body }
+          : { method: method || 'GET' });
         source = 'remote';
       } catch (e) {
+        if (isProductionHost()) {
+          P.emit('api:error', { name, error: e.message });
+          throw e;
+        }
         P.emit('api:fallback', { name, error: e.message });
         result = await localFn();
         source = 'local-fallback';
@@ -137,12 +200,18 @@
         const payload = { password };
         if (email) payload.email = (email || '').trim().toLowerCase();
         return call('auth.loginAdmin', async () => {
+          if (isProductionHost()) return { ok: false, error: 'Admin login requires API connection' };
           const valid = password === (P.get('admin_password', null) || 'admin123');
           if (!valid) return { ok: false, error: 'Invalid credentials' };
-          localStorage.setItem('urdfw_admin_mode', 'true');
           P.set('admin_session', { at: new Date().toISOString(), role: 'admin' });
           return { ok: true, role: 'admin' };
-        }, P.apiConfig.endpoints.auth + '/admin', payload);
+        }, P.apiConfig.endpoints.auth + '/admin', payload).then((res) => {
+          if (res?.token) {
+            P.storeApiToken(res.token);
+            P.set('admin_session', { at: new Date().toISOString(), role: 'admin', email: res.email });
+          }
+          return res;
+        });
       },
 
       loginMember(email, password) {
@@ -175,14 +244,20 @@
           const user = P.syncClientToUser ? P.syncClientToUser(client) : P.loginUser(em, password);
           if (password && P.changePassword && user) P.changePassword(user.id, password);
 
-          localStorage.setItem('urdfw_current_client', JSON.stringify(client));
+          localStorage.setItem('urdfw_current_client', JSON.stringify(normalizeClient(client)));
           P.set('member_session', { email: em, at: new Date().toISOString() });
-          return { ok: true, client, user };
-        }, P.apiConfig.endpoints.auth + '/member', { email, password });
+          return { ok: true, client: normalizeClient(client), user };
+        }, P.apiConfig.endpoints.auth + '/member', { email, password }).then((res) => {
+          if (res?.token) P.storeApiToken(res.token);
+          if (res?.client) {
+            res.client = normalizeClient(res.client);
+            localStorage.setItem('urdfw_current_client', JSON.stringify(res.client));
+          }
+          return res;
+        });
       },
 
       logoutAdmin() {
-        localStorage.removeItem('urdfw_admin_mode');
         P.storeApiToken?.(null);
         P.set('admin_session', null);
         return { ok: true };
@@ -204,7 +279,9 @@
       },
 
       isAdmin() {
-        return localStorage.getItem('urdfw_admin_mode') === 'true';
+        if (getTokenRole() === 'admin') return true;
+        if (isProductionHost()) return false;
+        return P.get('admin_session', null)?.role === 'admin';
       },
 
       getMember() {
@@ -248,10 +325,10 @@
           const list = P.get('clients', []);
           const idx = list.findIndex((c) => c.id === id);
           if (idx < 0) return { error: 'Not found' };
-          list[idx] = { ...list[idx], ...patch };
+          list[idx] = normalizeClient({ ...list[idx], ...patch });
           P.set('clients', list);
           return list[idx];
-        }, P.apiConfig.endpoints.clients + '/' + id, patch);
+        }, P.apiConfig.endpoints.clients + '/' + id, { method: 'PATCH', body: patch });
       },
       approve(id) {
         return P.api.clients.update(id, { status: 'approved' });
@@ -341,12 +418,32 @@
     },
 
     integrations: {
+      platform() {
+        return call('integrations.platform', async () => P._platformIntegrations || {}, '/api/platform/integrations');
+      },
+
       list() {
         return call('integrations.list', async () => ({
           providers: P.getIntegrationStats?.() || [],
           config: P.getIntegrationConfig?.() || {},
           subscribers: P.get('subscribers', []).length,
         }), P.apiConfig.endpoints.integrations);
+      },
+
+      memberList() {
+        return call('integrations.memberList', async () => ({
+          integrations: P.get('member_integration_config', {}),
+        }), '/api/client/integrations');
+      },
+
+      memberSave(provider, config) {
+        return call('integrations.memberSave', async () => {
+          const stored = P.get('member_integration_config', {});
+          stored[provider] = { ...(stored[provider] || {}), ...config, source: 'member' };
+          P.set('member_integration_config', stored);
+          P._memberIntegrations = stored;
+          return { ok: true, config: stored[provider] };
+        }, '/api/client/integrations/' + provider, { method: 'PATCH', body: config });
       },
 
       get(provider) {
@@ -422,12 +519,158 @@
       },
     },
 
+    claims: {
+      list() {
+        return call('claims.list', async () => P.get('claims', []), '/api/claims');
+      },
+      submit(data) {
+        return call('claims.submit', async () => {
+          const list = P.get('claims', []);
+          const claim = { id: P.uuid(), ...data, status: 'pending', at: new Date().toISOString() };
+          list.push(claim);
+          P.set('claims', list);
+          return { ok: true, claim };
+        }, '/api/claims', data);
+      },
+      approve(id) {
+        return call('claims.approve', async () => {
+          const list = P.get('claims', []);
+          const c = list.find((x) => x.id === id);
+          if (c) c.status = 'approved';
+          P.set('claims', list);
+          return { ok: true };
+        }, '/api/claims/' + id, { method: 'PATCH', body: { status: 'approved' } });
+      },
+    },
+
+    reviews: {
+      list(listingId) {
+        const q = listingId ? '?listingId=' + encodeURIComponent(listingId) : '';
+        return call('reviews.list', async () => {
+          const all = P.get('reviews', {});
+          return all[listingId] || [];
+        }, '/api/reviews' + q);
+      },
+      add(data) {
+        return call('reviews.add', async () => {
+          if (P.addReview) P.addReview(data.listingId, data);
+          return { ok: true };
+        }, '/api/reviews', data);
+      },
+      listAll() {
+        return call('reviews.listAll', async () => {
+          const all = P.get('reviews', {});
+          return Object.entries(all).flatMap(([lid, revs]) => revs.map((r) => ({ ...r, listingId: lid })));
+        }, '/api/admin/reviews');
+      },
+    },
+
+    training: {
+      get() {
+        return call('training.get', async () => {
+          const key = (localStorage.getItem('urdfw_current_client') || '').toLowerCase();
+          let email = '';
+          try { email = JSON.parse(localStorage.getItem('urdfw_current_client') || '{}').email || ''; } catch { /* ignore */ }
+          const done = JSON.parse(localStorage.getItem('training_' + (email || key).toLowerCase()) || '[]');
+          return { ok: true, completed: done };
+        }, '/api/training');
+      },
+      complete(moduleId) {
+        return call('training.complete', async () => {
+          const client = JSON.parse(localStorage.getItem('urdfw_current_client') || '{}');
+          const key = (client.email || client.id || 'demo').toLowerCase();
+          const done = JSON.parse(localStorage.getItem('training_' + key) || '[]');
+          const mid = Number(moduleId);
+          if (!done.includes(mid)) done.push(mid);
+          localStorage.setItem('training_' + key, JSON.stringify(done));
+          return { ok: true, completed: done };
+        }, '/api/training', { method: 'PATCH', body: { moduleId, complete: true } });
+      },
+    },
+
+    media: {
+      list(listingId) {
+        const q = listingId ? '?listingId=' + encodeURIComponent(listingId) : '';
+        return call('media.list', async () => {
+          const uploads = P.get('media_uploads', {});
+          return { ok: true, assets: uploads[listingId] || [] };
+        }, '/api/media' + q);
+      },
+      upload(data) {
+        return call('media.upload', async () => {
+          const uploads = P.get('media_uploads', {});
+          const lid = data.listingId || 'general';
+          uploads[lid] = uploads[lid] || [];
+          const item = { id: P.uuid(), dataUrl: data.dataUrl, url: data.dataUrl, name: data.name, at: Date.now() };
+          uploads[lid].push(item);
+          P.set('media_uploads', uploads);
+          return { ok: true, asset: item };
+        }, '/api/media', data);
+      },
+      remove(id) {
+        return call('media.remove', async () => ({ ok: true }), '/api/media/' + id, { method: 'DELETE' });
+      },
+    },
+
+    seo: {
+      getPages() {
+        return call('seo.pages', async () => ({ ok: true, pages: P.get('page_settings', {}) }), '/api/seo/pages');
+      },
+      savePage(pageId, patch) {
+        return call('seo.save', async () => {
+          const all = P.get('page_settings', {});
+          all[pageId] = { ...all[pageId], ...patch };
+          P.set('page_settings', all);
+          return { ok: true, page: all[pageId] };
+        }, '/api/seo/pages/' + encodeURIComponent(pageId), { method: 'PATCH', body: patch });
+      },
+    },
+
+    siteSettings: {
+      get() {
+        return call('siteSettings.get', async () => ({ ok: true, settings: P.get('site_settings', {}) }), '/api/platform/site-settings');
+      },
+      save(patch) {
+        return call('siteSettings.save', async () => {
+          const next = { ...P.get('site_settings', {}), ...patch };
+          P.set('site_settings', next);
+          return { ok: true, settings: next };
+        }, '/api/platform/site-settings', { method: 'PUT', body: patch });
+      },
+      verify(url) {
+        return call('telemetry.verify', async () => ({ ok: true }), '/api/platform/telemetry/verify', { method: 'POST', body: url ? { url } : {} });
+      },
+      rebuild(settings) {
+        return call('platform.rebuild', async () => ({ ok: true }), '/api/platform/rebuild', {
+          method: 'POST',
+          body: { settings, invalidateCache: true },
+        });
+      },
+    },
+
     webhooks: {
+      list() {
+        return call('webhooks.list', async () => P.get('webhooks', []), '/api/webhooks').then((r) => r?.webhooks || r || []);
+      },
       register(url, events) {
-        const hooks = P.get('webhooks', []);
-        hooks.push({ id: P.uuid(), url, events: events || ['*'], createdAt: new Date().toISOString() });
-        P.set('webhooks', hooks);
-        return hooks[hooks.length - 1];
+        return call('webhooks.register', async () => {
+          const hooks = P.get('webhooks', []);
+          hooks.push({ id: P.uuid(), url, events: events || ['*'], createdAt: new Date().toISOString() });
+          P.set('webhooks', hooks);
+          return hooks[hooks.length - 1];
+        }, '/api/webhooks', { url, events, label: 'Admin UI' }).then((r) => r?.webhook || r);
+      },
+      remove(id) {
+        return call('webhooks.remove', async () => {
+          P.set('webhooks', P.get('webhooks', []).filter((h) => h.id !== id));
+          return { ok: true };
+        }, '/api/webhooks/' + id, { method: 'DELETE' });
+      },
+      log() {
+        return call('webhooks.log', async () => P.get('webhook_log', []), '/api/webhooks/log').then((r) => r?.entries || r || []);
+      },
+      eventsLog() {
+        return call('events.log', async () => [], '/api/events/log').then((r) => r?.entries || r || []);
       },
       trigger(event, payload) {
         const hooks = P.get('webhooks', []);
@@ -462,13 +705,73 @@
   P.loadApiConfig();
   P.detectRemoteApi?.();
 
-  P.syncPlatformFromApi = async function () {
+  P.syncPlatformFromApi = async function (opts) {
     if (P.apiConfig.mode !== 'remote' || !localStorage.getItem('urdfw_api_token')) return;
+    const background = opts?.background === true;
+    const run = async () => {
     try {
-      const clients = await P.api.clients.list();
-      if (Array.isArray(clients)) P.set('clients', clients);
-      const orders = await P.api.admin.orders();
-      if (Array.isArray(orders)) P.set('orders', orders);
-    } catch { /* offline */ }
+      const me = await remoteFetch('/api/auth/me');
+      if (me?.client) {
+        const client = normalizeClient(me.client);
+        localStorage.setItem('urdfw_current_client', JSON.stringify(client));
+        P.set('member_session', { email: client.email, at: new Date().toISOString() });
+      }
+
+      const role = getTokenRole();
+      if (role === 'admin') {
+        const [clients, orders, stats, claims, tickets, seo, platform, integList, integStatus] = await Promise.all([
+          remoteFetch('/api/clients').catch(() => []),
+          remoteFetch('/api/admin/orders').catch(() => []),
+          remoteFetch('/api/admin/stats').catch(() => null),
+          remoteFetch('/api/claims').catch(() => []),
+          remoteFetch('/api/support').catch(() => []),
+          remoteFetch('/api/seo/pages').catch(() => null),
+          remoteFetch('/api/platform/integrations').catch(() => null),
+          remoteFetch('/api/integrations').catch(() => null),
+          remoteFetch('/api/integrations/status').catch(() => null),
+        ]);
+        if (Array.isArray(clients)) P.set('clients', clients.map(normalizeClient));
+        if (Array.isArray(orders)) P.set('orders', orders);
+        if (stats) P.set('admin_stats_cache', stats);
+        if (Array.isArray(claims)) P.set('claims', claims);
+        if (Array.isArray(tickets)) P.set('support_tickets', tickets);
+        if (seo?.pages) P.set('page_settings', seo.pages);
+        if (platform?.ok) P.applyPlatformIntegrations?.(platform);
+        if (integList?.subscriberEmails) P.set('subscribers', integList.subscriberEmails);
+        if (integStatus) P.set('integration_status_cache', integStatus);
+      } else if (me?.client) {
+        const [leads, invoices, claims, msgs, training, memberInteg] = await Promise.all([
+          remoteFetch('/api/leads').catch(() => []),
+          remoteFetch('/api/billing/invoices').catch(() => []),
+          remoteFetch('/api/claims').catch(() => []),
+          remoteFetch('/api/messages').catch(() => []),
+          remoteFetch('/api/training').catch(() => null),
+          remoteFetch('/api/client/integrations').catch(() => null),
+        ]);
+        if (Array.isArray(leads)) P.set('leads', leads.map(normalizeLead));
+        if (Array.isArray(invoices)) P.set('invoices', invoices);
+        if (Array.isArray(claims)) P.set('claims', claims);
+        if (Array.isArray(msgs) && me?.user?.sub) P.set('messages_' + me.user.sub, msgs);
+        if (training?.completed) {
+          const key = (me.client.email || me.client.id || '').toLowerCase();
+          localStorage.setItem('training_' + key, JSON.stringify(training.completed));
+        }
+        if (memberInteg?.ok) P.applyMemberIntegrations?.(memberInteg);
+      }
+      P.emit('api:synced', { role });
+      P.renderAdminQuickStats?.();
+    } catch (e) {
+      if (isProductionHost()) P.emit('api:sync-failed', { error: e.message });
+    }
+    };
+    if (background) {
+      run();
+      return;
+    }
+    return run();
   };
+
+  P.normalizeClient = normalizeClient;
+  P.normalizeLead = normalizeLead;
+  P.getTokenRole = getTokenRole;
 })(window);

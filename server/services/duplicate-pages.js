@@ -23,13 +23,15 @@ function projectRoot(rootDir) {
   return rootDir || path.join(__dirname, '..', '..');
 }
 
-function walkHtml(dir, list = []) {
+function walkHtml(dir, list = [], rootHint = null) {
   if (!fs.existsSync(dir)) return list;
   for (const name of fs.readdirSync(dir)) {
-    if (name === 'node_modules' || name.startsWith('.')) continue;
+    if (name === 'node_modules' || name.startsWith('.') || name === 'upperroom-dfw-mobile') continue;
+    // Design templates share titles intentionally — not SEO duplicates
+    if (name === 'templates') continue;
     const full = path.join(dir, name);
     const stat = fs.statSync(full);
-    if (stat.isDirectory()) walkHtml(full, list);
+    if (stat.isDirectory()) walkHtml(full, list, rootHint);
     else if (name.endsWith('.html')) list.push(full);
   }
   return list;

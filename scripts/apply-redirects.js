@@ -19,7 +19,7 @@ function main() {
     const mergedRules = mergeRedirectsFromAudit(audit, data);
     data = { version: '1.0.0', updatedAt: new Date().toISOString(), redirects: mergedRules };
     saveRedirectsFile(ROOT, data);
-    console.log('Refreshed redirects from duplicate audit:', merged.length, 'rules');
+    console.log('Refreshed redirects from duplicate audit:', mergedRules.length, 'rules');
   }
 
   if (fixCanonicals) {
