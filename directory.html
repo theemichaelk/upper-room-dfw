@@ -51,6 +51,14 @@
 
 
 
+
+
+
+
+
+
+
+
 <meta name="theme-color" content="#0369a1">
   <meta name="format-detection" content="telephone=no">
 
@@ -73,11 +81,118 @@
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/platform.css">
   <style>
-    /* Luxury Corporate Blue/Sky Blue Theme */
-    :root { --sky-deep: #0c4a6e; --sky: #0ea5e9; --baby-blue: #bae6fd; }
+    :root { --sky-deep: #0c4a6e; --sky: #0ea5e9; --sky-700: #0369a1; --baby-blue: #bae6fd; }
     .sky-gradient { background: linear-gradient(135deg, #0c4a6e 0%, #0ea5e9 100%); }
     .luxury-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .luxury-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
+
+    /* Directory hero banner */
+    .dir-hero {
+      position: relative;
+      min-height: clamp(320px, 48vh, 480px);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        linear-gradient(115deg, rgba(12, 74, 110, 0.92) 0%, rgba(3, 105, 161, 0.78) 48%, rgba(14, 165, 233, 0.55) 100%),
+        url('images/36.jpg') center/cover no-repeat;
+      color: #fff;
+    }
+    .dir-hero::after {
+      content: '';
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 4.5rem;
+      background: linear-gradient(to top, rgb(248 250 252), transparent);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .dir-hero-inner { position: relative; z-index: 2; width: 100%; padding: 2.5rem 0 3.25rem; }
+    .dir-hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 999px; padding: 0.35rem 0.9rem;
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .dir-hero-search {
+      display: flex; flex-wrap: wrap; gap: 0.6rem;
+      background: #fff; border-radius: 1.25rem;
+      padding: 0.45rem; box-shadow: 0 20px 40px -12px rgba(12, 74, 110, 0.45);
+      margin-top: 1.5rem; max-width: 52rem;
+    }
+    .dir-hero-search input {
+      flex: 1 1 220px; min-width: 0; border: 0; outline: none;
+      padding: 0.85rem 1rem 0.85rem 2.75rem; font-size: 0.95rem; color: #0f172a;
+      background: transparent; border-radius: 1rem;
+    }
+    .dir-hero-search .search-wrap { position: relative; flex: 1 1 220px; min-width: 0; }
+    .dir-hero-search .search-wrap i {
+      position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+      color: #94a3b8; pointer-events: none;
+    }
+    .dir-hero-search select {
+      border: 1px solid #e2e8f0; border-radius: 0.9rem;
+      padding: 0.7rem 0.9rem; font-size: 0.875rem; color: #334155; background: #f8fafc;
+      min-width: 9rem;
+    }
+    .dir-hero-search .dir-search-btn {
+      border: 0; border-radius: 0.9rem; padding: 0.75rem 1.35rem;
+      background: linear-gradient(135deg, #0369a1, #0ea5e9); color: #fff;
+      font-weight: 600; font-size: 0.9rem; white-space: nowrap; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .dir-hero-search .dir-search-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 16px -6px rgba(3,105,161,0.5); }
+    .dir-quick-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 1rem; }
+    .dir-quick-chips button {
+      border: 1px solid rgba(255,255,255,0.35); background: rgba(255,255,255,0.1);
+      color: #fff; border-radius: 999px; padding: 0.35rem 0.85rem;
+      font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background 0.15s;
+    }
+    .dir-quick-chips button:hover, .dir-quick-chips button.active {
+      background: rgba(255,255,255,0.92); color: #0369a1; border-color: transparent;
+    }
+    .dir-hero-stats {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem; margin-top: 1.75rem;
+    }
+    @media (min-width: 768px) {
+      .dir-hero-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 40rem; }
+    }
+    .dir-hero-stat {
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px); border-radius: 1rem; padding: 0.75rem 0.9rem;
+    }
+    .dir-hero-stat strong { display: block; font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
+    .dir-hero-stat span { font-size: 0.7rem; opacity: 0.85; letter-spacing: 0.02em; }
+    .dir-toolbar {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 1.25rem;
+      padding: 0.85rem 1rem; box-shadow: 0 4px 20px -8px rgba(15, 23, 42, 0.12);
+    }
+    .dir-toolbar .urdfw-display-btn.active {
+      background: #e0f2fe; border-color: #7dd3fc; color: #0369a1;
+    }
+    .filter-chip.active {
+      background: #0369a1 !important; color: #fff !important; border-color: #0369a1 !important;
+    }
+    #directory-results-anchor { scroll-margin-top: 5.5rem; }
+    .dir-empty-state {
+      grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem;
+      background: #fff; border: 1px dashed #cbd5e1; border-radius: 1.5rem;
+    }
+    .dir-insight-card {
+      background: linear-gradient(160deg, #f0f9ff 0%, #fff 70%);
+      border: 1px solid #e0f2fe; border-radius: 1.25rem; padding: 1.15rem;
+      text-align: center; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .dir-insight-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -12px rgba(3,105,161,0.25); }
+    .dir-insight-card .num { font-size: 1.85rem; font-weight: 700; color: #0369a1; line-height: 1.1; }
+    @media (max-width: 640px) {
+      .dir-hero-inner { padding: 1.75rem 0 2.5rem; }
+      .dir-hero-search { padding: 0.5rem; }
+      .dir-hero-search .dir-search-btn { width: 100%; }
+    }
   </style>
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/widgets.css">
@@ -152,138 +267,208 @@
     </div>
   </nav>
 
-  <header class="sky-gradient text-white">
-    <div class="max-w-screen-2xl mx-auto px-6 py-10">
-      <h1 class="text-4xl font-semibold tracking-tighter">DFW Church Directory</h1>
-      <p class="mt-2 text-lg text-sky-100 max-w-2xl">Search verified churches across Dallas–Fort Worth by keyword, area, or map. Save favorites and contact churches directly.</p>
+  <!-- Hero banner with intelligent search -->
+  <header class="dir-hero" id="directory-hero" aria-label="DFW Church Directory hero">
+    <div class="dir-hero-inner">
+      <div class="max-w-screen-2xl mx-auto px-6">
+        <div class="dir-hero-badge" aria-live="polite">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span><span id="hero-listing-count">105+</span> verified DFW listings</span>
+        </div>
+        <h1 class="mt-4 text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter leading-[1.05] max-w-3xl">
+          Find your church in Dallas–Fort Worth
+        </h1>
+        <p class="mt-3 text-base sm:text-lg text-sky-100 max-w-2xl leading-relaxed">
+          Intelligent search across verified churches, ministries, and outreach. Filter by city, category, or keywords like youth, family, bilingual, and worship.
+        </p>
+
+        <form class="dir-hero-search" id="directory-search" role="search" onsubmit="event.preventDefault(); window.runDirectorySearch && window.runDirectorySearch();">
+          <div class="search-wrap">
+            <i class="fa-solid fa-search" aria-hidden="true"></i>
+            <input id="search-input" type="search" name="q" autocomplete="off"
+              placeholder="Search churches, cities, ministries…"
+              aria-label="Search the DFW church directory">
+          </div>
+          <select id="area-filter" aria-label="Filter by city or area">
+            <option value="">All cities</option>
+            <option>Arlington</option>
+            <option>Dallas</option>
+            <option>Fort Worth</option>
+            <option>Plano</option>
+            <option>Irving</option>
+            <option>Frisco</option>
+            <option>Mesquite</option>
+            <option>Garland</option>
+            <option>Richardson</option>
+            <option>Carrollton</option>
+            <option>Euless</option>
+            <option>McKinney</option>
+          </select>
+          <button type="submit" class="dir-search-btn">
+            <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Search
+          </button>
+        </form>
+
+        <div class="dir-quick-chips" id="dir-quick-chips" aria-label="Popular searches">
+          <button type="button" data-kw="youth">Youth ministry</button>
+          <button type="button" data-kw="family">Family friendly</button>
+          <button type="button" data-kw="bilingual">Bilingual</button>
+          <button type="button" data-kw="worship">Worship</button>
+          <button type="button" data-kw="dallas">Dallas</button>
+          <button type="button" data-kw="fort worth">Fort Worth</button>
+          <button type="button" data-kw="outreach">Outreach</button>
+        </div>
+
+        <div class="dir-hero-stats" aria-label="Directory snapshot">
+          <div class="dir-hero-stat">
+            <strong id="stat-total">—</strong>
+            <span>Verified listings</span>
+          </div>
+          <div class="dir-hero-stat">
+            <strong id="stat-cities">—</strong>
+            <span>Cities covered</span>
+          </div>
+          <div class="dir-hero-stat">
+            <strong id="stat-churches">—</strong>
+            <span>Churches</span>
+          </div>
+          <div class="dir-hero-stat">
+            <strong id="stat-ministries">—</strong>
+            <span>Ministries &amp; outreach</span>
+          </div>
+        </div>
+      </div>
     </div>
   </header>
 
-  <div class="max-w-screen-2xl mx-auto px-6 pt-6 pb-2" id="directory-search">
-    <div class="flex items-end justify-between flex-wrap gap-4">
-      <div>
-        <p class="text-slate-600 text-sm">Showing <span id="total-listings">29</span> verified listings in the metroplex.</p>
-      </div>
-      <div class="hidden md:flex gap-2 flex-wrap">
-        <select id="urdfw-directory-select" class="border rounded-2xl px-3 py-2 text-sm" title="Multiple directories">
-          <option value="dfw-churches">DFW Churches</option>
-          <option value="dfw-ministries">DFW Ministries</option>
-          <option value="dfw-events">DFW Faith Events</option>
-        </select>
-        <button data-display="grid" class="urdfw-display-btn px-3 py-2 text-sm border rounded-2xl" title="Grid mode"><i class="fa-solid fa-grid-2"></i></button>
-        <button data-display="list" class="urdfw-display-btn px-3 py-2 text-sm border rounded-2xl" title="List mode"><i class="fa-solid fa-list"></i></button>
-        <button data-display="map" class="urdfw-display-btn px-3 py-2 text-sm border rounded-2xl" title="Map mode"><i class="fa-solid fa-map"></i></button>
-        <button data-display="compact" class="urdfw-display-btn px-3 py-2 text-sm border rounded-2xl" title="Compact mode"><i class="fa-solid fa-compress"></i></button>
-        <button id="export-json" class="px-4 py-2 text-sm font-semibold border rounded-2xl flex items-center gap-x-2 hover:bg-slate-50"><i class="fa-solid fa-download"></i> JSON</button>
-        <button id="export-csv" class="px-4 py-2 text-sm font-semibold border rounded-2xl flex items-center gap-x-2 hover:bg-slate-50"><i class="fa-solid fa-download"></i> CSV</button>
-        <button id="export-pdf-list" class="px-4 py-2 text-sm font-semibold border rounded-2xl hover:bg-slate-50"><i class="fa-solid fa-print"></i> Print</button>
-        <a href="contact.html" class="px-5 py-2 bg-[#0ea5e9] text-white rounded-2xl text-sm font-semibold">Add a Listing</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filters -->
-  <div class="max-w-screen-2xl mx-auto px-6">
-    <div class="bg-white border border-slate-200 rounded-3xl p-5 mb-6">
-      <div class="flex flex-col lg:flex-row gap-4">
-        <div class="flex-1 relative">
-          <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
-          <input id="search-input" type="text" class="w-full border border-slate-200 focus:border-sky-300 pl-11 py-3 rounded-2xl text-sm" placeholder="Search real Texas churches by keywords: youth, bilingual, DFW, family, outreach, Arlington, Dallas, Frisco...">
+  <!-- Toolbar + category filters -->
+  <div class="max-w-screen-2xl mx-auto px-6 -mt-4 relative z-10" id="directory-results-anchor">
+    <div class="dir-toolbar mb-4">
+      <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+          <span class="inline-flex items-center gap-1.5 font-medium text-slate-800">
+            <i class="fa-solid fa-list-check text-sky-600"></i>
+            Showing <span id="results-count" class="text-sky-700 font-bold">0</span>
+            of <span id="total-listings" class="font-semibold">0</span>
+          </span>
+          <span class="hidden sm:inline text-slate-300">|</span>
+          <span class="text-xs text-slate-500" id="results-summary">Loading DFW listings…</span>
         </div>
-        <div class="lg:w-72">
-          <select id="area-filter" class="w-full border border-slate-200 py-3 px-4 rounded-2xl text-sm bg-white">
-            <option value="">All Areas</option>
-            <option>Arlington</option><option>Dallas</option><option>Fort Worth</option><option>Plano</option><option>Irving</option><option>Frisco</option><option>Mesquite</option><option>Garland</option><option>Richardson</option>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="urdfw-directory-select" class="border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white" title="Directory catalog">
+            <option value="dfw-churches">DFW Churches</option>
+            <option value="dfw-ministries">DFW Ministries</option>
+            <option value="dfw-events">DFW Faith Events</option>
           </select>
+          <select id="sort-filter" class="border border-slate-200 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white" title="Sort results" aria-label="Sort results">
+            <option value="relevance">Best match</option>
+            <option value="name">Name A–Z</option>
+            <option value="area">City A–Z</option>
+            <option value="featured">Featured first</option>
+          </select>
+          <div class="inline-flex rounded-xl border border-slate-200 overflow-hidden" role="group" aria-label="Display mode">
+            <button type="button" data-display="grid" class="urdfw-display-btn active px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50" title="Grid"><i class="fa-solid fa-grip"></i></button>
+            <button type="button" data-display="list" class="urdfw-display-btn px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50 border-l border-slate-200" title="List"><i class="fa-solid fa-list"></i></button>
+            <button type="button" data-display="map" class="urdfw-display-btn px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50 border-l border-slate-200" title="Map focus"><i class="fa-solid fa-map"></i></button>
+            <button type="button" data-display="compact" class="urdfw-display-btn px-2.5 py-2 text-sm text-slate-600 hover:bg-slate-50 border-l border-slate-200" title="Compact"><i class="fa-solid fa-compress"></i></button>
+          </div>
+          <button type="button" id="export-json" class="hidden sm:inline-flex px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 items-center gap-1.5" title="Export JSON"><i class="fa-solid fa-file-code"></i> JSON</button>
+          <button type="button" id="export-csv" class="hidden sm:inline-flex px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 items-center gap-1.5" title="Export CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
+          <button type="button" id="export-pdf-list" class="hidden md:inline-flex px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 items-center gap-1.5" title="Print listing"><i class="fa-solid fa-print"></i></button>
+          <button type="button" id="reset-filters-btn" class="px-3 py-2 text-xs font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600" title="Clear filters"><i class="fa-solid fa-rotate-left mr-1"></i>Reset</button>
+          <a href="register.html" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm">Add listing</a>
         </div>
       </div>
 
-      <div class="flex flex-wrap gap-2 mt-4" id="category-filters">
-        <button data-category="" class="filter-chip active px-5 py-1.5 rounded-3xl border text-xs font-semibold bg-[#0369a1] text-white">All</button>
-        <button data-category="Church" class="filter-chip px-5 py-1.5 rounded-3xl border text-xs font-semibold hover:bg-slate-100">Churches</button>
-        <button data-category="Ministry" class="filter-chip px-5 py-1.5 rounded-3xl border text-xs font-semibold hover:bg-slate-100">Ministries</button>
-        <button data-category="Youth" class="filter-chip px-5 py-1.5 rounded-3xl border text-xs font-semibold hover:bg-slate-100">Youth &amp; Family</button>
-        <button data-category="Outreach" class="filter-chip px-5 py-1.5 rounded-3xl border text-xs font-semibold hover:bg-slate-100">Outreach</button>
-        <button data-category="Event" class="filter-chip px-5 py-1.5 rounded-3xl border text-xs font-semibold hover:bg-slate-100">Events &amp; Gatherings</button>
+      <div class="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100" id="category-filters">
+        <button type="button" data-category="" class="filter-chip active px-4 py-1.5 rounded-full border text-xs font-semibold">All</button>
+        <button type="button" data-category="Church" class="filter-chip px-4 py-1.5 rounded-full border text-xs font-semibold hover:bg-slate-50">Churches</button>
+        <button type="button" data-category="Ministry" class="filter-chip px-4 py-1.5 rounded-full border text-xs font-semibold hover:bg-slate-50">Ministries</button>
+        <button type="button" data-category="Youth" class="filter-chip px-4 py-1.5 rounded-full border text-xs font-semibold hover:bg-slate-50">Youth &amp; family</button>
+        <button type="button" data-category="Outreach" class="filter-chip px-4 py-1.5 rounded-full border text-xs font-semibold hover:bg-slate-50">Outreach</button>
+        <button type="button" data-category="Event" class="filter-chip px-4 py-1.5 rounded-full border text-xs font-semibold hover:bg-slate-50">Events</button>
       </div>
-      <!-- Quick keyword test buttons for real data search -->
-      <div class="mt-2 text-xs text-slate-500">
-        Quick tests (click to search real Texas data): 
-        <button onclick="quickKeywordSearch('youth')" class="underline hover:text-[#0369a1]">youth</button> 
-        <button onclick="quickKeywordSearch('dallas')" class="underline hover:text-[#0369a1]">dallas</button> 
-        <button onclick="quickKeywordSearch('family')" class="underline hover:text-[#0369a1]">family</button> 
-        <button onclick="quickKeywordSearch('worship')" class="underline hover:text-[#0369a1]">worship</button>
-      </div>
-      <div id="urdfw-facet-container" class="mt-3"></div>
+      <div id="urdfw-facet-container" class="mt-2"></div>
     </div>
   </div>
 
   <!-- Map + Grid -->
-  <div class="max-w-screen-2xl mx-auto px-6 grid lg:grid-cols-5 gap-6 items-start">
-    <!-- Map -->
-    <div class="lg:col-span-2 urdfw-map-column lg:sticky lg:top-20">
+  <div class="max-w-screen-2xl mx-auto px-6 grid lg:grid-cols-5 gap-6 items-start pb-2">
+    <div class="lg:col-span-2 urdfw-map-column lg:sticky lg:top-20 order-2 lg:order-1">
       <div class="urdfw-map-toolbar" id="urdfw-map-toolbar">
-        <button data-action="draw" type="button"><i class="fa-solid fa-draw-polygon"></i> Draw Search Area</button>
-        <button data-action="clear-draw" type="button">Clear Draw</button>
-        <select id="urdfw-map-provider" class="border rounded px-2 py-1 text-xs">
+        <button data-action="draw" type="button"><i class="fa-solid fa-draw-polygon"></i> Draw area</button>
+        <button data-action="clear-draw" type="button">Clear</button>
+        <select id="urdfw-map-provider" class="border rounded px-2 py-1 text-xs" aria-label="Map provider">
           <option value="openstreetmap">OpenStreetMap</option>
           <option value="google">Google Maps</option>
           <option value="mapbox">MapBox</option>
         </select>
       </div>
-      <div class="bg-white border rounded-3xl overflow-hidden">
-        <div id="directory-map"></div>
+      <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+        <div id="directory-map" role="region" aria-label="Map of DFW churches"></div>
       </div>
-      <p class="text-xs text-center text-slate-500 mt-2">Map data © OpenStreetMap contributors. Click markers for details.</p>
+      <p class="text-xs text-center text-slate-500 mt-2">Map © OpenStreetMap · Click a pin for the church profile</p>
     </div>
 
-    <!-- Grid -->
-    <div class="lg:col-span-3">
-      <div id="directory-grid" class="directory-grid"></div>
+    <div class="lg:col-span-3 order-1 lg:order-2">
+      <div id="directory-grid" class="directory-grid" aria-live="polite"></div>
     </div>
   </div>
 
   <div class="max-w-screen-2xl mx-auto px-6 py-4 text-xs text-center text-slate-500">
-    Showing <span id="results-count">0</span> of <span id="total-listings">0</span> listings • All data stored locally in your browser • <a href="data/churches.json" class="underline">View raw data (JSON)</a>
+    Live data from verified DFW listings ·
+    <a href="data/churches.json" class="underline hover:text-sky-700">View raw JSON</a> ·
+    <a href="claim-listing.html" class="underline hover:text-sky-700">Claim your church</a>
   </div>
 
-  <!-- Rich Infograph & Data Section for E-E-A-T and SEO -->
-  <div class="max-w-screen-2xl mx-auto px-6 py-8 bg-white border-t" id="directory-infograph">
-    <h3 class="font-semibold mb-4 text-xl">Directory Insights &amp; Infograph: Real Texas Church Data</h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="p-4 bg-sky-50 rounded text-center luxury-card">
-        <div class="text-3xl font-bold text-[#0ea5e9]">142+</div>
-        <div class="text-sm">Verified DFW Churches (live from JSON)</div>
-        <div class="text-xs mt-1">Dallas: 42 • Fort Worth: 28 • Arlington: 19 • Plano/Frisco: 31 • Others: 22</div>
+  <!-- Live insights (computed from real data) -->
+  <section class="border-t bg-white" id="directory-infograph" aria-labelledby="dir-insights-heading">
+    <div class="max-w-screen-2xl mx-auto px-6 py-10">
+      <div class="flex flex-wrap items-end justify-between gap-3 mb-6">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-widest text-sky-600 mb-1">Live directory insights</p>
+          <h2 id="dir-insights-heading" class="text-2xl font-bold tracking-tight text-slate-900">What the data shows right now</h2>
+          <p class="text-sm text-slate-500 mt-1 max-w-xl">Stats update from your current catalog — not hardcoded marketing numbers.</p>
+        </div>
+        <button type="button" onclick="refreshLiveDirectoryMetrics()" class="text-xs px-3 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 font-semibold text-slate-600">
+          <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
+        </button>
       </div>
-      <div class="p-4 bg-sky-50 rounded text-center luxury-card">
-        <div class="text-3xl font-bold text-[#0ea5e9]">4.8★</div>
-        <div class="text-sm">Avg GMB Rating (1,240+ Reviews)</div>
-        <div class="text-xs mt-1">GMB: michaelk@tsbrenterprises.com • (682) 358-3942 • Mon–Fri 9am–6pm, Dallas TX 76040</div>
+      <div id="live-directory-metrics" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="dir-insight-card"><div class="num">…</div><div class="text-sm text-slate-600 mt-1">Loading…</div></div>
       </div>
-      <div class="p-4 bg-sky-50 rounded text-center luxury-card">
-        <div class="text-3xl font-bold text-[#0ea5e9]">87%</div>
-        <div class="text-sm">Keyword Match Rate for Families</div>
-        <div class="text-xs mt-1">Top searches: Youth (38%), Family (29%), Worship (18%), Bilingual (15%)</div>
-      </div>
-      <div class="p-4 bg-sky-50 rounded text-center luxury-card">
-        <img src="images/10.jpg" class="mx-auto h-12 rounded" alt="Community infograph">
-        <div class="text-sm mt-1">Real photos + videos from listings • 29 Texas cities covered</div>
+      <div class="mt-8 grid md:grid-cols-3 gap-4">
+        <a href="register.html" class="group p-5 rounded-2xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 transition">
+          <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3"><i class="fa-solid fa-church"></i></div>
+          <h3 class="font-semibold text-slate-900 group-hover:text-sky-800">List your church</h3>
+          <p class="text-sm text-slate-500 mt-1">Reach families searching DFW for worship, youth, and community.</p>
+        </a>
+        <a href="events.html" class="group p-5 rounded-2xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 transition">
+          <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3"><i class="fa-solid fa-calendar-days"></i></div>
+          <h3 class="font-semibold text-slate-900 group-hover:text-sky-800">Faith events</h3>
+          <p class="text-sm text-slate-500 mt-1">Discover gatherings, conferences, and local ministry events.</p>
+        </a>
+        <a href="member-dashboard.html" class="group p-5 rounded-2xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 transition">
+          <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center mb-3"><i class="fa-solid fa-gauge-high"></i></div>
+          <h3 class="font-semibold text-slate-900 group-hover:text-sky-800">Church dashboard</h3>
+          <p class="text-sm text-slate-500 mt-1">Manage leads, profile, and visibility after you claim a listing.</p>
+        </a>
       </div>
     </div>
-    <p class="text-xs mt-3 text-slate-500">All data powered by real local churches.json + verified GMB profile. Use keyword search (e.g. "youth dallas family") for AI-like intelligent matching.</p>
-    <div class="mt-3 flex gap-4">
-      <button onclick="refreshLiveDirectoryMetrics()" class="text-xs px-3 py-1 border rounded-2xl">Refresh Live Data</button>
-      <video controls class="w-48 rounded border" src="images/2.mp4"></video>
-      <div class="text-xs">Real community video from DFW churches.</div>
-    </div>
-  </div>
+  </section>
 
-  <!-- Exact Footer -->
-  <footer class="bg-slate-900 text-slate-400 text-sm mt-8">
-    <div class="max-w-screen-2xl mx-auto px-6 py-5 text-xs flex flex-wrap gap-x-4">© Upper Room DFW • <a href="index.html">Home</a> • <a href="directory.html">Directory</a> • <a href="member-dashboard.html">My Dashboard</a> • <a href="privacy-policy.html">Privacy</a> • <a href="terms-of-service.html">Terms</a> • GMB Verified 4.8★</div>
-  
-    <div class="text-center text-xs py-3 text-slate-500 border-t border-white/10 urdfw-powered-by">Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K</div>
+  <footer class="bg-slate-900 text-slate-400 text-sm mt-0">
+    <div class="max-w-screen-2xl mx-auto px-6 py-5 text-xs flex flex-wrap gap-x-4 gap-y-1">
+      © Upper Room DFW ·
+      <a href="index.html" class="hover:text-white">Home</a> ·
+      <a href="directory.html" class="hover:text-white">Directory</a> ·
+      <a href="member-dashboard.html" class="hover:text-white">My Dashboard</a> ·
+      <a href="privacy-policy.html" class="hover:text-white">Privacy</a> ·
+      <a href="terms-of-service.html" class="hover:text-white">Terms</a>
+    </div>
+    <div class="text-center text-xs py-3 text-slate-500 border-t border-white/10 urdfw-powered-by">
+      Powered By <a href="https://tsbrenterprises.com" class="hover:text-white underline" target="_blank" rel="noopener noreferrer">The Stone Builders Rejected</a> Michael K
+    </div>
   </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -291,71 +476,84 @@
   <script src="js/platform/loader.js" defer></script>
   <script src="js/directory.js"></script>
   <script>
-    // Live computed metrics for Directory page — pulls ONLY from real stored data (churches.json + localStorage)
-    // No hardcoded "29" or "4.8" stats written by us. Everything recalculated on demand.
     async function refreshLiveDirectoryMetrics() {
       const container = document.getElementById('live-directory-metrics');
-      if (!container) return;
-
-      let base = [];
-      try {
-        const res = await fetch('data/churches.json');
-        base = await res.json();
-      } catch(e) { base = []; }
-
-      const customs = JSON.parse(localStorage.getItem('urdfw_custom_listings') || '[]');
-      const all = [...base, ...customs];
+      let base = (window.churchesData && window.churchesData.length) ? window.churchesData : [];
+      if (!base.length) {
+        try {
+          const res = await fetch('data/churches.json');
+          base = await res.json();
+        } catch (e) { base = []; }
+      }
+      let customs = [];
+      try { customs = JSON.parse(localStorage.getItem('urdfw_custom_listings') || '[]'); } catch (e) { customs = []; }
+      const all = [...base, ...(Array.isArray(customs) ? customs : [])];
       const total = all.length;
-
-      // Real area breakdown (relevance by location)
       const areaCounts = {};
-      all.forEach(item => { const a = item.area || 'Other'; areaCounts[a] = (areaCounts[a]||0) + 1; });
-      const topAreas = Object.entries(areaCounts).sort((a,b) => b[1]-a[1]).slice(0,3).map(([k,v])=>k+':'+v).join(' • ');
+      const catCounts = {};
+      all.forEach((item) => {
+        const a = item.area || 'Other';
+        areaCounts[a] = (areaCounts[a] || 0) + 1;
+        const c = item.category || 'Other';
+        catCounts[c] = (catCounts[c] || 0) + 1;
+      });
+      const cities = Object.keys(areaCounts).length;
+      const churches = catCounts.Church || 0;
+      const ministries = (catCounts.Ministry || 0) + (catCounts.Outreach || 0) + (catCounts.Youth || 0);
+      const topAreas = Object.entries(areaCounts).sort((a, b) => b[1] - a[1]).slice(0, 4)
+        .map(([k, v]) => k + ' ' + v).join(' · ');
 
-      // Leads tracked in the system (from member activity + contact forms)
-      const allLeads = JSON.parse(localStorage.getItem('urdfw_leads') || '[]').length;
+      document.querySelectorAll('#total-listings, #hero-listing-count, #stat-total').forEach((el) => {
+        if (el.id === 'hero-listing-count') el.textContent = total + '+';
+        else el.textContent = total;
+      });
+      const stCities = document.getElementById('stat-cities');
+      const stCh = document.getElementById('stat-churches');
+      const stMin = document.getElementById('stat-ministries');
+      if (stCities) stCities.textContent = cities;
+      if (stCh) stCh.textContent = churches;
+      if (stMin) stMin.textContent = ministries;
 
-      // How many churches are actually paid/upgraded right now (from client records)
-      const clients = JSON.parse(localStorage.getItem('urdfw_clients') || '[]');
-      const paidListings = clients.filter(c => !!c.isPaid).length;
-
-      // Update any visible totals on the page
-      document.querySelectorAll('#total-listings').forEach(el => el.textContent = total);
-      const rcEl = document.getElementById('results-count');
-      if (rcEl) rcEl.textContent = total;
-
-      container.innerHTML = `
-        <div class="p-4 bg-sky-50 rounded text-center">
-          <div class="text-3xl font-bold text-[#0369a1]">${total}</div>
-          <div class="text-sm">Current Total Listings</div>
-          <div class="text-xs mt-1">${topAreas || 'DFW metro'}</div>
-        </div>
-        <div class="p-4 bg-sky-50 rounded text-center">
-          <div class="text-3xl font-bold text-[#0369a1]">${allLeads}</div>
-          <div class="text-sm">Leads Generated &amp; Stored</div>
-          <div class="text-xs mt-1">Real interactions from visitors</div>
-        </div>
-        <div class="p-4 bg-sky-50 rounded text-center">
-          <div class="text-3xl font-bold text-[#0369a1]">${paidListings}</div>
-          <div class="text-sm">Currently Paid / Active Members</div>
-          <div class="text-xs mt-1">Driving visibility in directory</div>
-        </div>
-        <div class="p-4 bg-sky-50 rounded text-center">
-          <div class="text-3xl font-bold text-[#0369a1]">${Object.keys(areaCounts).length}</div>
-          <div class="text-sm">Cities / Areas Represented</div>
-          <div class="text-xs mt-1">Live from registered churches</div>
-        </div>
-      `;
+      if (container) {
+        container.innerHTML = `
+          <div class="dir-insight-card">
+            <div class="num">${total}</div>
+            <div class="text-sm text-slate-700 mt-1 font-medium">Verified listings</div>
+            <div class="text-xs text-slate-500 mt-1">${topAreas || 'DFW metro'}</div>
+          </div>
+          <div class="dir-insight-card">
+            <div class="num">${cities}</div>
+            <div class="text-sm text-slate-700 mt-1 font-medium">Cities &amp; suburbs</div>
+            <div class="text-xs text-slate-500 mt-1">Across the DFW metroplex</div>
+          </div>
+          <div class="dir-insight-card">
+            <div class="num">${churches}</div>
+            <div class="text-sm text-slate-700 mt-1 font-medium">Churches</div>
+            <div class="text-xs text-slate-500 mt-1">Primary worship communities</div>
+          </div>
+          <div class="dir-insight-card">
+            <div class="num">${ministries}</div>
+            <div class="text-sm text-slate-700 mt-1 font-medium">Ministries &amp; outreach</div>
+            <div class="text-xs text-slate-500 mt-1">Youth, care &amp; community programs</div>
+          </div>`;
+      }
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initial live compute (after directory.js probably loaded data)
-      setTimeout(refreshLiveDirectoryMetrics, 420);
-      // Recompute on major interactions
-      const si = document.getElementById('search-input');
-      if (si) si.addEventListener('keyup', () => setTimeout(refreshLiveDirectoryMetrics, 600));
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(refreshLiveDirectoryMetrics, 500);
+      document.querySelectorAll('#dir-quick-chips button').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#dir-quick-chips button').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (window.quickKeywordSearch) window.quickKeywordSearch(btn.dataset.kw || btn.textContent.trim());
+        });
+      });
+      const resetBtn = document.getElementById('reset-filters-btn');
+      if (resetBtn) resetBtn.addEventListener('click', () => {
+        document.querySelectorAll('#dir-quick-chips button').forEach((b) => b.classList.remove('active'));
+        if (window.resetAllFilters) window.resetAllFilters();
+      });
     });
-    // Expose for manual refresh from other pages or console
     window.refreshLiveDirectoryMetrics = refreshLiveDirectoryMetrics;
   </script>
 </body></html>
