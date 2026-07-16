@@ -1,5 +1,7 @@
 node_modules/
 .env
+upperroom-dfw-mobile/
+
 deploy/amplify-env.production.json
 server/data/*.db
 server/data/*.db-*
