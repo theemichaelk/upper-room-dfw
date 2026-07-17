@@ -35,6 +35,7 @@
     "footer:inject": "node scripts/add-powered-by-footer.js",
     "build": "node scripts/inject-platform.js && node scripts/add-powered-by-footer.js && node scripts/build-amplify-bundle.js",
     "generate:blog": "node scripts/generate-blog.js",
+    "blog:near-me": "node scripts/generate-near-me-keyword-blogs.js && node scripts/redate-near-me-batch.js && node scripts/generate-blog.js && node scripts/generate-sitemap.js",
     "blog:expand": "node scripts/expand-and-schedule-blog.js && node scripts/generate-blog.js",
     "build:static": "node scripts/generate-blog.js && node scripts/apply-brand-logo.js && node scripts/inject-platform.js && node scripts/add-powered-by-footer.js && node scripts/apply-redirects.js --canonicals && node scripts/generate-sitemap.js",
     "brand:logo": "node scripts/apply-brand-logo.js",
